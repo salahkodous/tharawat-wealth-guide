@@ -14,6 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      assets: {
+        Row: {
+          area_sqm: number | null
+          asset_name: string
+          asset_type: string
+          city: string | null
+          country: string
+          created_at: string
+          current_price: number | null
+          district: string | null
+          id: string
+          metadata: Json | null
+          portfolio_id: string
+          property_type: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          quantity: number | null
+          symbol: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area_sqm?: number | null
+          asset_name: string
+          asset_type: string
+          city?: string | null
+          country: string
+          created_at?: string
+          current_price?: number | null
+          district?: string | null
+          id?: string
+          metadata?: Json | null
+          portfolio_id: string
+          property_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          quantity?: number | null
+          symbol?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area_sqm?: number | null
+          asset_name?: string
+          asset_type?: string
+          city?: string | null
+          country?: string
+          created_at?: string
+          current_price?: number | null
+          district?: string | null
+          id?: string
+          metadata?: Json | null
+          portfolio_id?: string
+          property_type?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          quantity?: number | null
+          symbol?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_goals: {
+        Row: {
+          ai_strategy: string | null
+          category: string | null
+          created_at: string
+          current_amount: number | null
+          id: string
+          status: string | null
+          target_amount: number
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_strategy?: string | null
+          category?: string | null
+          created_at?: string
+          current_amount?: number | null
+          id?: string
+          status?: string | null
+          target_amount: number
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_strategy?: string | null
+          category?: string | null
+          created_at?: string
+          current_amount?: number | null
+          id?: string
+          status?: string | null
+          target_amount?: number
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kv_store_c952a926: {
         Row: {
           key: string
@@ -26,6 +139,57 @@ export type Database = {
         Update: {
           key?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      portfolios: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
