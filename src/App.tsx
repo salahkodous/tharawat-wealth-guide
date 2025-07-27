@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Dashboard from "./pages/Dashboard";
 import Portfolio from "./pages/Portfolio";
+import Finances from "./pages/Finances";
+import Assistant from "./pages/Assistant";
+import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +46,21 @@ const AppRoutes = () => {
       <Route path="/portfolio" element={
         <ProtectedRoute>
           <Portfolio />
+        </ProtectedRoute>
+      } />
+      <Route path="/finances" element={
+        <ProtectedRoute>
+          <Finances />
+        </ProtectedRoute>
+      } />
+      <Route path="/assistant" element={
+        <ProtectedRoute>
+          <Assistant />
+        </ProtectedRoute>
+      } />
+      <Route path="/analytics" element={
+        <ProtectedRoute>
+          <Analytics />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />
