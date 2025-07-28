@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { CurrencyProvider } from "@/hooks/useCurrency";
 import Dashboard from "./pages/Dashboard";
 import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
@@ -74,9 +75,11 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <CurrencyProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </CurrencyProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
