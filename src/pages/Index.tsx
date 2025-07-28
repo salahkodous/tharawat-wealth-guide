@@ -20,7 +20,7 @@ import TharawatLogo from '@/components/TharawatLogo';
 import VoiceSearchInput from '@/components/VoiceSearchInput';
 import PortfolioManager from '@/components/PortfolioManager';
 import AIRecommendations from '@/components/AIRecommendations';
-import FinancialTracker from '@/components/FinancialTracker';
+
 
 // Import hero background
 import heroBackground from '@/assets/hero-background.jpg';
@@ -215,9 +215,6 @@ const Index = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="tracker" className="space-y-8">
-                <FinancialTracker />
-              </TabsContent>
             </Tabs>
           </div>
         </section>

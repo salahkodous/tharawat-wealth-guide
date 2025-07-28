@@ -197,6 +197,82 @@ const Portfolio = () => {
             </div>
 
             <PortfolioTable />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-blue-500" />
+                    Portfolio Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Risk Score</span>
+                      <span className="text-sm font-medium">7.2/10</span>
+                    </div>
+                    <Progress value={72} className="h-2" />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Diversification</span>
+                      <span className="text-sm font-medium">Good</span>
+                    </div>
+                    <Progress value={85} className="h-2" />
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <h4 className="font-medium mb-2">Allocation Breakdown</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Stocks (MENA)</span>
+                        <span>45%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Real Estate</span>
+                        <span>35%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Cash & Bonds</span>
+                        <span>20%</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-green-500" />
+                    Performance Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Best Performer: Saudi Aramco (+15.2%)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <span className="text-sm">Underperformer: UAE Tech ETF (-3.1%)</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <h4 className="font-medium mb-2">Recommendations</h4>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p>• Consider increasing exposure to Dubai real estate</p>
+                      <p>• Reduce concentration in single stocks</p>
+                      <p>• Add Islamic bonds for stability</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </section>
       </div>

@@ -4,10 +4,14 @@ import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
 
 const MarketOverview = () => {
   const markets = [
-    { name: 'EGX 30', value: '18,245.32', change: '+2.34%', positive: true, country: 'Egypt' },
-    { name: 'TASI', value: '11,892.45', change: '+1.87%', positive: true, country: 'Saudi Arabia' },
-    { name: 'DFM', value: '3,456.78', change: '-0.45%', positive: false, country: 'UAE' },
-    { name: 'Boursa Kuwait', value: '7,123.56', change: '+0.92%', positive: true, country: 'Kuwait' }
+    { name: 'TASI', value: '12,450.8', change: '+2.3%', positive: true, category: 'Stocks', country: 'Saudi Arabia' },
+    { name: 'DFM', value: '4,125.6', change: '-0.8%', positive: false, category: 'Stocks', country: 'UAE' },
+    { name: 'Dubai Real Estate', value: '98.2', change: '+3.1%', positive: true, category: 'Real Estate', country: 'UAE' },
+    { name: 'Bitcoin (MENA)', value: '67,432', change: '-2.4%', positive: false, category: 'Crypto', country: 'Regional' },
+    { name: 'Saudi Banks', value: '8,945', change: '+1.8%', positive: true, category: 'Banking', country: 'Saudi Arabia' },
+    { name: 'UAE Property', value: '156.7', change: '+2.2%', positive: true, category: 'Real Estate', country: 'UAE' },
+    { name: 'QE Index', value: '10,234', change: '+0.9%', positive: true, category: 'Stocks', country: 'Qatar' },
+    { name: 'Ethereum Gulf', value: '3,821', change: '+1.5%', positive: true, category: 'Crypto', country: 'Regional' }
   ];
 
   const currencies = [
@@ -26,17 +30,21 @@ const MarketOverview = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {markets.map((market, index) => (
-          <Card key={index} className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {market.country}
-              </CardTitle>
-              <div className="text-lg font-bold">{market.name}</div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-xl font-semibold">{market.value}</div>
-                <div className={`flex items-center gap-1 text-sm font-medium ${
+          <Card key={index} className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    market.category === 'Stocks' ? 'bg-blue-500' :
+                    market.category === 'Real Estate' ? 'bg-green-500' :
+                    market.category === 'Crypto' ? 'bg-orange-500' :
+                    'bg-purple-500'
+                  }`} />
+                  <span className="text-xs text-muted-foreground">
+                    {market.category}
+                  </span>
+                </div>
+                <div className={`flex items-center gap-1 ${
                   market.positive ? 'text-green-500' : 'text-red-500'
                 }`}>
                   {market.positive ? (
@@ -44,8 +52,15 @@ const MarketOverview = () => {
                   ) : (
                     <TrendingDown className="w-4 h-4" />
                   )}
-                  {market.change}
+                  <span className="text-sm font-medium">
+                    {market.change}
+                  </span>
                 </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm mb-1">{market.name}</h3>
+                <p className="text-xl font-bold">{market.value}</p>
+                <p className="text-xs text-muted-foreground">{market.country}</p>
               </div>
             </CardContent>
           </Card>

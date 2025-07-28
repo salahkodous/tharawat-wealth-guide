@@ -2,7 +2,6 @@ import React from 'react';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PersonalFinances from '@/components/PersonalFinances';
-import FinancialTracker from '@/components/FinancialTracker';
 
 const Finances = () => {
   return (
@@ -20,7 +19,6 @@ const Finances = () => {
             </div>
             
             <PersonalFinances />
-            <FinancialTracker />
           </div>
         </section>
       </div>

@@ -3,6 +3,9 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import QuickActions from '@/components/QuickActions';
+import PersonalFinances from '@/components/PersonalFinances';
+import MarketOverview from '@/components/MarketOverview';
+import AIInvestmentAssistant from '@/components/AIInvestmentAssistant';
 
 const Dashboard = () => {
   return (
@@ -19,7 +22,13 @@ const Dashboard = () => {
               <p className="text-muted-foreground">Your financial overview at a glance</p>
             </div>
             
-            <PortfolioSummary />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <PortfolioSummary />
+              <PersonalFinances />
+            </div>
+            
+            <MarketOverview />
+            <AIInvestmentAssistant />
             <QuickActions />
           </div>
         </section>
