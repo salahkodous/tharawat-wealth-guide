@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Bot, 
   TrendingUp, 
@@ -18,6 +20,7 @@ const AIInvestmentAssistant = () => {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const sampleQueries = [
     "Should I sell my Saudi Aramco stocks now?",
@@ -27,24 +30,58 @@ const AIInvestmentAssistant = () => {
   ];
 
   const handleAnalyze = async () => {
+    if (!query.trim()) return;
+    
     setIsLoading(true);
-    // Simulate AI analysis
-    setTimeout(() => {
-      setResponse(`Based on your current portfolio and market conditions:
+    setResponse('');
+    
+    try {
+      toast({
+        title: "AI Analysis Starting",
+        description: "Analyzing your query with market data...",
+      });
 
-📊 **Analysis**: Your query about "${query}" has been analyzed considering:
-- Your current asset allocation (70% stocks, 25% real estate, 5% cash)
-- Market volatility in MENA region (+2.3% this week)
-- Your risk tolerance and investment goals
+      const { data, error } = await supabase.functions.invoke('ai-investment-analysis', {
+        body: {
+          query: query,
+          portfolioData: {
+            // Mock portfolio data - in real implementation, fetch from database
+            totalValue: 125450,
+            allocation: { stocks: 70, realEstate: 25, cash: 5 },
+            topHoldings: ['Saudi Aramco', 'Emirates NBD', 'Dubai Real Estate']
+          },
+          userProfile: {
+            // Mock user profile - in real implementation, fetch from user profile
+            riskTolerance: 'moderate',
+            investmentGoals: ['wealth_building', 'retirement'],
+            timeHorizon: 'long_term'
+          }
+        }
+      });
 
-💡 **Recommendation**: 
-- **Moderate Risk**: Consider gradual position adjustment
-- **Timeline**: 3-6 months for optimal execution
-- **Market Timing**: Current conditions show mixed signals
+      if (error) {
+        throw error;
+      }
 
-⚠️ **Important**: This analysis is based on general market data. For personalized advice, please ensure your complete financial profile is updated in the system.`);
+      setResponse(data.analysis);
+      
+      toast({
+        title: "Analysis Complete",
+        description: "AI has generated your personalized investment insights.",
+      });
+      
+    } catch (error) {
+      console.error('AI Analysis Error:', error);
+      setResponse(`Sorry, I encountered an error while analyzing your query. ${error.message || 'Please try again later.'}`);
+      
+      toast({
+        title: "Analysis Failed",
+        description: "Could not generate AI analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
