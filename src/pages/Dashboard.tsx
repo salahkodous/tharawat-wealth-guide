@@ -22,13 +22,14 @@ const Dashboard = () => {
               <p className="text-muted-foreground">Your financial overview at a glance</p>
             </div>
             
+            <AIInvestmentAssistant />
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <PortfolioSummary />
               <PersonalFinances />
             </div>
             
             <MarketOverview />
-            <AIInvestmentAssistant />
             <QuickActions />
           </div>
         </section>

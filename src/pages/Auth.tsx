@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock, User, Chrome } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Mail, Lock, User, Chrome, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import TharawatLogo from '@/components/TharawatLogo';
@@ -20,7 +21,27 @@ const Auth = () => {
     email: '',
     password: '',
     fullName: '',
+    country: '',
   });
+
+  const countries = [
+    { code: 'AE', name: 'United Arab Emirates', currency: 'AED' },
+    { code: 'SA', name: 'Saudi Arabia', currency: 'SAR' },
+    { code: 'QA', name: 'Qatar', currency: 'QAR' },
+    { code: 'KW', name: 'Kuwait', currency: 'KWD' },
+    { code: 'BH', name: 'Bahrain', currency: 'BHD' },
+    { code: 'OM', name: 'Oman', currency: 'OMR' },
+    { code: 'JO', name: 'Jordan', currency: 'JOD' },
+    { code: 'LB', name: 'Lebanon', currency: 'LBP' },
+    { code: 'EG', name: 'Egypt', currency: 'EGP' },
+    { code: 'MA', name: 'Morocco', currency: 'MAD' },
+    { code: 'TN', name: 'Tunisia', currency: 'TND' },
+    { code: 'DZ', name: 'Algeria', currency: 'DZD' },
+    { code: 'IQ', name: 'Iraq', currency: 'IQD' },
+    { code: 'US', name: 'United States', currency: 'USD' },
+    { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
+    { code: 'EU', name: 'European Union', currency: 'EUR' },
+  ];
 
   useEffect(() => {
     if (user && !loading) {
@@ -32,6 +53,14 @@ const Auth = () => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
+    });
+    setError(null);
+  };
+
+  const handleCountryChange = (value: string) => {
+    setFormData({
+      ...formData,
+      country: value,
     });
     setError(null);
   };
@@ -54,7 +83,15 @@ const Auth = () => {
     setAuthLoading(true);
     setError(null);
 
-    const { error } = await signUp(formData.email, formData.password, formData.fullName);
+    if (!formData.country) {
+      setError('Please select your country');
+      setAuthLoading(false);
+      return;
+    }
+
+    const selectedCountry = countries.find(c => c.code === formData.country);
+    
+    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.country, selectedCountry?.currency);
     
     if (error) {
       setError(error.message);
@@ -213,6 +250,24 @@ const Auth = () => {
                           required
                           minLength={6}
                         />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-country">Country</Label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                        <Select value={formData.country} onValueChange={handleCountryChange}>
+                          <SelectTrigger className="pl-10">
+                            <SelectValue placeholder="Select your country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countries.map((country) => (
+                              <SelectItem key={country.code} value={country.code}>
+                                {country.name} ({country.currency})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     <Button 

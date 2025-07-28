@@ -1,20 +1,23 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, TrendingUp, PieChart, Target } from 'lucide-react';
+import { useCurrency } from '@/hooks/useCurrency';
 
 const PortfolioSummary = () => {
+  const { formatAmount } = useCurrency();
+  
   const portfolioStats = [
-    { label: 'Total Value', value: '$125,450', change: '+8.5%', positive: true },
-    { label: 'Today\'s Gain', value: '+$2,340', change: '+1.9%', positive: true },
-    { label: 'Total Return', value: '+$15,450', change: '+14.1%', positive: true },
+    { label: 'Total Value', value: formatAmount(125450), change: '+8.5%', positive: true },
+    { label: 'Today\'s Gain', value: '+' + formatAmount(2340), change: '+1.9%', positive: true },
+    { label: 'Total Return', value: '+' + formatAmount(15450), change: '+14.1%', positive: true },
     { label: 'Assets', value: '12', change: '+2', positive: true }
   ];
 
   const topHoldings = [
-    { name: 'Saudi Aramco', symbol: 'ARAMCO', value: '$25,600', allocation: '20.4%', change: '+2.1%', positive: true },
-    { name: 'Commercial Intl Bank', symbol: 'COMI', value: '$18,900', allocation: '15.1%', change: '+1.8%', positive: true },
-    { name: 'Emirates NBD', symbol: 'ENBD', value: '$15,200', allocation: '12.1%', change: '-0.5%', positive: false },
-    { name: 'Kuwait Finance House', symbol: 'KFH', value: '$12,800', allocation: '10.2%', change: '+0.8%', positive: true }
+    { name: 'Saudi Aramco', symbol: 'ARAMCO', value: formatAmount(25600), allocation: '20.4%', change: '+2.1%', positive: true },
+    { name: 'Commercial Intl Bank', symbol: 'COMI', value: formatAmount(18900), allocation: '15.1%', change: '+1.8%', positive: true },
+    { name: 'Emirates NBD', symbol: 'ENBD', value: formatAmount(15200), allocation: '12.1%', change: '-0.5%', positive: false },
+    { name: 'Kuwait Finance House', symbol: 'KFH', value: formatAmount(12800), allocation: '10.2%', change: '+0.8%', positive: true }
   ];
 
   return (

@@ -19,8 +19,8 @@ const Assistant = () => {
               <p className="text-muted-foreground">Get personalized insights and recommendations</p>
             </div>
             
-            <AIRecommendations />
             <AIAssistantWithCharts />
+            <AIRecommendations />
           </div>
         </section>
       </div>
