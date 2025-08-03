@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TrendingUp, TrendingDown, MoreHorizontal, Edit3, BarChart3, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import PortfolioManager from '@/components/PortfolioManager';
 
 const PortfolioTable = () => {
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState<string | null>(null);
+  const { toast } = useToast();
   const holdings = [
     {
       id: 1,
@@ -85,6 +94,59 @@ const PortfolioTable = () => {
   const totalValue = holdings.reduce((sum, holding) => sum + holding.value, 0);
   const totalChange = holdings.reduce((sum, holding) => sum + holding.change, 0);
   const totalChangePercent = (totalChange / (totalValue - totalChange)) * 100;
+
+  const handleEdit = (asset: any) => {
+    setSelectedAsset(asset);
+    setEditDialogOpen(true);
+  };
+
+  const handleAnalyze = async (asset: any) => {
+    setIsAnalyzing(asset.id.toString());
+    
+    try {
+      toast({
+        title: "Analysis Starting",
+        description: `Analyzing ${asset.name} performance...`,
+      });
+
+      const { data, error } = await supabase.functions.invoke('ai-investment-analysis', {
+        body: {
+          assetName: asset.name,
+          assetType: asset.type,
+          currentPrice: asset.currentPrice,
+          avgPrice: asset.avgPrice,
+          quantity: asset.quantity,
+          country: asset.country
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Analysis Complete",
+        description: "Check the AI Assistant page for detailed insights.",
+      });
+      
+    } catch (error) {
+      console.error('Analysis Error:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze asset. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(null);
+    }
+  };
+
+  const handleDelete = async (asset: any) => {
+    if (window.confirm(`Are you sure you want to delete ${asset.name} from your portfolio?`)) {
+      toast({
+        title: "Asset Removed",
+        description: `${asset.name} has been removed from your portfolio.`,
+      });
+    }
+  };
 
   return (
     <Card className="glass-card">
@@ -169,9 +231,33 @@ const PortfolioTable = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(holding)}>
+                          <Edit3 className="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleAnalyze(holding)}
+                          disabled={isAnalyzing === holding.id.toString()}
+                        >
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          {isAnalyzing === holding.id.toString() ? 'Analyzing...' : 'Analyze'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(holding)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -179,6 +265,20 @@ const PortfolioTable = () => {
           </Table>
         </div>
       </CardContent>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Asset: {selectedAsset?.name}</DialogTitle>
+          </DialogHeader>
+          <PortfolioManager 
+            onAssetAdded={() => {
+              setEditDialogOpen(false);
+              // Refresh portfolio data here if needed
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

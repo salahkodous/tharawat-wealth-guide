@@ -11,6 +11,7 @@ import Finances from "./pages/Finances";
 import Assistant from "./pages/Assistant";
 import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,11 @@ const AppRoutes = () => {
       <Route path="/analytics" element={
         <ProtectedRoute>
           <Analytics />
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Settings />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />

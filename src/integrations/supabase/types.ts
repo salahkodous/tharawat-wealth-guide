@@ -92,6 +92,7 @@ export type Database = {
           created_at: string
           current_amount: number | null
           id: string
+          monthly_saving_amount: number | null
           status: string | null
           target_amount: number
           target_date: string | null
@@ -105,6 +106,7 @@ export type Database = {
           created_at?: string
           current_amount?: number | null
           id?: string
+          monthly_saving_amount?: number | null
           status?: string | null
           target_amount: number
           target_date?: string | null
@@ -118,6 +120,7 @@ export type Database = {
           created_at?: string
           current_amount?: number | null
           id?: string
+          monthly_saving_amount?: number | null
           status?: string | null
           target_amount?: number
           target_date?: string | null
