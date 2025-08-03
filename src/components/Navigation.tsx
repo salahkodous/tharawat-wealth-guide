@@ -6,15 +6,20 @@ import {
   Calculator, 
   Bot,
   TrendingUp,
-  LogOut
+  LogOut,
+  Settings,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation } from 'react-router-dom';
 import TharawatLogo from '@/components/TharawatLogo';
+import { useState } from 'react';
 
 const Navigation = () => {
   const { signOut } = useAuth();
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -34,6 +39,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between">
           <TharawatLogo size="lg" />
           
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>
@@ -48,15 +54,66 @@ const Navigation = () => {
             ))}
           </nav>
 
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-2">
+            <Link to="/settings">
+              <Button variant="ghost" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Settings
+              </Button>
+            </Link>
+            <Button 
+              variant="ghost" 
+              className="hover:text-destructive"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+
+          {/* Mobile Menu Button */}
           <Button 
             variant="ghost" 
-            className="hover:text-destructive"
-            onClick={handleSignOut}
+            className="md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Sign Out</span>
+            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 border-t border-border/20">
+            <nav className="flex flex-col gap-2 mt-4">
+              {navItems.map((item) => (
+                <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)}>
+                  <Button 
+                    variant={location.pathname === item.path ? "default" : "ghost"}
+                    className="w-full justify-start gap-2"
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </Button>
+                </Link>
+              ))}
+              <Link to="/settings" onClick={() => setIsMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </Button>
+              </Link>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start gap-2 hover:text-destructive"
+                onClick={handleSignOut}
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );

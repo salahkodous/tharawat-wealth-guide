@@ -2,7 +2,6 @@ import React from 'react';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
-import QuickActions from '@/components/QuickActions';
 import PersonalFinances from '@/components/PersonalFinances';
 import MarketOverview from '@/components/MarketOverview';
 import AIInvestmentAssistant from '@/components/AIInvestmentAssistant';
@@ -30,7 +29,6 @@ const Dashboard = () => {
             </div>
             
             <MarketOverview />
-            <QuickActions />
           </div>
         </section>
 
