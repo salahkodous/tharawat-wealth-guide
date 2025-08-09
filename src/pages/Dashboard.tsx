@@ -27,8 +27,6 @@ const Dashboard = () => {
               <PortfolioSummary />
               <PersonalFinances />
             </div>
-            
-            <MarketOverview />
           </div>
         </section>
 

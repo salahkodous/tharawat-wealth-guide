@@ -85,6 +85,48 @@ export type Database = {
           },
         ]
       }
+      debts: {
+        Row: {
+          created_at: string
+          duration_months: number | null
+          id: string
+          interest_rate: number | null
+          monthly_payment: number | null
+          name: string
+          paid_amount: number | null
+          start_date: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_months?: number | null
+          id?: string
+          interest_rate?: number | null
+          monthly_payment?: number | null
+          name: string
+          paid_amount?: number | null
+          start_date?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_months?: number | null
+          id?: string
+          interest_rate?: number | null
+          monthly_payment?: number | null
+          name?: string
+          paid_amount?: number | null
+          start_date?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financial_goals: {
         Row: {
           ai_strategy: string | null
@@ -142,6 +184,36 @@ export type Database = {
         Update: {
           key?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      personal_finances: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_expenses: number | null
+          monthly_income: number | null
+          net_savings: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_expenses?: number | null
+          monthly_income?: number | null
+          net_savings?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_expenses?: number | null
+          monthly_income?: number | null
+          net_savings?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
