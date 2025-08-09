@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, CreditCard, Target, AlertTriangle, Plus } from 'lucide-react';
+import { DollarSign, CreditCard, Target, AlertTriangle, Plus, TrendingUp, Banknote } from 'lucide-react';
 import GoalManager from '@/components/GoalManager';
 import EditableFinanceCard from '@/components/EditableFinanceCard';
 import DebtManager from '@/components/DebtManager';
@@ -17,7 +17,8 @@ const PersonalFinances = () => {
     addDebt, 
     updateDebt, 
     deleteDebt, 
-    getTotalDebt 
+    getTotalDebt,
+    getFreeMonthCash
   } = usePersonalFinances();
   const { formatAmount } = useCurrency();
 
@@ -28,8 +29,8 @@ const PersonalFinances = () => {
           <DollarSign className="w-6 h-6 text-primary" />
           <h2 className="text-2xl font-bold">Personal Finances</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
             <Card key={i} className="glass-card animate-pulse">
               <CardContent className="p-4">
                 <div className="h-16 bg-muted rounded" />
@@ -64,10 +65,24 @@ const PersonalFinances = () => {
       field: 'net_savings' as keyof typeof finances
     },
     { 
+      label: 'Monthly Investing', 
+      value: finances.monthly_investing_amount, 
+      icon: TrendingUp, 
+      color: 'text-purple-500',
+      field: 'monthly_investing_amount' as keyof typeof finances
+    },
+    { 
       label: 'Total Debt', 
       value: getTotalDebt(), 
       icon: AlertTriangle, 
       color: 'text-orange-500',
+      field: null
+    },
+    { 
+      label: 'Free Monthly Cash', 
+      value: getFreeMonthCash(), 
+      icon: Banknote, 
+      color: 'text-teal-500',
       field: null
     }
   ];
@@ -79,7 +94,7 @@ const PersonalFinances = () => {
         <h2 className="text-2xl font-bold">Personal Finances</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {financialStats.map((stat, index) => {
           if (stat.field) {
             return (

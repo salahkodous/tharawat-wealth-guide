@@ -8,6 +8,7 @@ interface PersonalFinance {
   monthly_income: number;
   monthly_expenses: number;
   net_savings: number;
+  monthly_investing_amount: number;
 }
 
 interface Debt {
@@ -28,6 +29,7 @@ export const usePersonalFinances = () => {
     monthly_income: 0,
     monthly_expenses: 0,
     net_savings: 0,
+    monthly_investing_amount: 0,
   });
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,7 @@ export const usePersonalFinances = () => {
           monthly_income: Number(data.monthly_income) || 0,
           monthly_expenses: Number(data.monthly_expenses) || 0,
           net_savings: Number(data.net_savings) || 0,
+          monthly_investing_amount: Number(data.monthly_investing_amount) || 0,
         });
       }
     } catch (error) {
@@ -205,6 +208,15 @@ export const usePersonalFinances = () => {
     return debts.reduce((total, debt) => total + (debt.total_amount - debt.paid_amount), 0);
   };
 
+  const getMonthlyDebtPayments = () => {
+    return debts.reduce((total, debt) => total + debt.monthly_payment, 0);
+  };
+
+  const getFreeMonthCash = () => {
+    const monthlyDebtPayments = getMonthlyDebtPayments();
+    return finances.monthly_income - (finances.monthly_expenses + finances.net_savings + finances.monthly_investing_amount + monthlyDebtPayments);
+  };
+
   useEffect(() => {
     if (user) {
       setLoading(true);
@@ -223,5 +235,7 @@ export const usePersonalFinances = () => {
     updateDebt,
     deleteDebt,
     getTotalDebt,
+    getMonthlyDebtPayments,
+    getFreeMonthCash,
   };
 };

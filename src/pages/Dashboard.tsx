@@ -3,7 +3,6 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import PersonalFinances from '@/components/PersonalFinances';
-import MarketOverview from '@/components/MarketOverview';
 import AIInvestmentAssistant from '@/components/AIInvestmentAssistant';
 
 const Dashboard = () => {

@@ -193,6 +193,7 @@ export type Database = {
           id: string
           monthly_expenses: number | null
           monthly_income: number | null
+          monthly_investing_amount: number | null
           net_savings: number | null
           updated_at: string
           user_id: string
@@ -202,6 +203,7 @@ export type Database = {
           id?: string
           monthly_expenses?: number | null
           monthly_income?: number | null
+          monthly_investing_amount?: number | null
           net_savings?: number | null
           updated_at?: string
           user_id: string
@@ -211,6 +213,7 @@ export type Database = {
           id?: string
           monthly_expenses?: number | null
           monthly_income?: number | null
+          monthly_investing_amount?: number | null
           net_savings?: number | null
           updated_at?: string
           user_id?: string
