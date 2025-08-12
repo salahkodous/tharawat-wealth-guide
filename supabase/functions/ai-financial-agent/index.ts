@@ -6,6 +6,11 @@ const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+console.log('Environment check:');
+console.log('OPENROUTER_API_KEY exists:', !!openRouterApiKey);
+console.log('SUPABASE_URL exists:', !!supabaseUrl);
+console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!supabaseServiceKey);
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -20,16 +25,22 @@ interface PendingAction {
 }
 
 serve(async (req) => {
+  console.log('Request received:', req.method, req.url);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Parsing request body...');
     const { message, userId, action } = await req.json();
+    console.log('Request data:', { message, userId, actionType: action?.type });
 
     // If this is a confirmation action, execute the pending action
     if (action?.type === 'confirm' && action?.pendingAction) {
+      console.log('Executing pending action:', action.pendingAction);
       const result = await executePendingAction(userId, action.pendingAction);
+      console.log('Action result:', result);
       if (result.success) {
         return new Response(JSON.stringify({ 
           response: `✅ Changes applied successfully! ${result.message}`,
@@ -48,10 +59,21 @@ serve(async (req) => {
     }
 
     // Get user's current financial data
+    console.log('Fetching user financial data...');
     const userData = await getUserFinancialData(userId);
+    console.log('User data fetched:', { 
+      financesExist: !!userData.finances, 
+      goalsCount: userData.goals.length,
+      assetsCount: userData.assets.length 
+    });
     
     // Analyze message for potential actions
+    console.log('Analyzing user message...');
     const { analysis, pendingAction } = await analyzeUserMessage(message, userData);
+    console.log('Analysis complete:', { 
+      analysisLength: analysis.length, 
+      hasPendingAction: !!pendingAction 
+    });
 
     return new Response(JSON.stringify({ 
       response: analysis,
