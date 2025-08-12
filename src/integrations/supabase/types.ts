@@ -172,6 +172,42 @@ export type Database = {
         }
         Relationships: []
       }
+      income_streams: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          income_type: string
+          is_active: boolean
+          name: string
+          received_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          income_type: string
+          is_active?: boolean
+          name: string
+          received_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          income_type?: string
+          is_active?: boolean
+          name?: string
+          received_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kv_store_c952a926: {
         Row: {
           key: string
@@ -276,7 +312,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_monthly_income: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
