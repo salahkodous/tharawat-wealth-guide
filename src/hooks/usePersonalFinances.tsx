@@ -127,6 +127,10 @@ export const usePersonalFinances = () => {
     }
   };
 
+  const updateMonthlyIncomeFromStreams = async (totalIncome: number) => {
+    await updateFinances('monthly_income', totalIncome);
+  };
+
   const addDebt = async (debt: Omit<Debt, 'id'>) => {
     if (!user) return;
 
@@ -231,6 +235,7 @@ export const usePersonalFinances = () => {
     debts,
     loading,
     updateFinances,
+    updateMonthlyIncomeFromStreams,
     addDebt,
     updateDebt,
     deleteDebt,
