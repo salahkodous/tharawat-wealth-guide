@@ -56,6 +56,7 @@ export const useIncomeStreams = () => {
       toast({
         title: "Success",
         description: "Income stream added successfully",
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error adding income stream:', error);
@@ -63,7 +64,9 @@ export const useIncomeStreams = () => {
         title: "Error",
         description: "Failed to add income stream",
         variant: "destructive",
+        duration: 5000,
       });
+      throw error; // Re-throw to handle in component
     }
   };
 
@@ -82,6 +85,7 @@ export const useIncomeStreams = () => {
       toast({
         title: "Success",
         description: "Income stream updated successfully",
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error updating income stream:', error);
@@ -89,7 +93,9 @@ export const useIncomeStreams = () => {
         title: "Error",
         description: "Failed to update income stream",
         variant: "destructive",
+        duration: 5000,
       });
+      throw error; // Re-throw to handle in component
     }
   };
 
@@ -106,6 +112,7 @@ export const useIncomeStreams = () => {
       toast({
         title: "Success",
         description: "Income stream deleted successfully",
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error deleting income stream:', error);
@@ -113,6 +120,7 @@ export const useIncomeStreams = () => {
         title: "Error",
         description: "Failed to delete income stream",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
