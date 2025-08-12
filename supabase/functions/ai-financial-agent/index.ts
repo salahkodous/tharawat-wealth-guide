@@ -36,6 +36,18 @@ serve(async (req) => {
     const { message, userId, action } = await req.json();
     console.log('Request data:', { message, userId, actionType: action?.type });
 
+    // Check if API key exists
+    if (!openRouterApiKey) {
+      console.error('OPENROUTER_API_KEY is not configured');
+      return new Response(JSON.stringify({ 
+        error: 'OPENROUTER_API_KEY not configured',
+        response: 'I need the OpenRouter API key to be configured. Please check the Supabase Edge Function secrets.'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // If this is a confirmation action, execute the pending action
     if (action?.type === 'confirm' && action?.pendingAction) {
       console.log('Executing pending action:', action.pendingAction);
