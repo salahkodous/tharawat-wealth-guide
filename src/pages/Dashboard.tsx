@@ -3,7 +3,7 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import PersonalFinances from '@/components/PersonalFinances';
-import AIInvestmentAssistant from '@/components/AIInvestmentAssistant';
+import AIFinancialAgent from '@/components/AIFinancialAgent';
 
 const Dashboard = () => {
   return (
@@ -20,7 +20,7 @@ const Dashboard = () => {
               <p className="text-muted-foreground">Your financial overview at a glance</p>
             </div>
             
-            <AIInvestmentAssistant />
+            <AIFinancialAgent />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <PortfolioSummary />
