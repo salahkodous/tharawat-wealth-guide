@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, DollarSign } from 'lucide-react';
 import { useIncomeStreams, IncomeStream } from '@/hooks/useIncomeStreams';
 import { useCurrency } from '@/hooks/useCurrency';
-import { useToast } from '@/hooks/use-toast';
 
 interface IncomeStreamManagerProps {
   onIncomeChange: (totalIncome: number) => void;
@@ -18,7 +17,6 @@ interface IncomeStreamManagerProps {
 const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChange }) => {
   const { incomeStreams, addIncomeStream, updateIncomeStream, deleteIncomeStream, calculateTotalMonthlyIncome } = useIncomeStreams();
   const { formatAmount } = useCurrency();
-  const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStream, setEditingStream] = useState<IncomeStream | null>(null);
   const [formData, setFormData] = useState({
@@ -45,34 +43,12 @@ const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChang
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form data
-    if (!formData.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a name for the income stream",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!formData.name.trim()) return;
     
     const amount = parseFloat(formData.amount);
-    if (isNaN(amount) || amount <= 0) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid amount greater than 0",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (isNaN(amount) || amount <= 0) return;
 
-    if (formData.income_type === 'unstable' && !formData.received_date) {
-      toast({
-        title: "Error",
-        description: "Please select a received date for one-time income",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (formData.income_type === 'unstable' && !formData.received_date) return;
 
     const streamData: Omit<IncomeStream, 'id'> = {
       name: formData.name.trim(),

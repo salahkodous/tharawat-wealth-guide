@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useIncomeStreams } from './useIncomeStreams';
+import { useExpenseStreams } from './useExpenseStreams';
 
 interface PersonalFinance {
   id?: string;
@@ -25,6 +27,8 @@ interface Debt {
 export const usePersonalFinances = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { calculateTotalMonthlyIncome } = useIncomeStreams();
+  const { calculateTotalMonthlyExpenses } = useExpenseStreams();
   const [finances, setFinances] = useState<PersonalFinance>({
     monthly_income: 0,
     monthly_expenses: 0,
@@ -129,6 +133,10 @@ export const usePersonalFinances = () => {
 
   const updateMonthlyIncomeFromStreams = async (totalIncome: number) => {
     await updateFinances('monthly_income', totalIncome);
+  };
+
+  const updateMonthlyExpensesFromStreams = async (totalExpenses: number) => {
+    await updateFinances('monthly_expenses', totalExpenses);
   };
 
   const addDebt = async (debt: Omit<Debt, 'id'>) => {
@@ -236,6 +244,7 @@ export const usePersonalFinances = () => {
     loading,
     updateFinances,
     updateMonthlyIncomeFromStreams,
+    updateMonthlyExpensesFromStreams,
     addDebt,
     updateDebt,
     deleteDebt,

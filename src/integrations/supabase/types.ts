@@ -127,6 +127,42 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_streams: {
+        Row: {
+          amount: number
+          created_at: string
+          expense_date: string | null
+          expense_type: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          expense_date?: string | null
+          expense_type: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expense_date?: string | null
+          expense_type?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financial_goals: {
         Row: {
           ai_strategy: string | null
@@ -312,6 +348,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_monthly_expenses: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
       calculate_monthly_income: {
         Args: { user_uuid: string }
         Returns: number

@@ -6,6 +6,7 @@ import GoalManager from '@/components/GoalManager';
 import EditableFinanceCard from '@/components/EditableFinanceCard';
 import DebtManager from '@/components/DebtManager';
 import IncomeStreamManager from '@/components/IncomeStreamManager';
+import ExpenseStreamManager from '@/components/ExpenseStreamManager';
 import { usePersonalFinances } from '@/hooks/usePersonalFinances';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,6 +18,7 @@ const PersonalFinances = () => {
     loading, 
     updateFinances, 
     updateMonthlyIncomeFromStreams,
+    updateMonthlyExpensesFromStreams,
     addDebt, 
     updateDebt, 
     deleteDebt, 
@@ -25,6 +27,7 @@ const PersonalFinances = () => {
   } = usePersonalFinances();
   const { formatAmount } = useCurrency();
   const [showIncomeManager, setShowIncomeManager] = React.useState(false);
+  const [showExpenseManager, setShowExpenseManager] = React.useState(false);
 
   if (loading) {
     return (
@@ -117,6 +120,23 @@ const PersonalFinances = () => {
                 </Card>
               );
             }
+
+            // Special handling for monthly expenses to show expense stream manager
+            if (stat.field === 'monthly_expenses') {
+              return (
+                <Card key={index} className="glass-card cursor-pointer" onClick={() => setShowExpenseManager(true)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium text-muted-foreground">{stat.label}</div>
+                        <div className="text-2xl font-bold">{formatAmount(stat.value)}</div>
+                      </div>
+                      <stat.icon className={`w-8 h-8 ${stat.color}`} />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
             
             return (
               <EditableFinanceCard
@@ -167,6 +187,15 @@ const PersonalFinances = () => {
             <DialogTitle>Manage Income Streams</DialogTitle>
           </DialogHeader>
           <IncomeStreamManager onIncomeChange={updateMonthlyIncomeFromStreams} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showExpenseManager} onOpenChange={setShowExpenseManager}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Expense Streams</DialogTitle>
+          </DialogHeader>
+          <ExpenseStreamManager onExpenseChange={updateMonthlyExpensesFromStreams} />
         </DialogContent>
       </Dialog>
     </div>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 
 export interface IncomeStream {
   id?: string;
@@ -14,7 +13,6 @@ export interface IncomeStream {
 
 export const useIncomeStreams = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [incomeStreams, setIncomeStreams] = useState<IncomeStream[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,11 +30,6 @@ export const useIncomeStreams = () => {
       setIncomeStreams((data || []) as IncomeStream[]);
     } catch (error) {
       console.error('Error fetching income streams:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load income streams",
-        variant: "destructive",
-      });
     }
   };
 
@@ -53,20 +46,9 @@ export const useIncomeStreams = () => {
       if (error) throw error;
 
       setIncomeStreams(prev => [data as IncomeStream, ...prev]);
-      toast({
-        title: "Success",
-        description: "Income stream added successfully",
-        duration: 3000,
-      });
     } catch (error) {
       console.error('Error adding income stream:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add income stream",
-        variant: "destructive",
-        duration: 5000,
-      });
-      throw error; // Re-throw to handle in component
+      throw error;
     }
   };
 
@@ -82,20 +64,9 @@ export const useIncomeStreams = () => {
       setIncomeStreams(prev => prev.map(stream => 
         stream.id === id ? { ...stream, ...updates } : stream
       ));
-      toast({
-        title: "Success",
-        description: "Income stream updated successfully",
-        duration: 3000,
-      });
     } catch (error) {
       console.error('Error updating income stream:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update income stream",
-        variant: "destructive",
-        duration: 5000,
-      });
-      throw error; // Re-throw to handle in component
+      throw error;
     }
   };
 
@@ -109,19 +80,8 @@ export const useIncomeStreams = () => {
       if (error) throw error;
 
       setIncomeStreams(prev => prev.filter(stream => stream.id !== id));
-      toast({
-        title: "Success",
-        description: "Income stream deleted successfully",
-        duration: 3000,
-      });
     } catch (error) {
       console.error('Error deleting income stream:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete income stream",
-        variant: "destructive",
-        duration: 5000,
-      });
     }
   };
 
