@@ -138,11 +138,15 @@ Otherwise, just provide helpful financial advice in JSON format:
   "analysis": "Your response"
 }`;
 
+  console.log('Calling OpenRouter API...');
+  
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${openRouterApiKey}`,
       'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://lovable.dev',
+      'X-Title': 'Tharawat Investment Platform'
     },
     body: JSON.stringify({
       model: 'anthropic/claude-3.5-sonnet',
@@ -155,8 +159,24 @@ Otherwise, just provide helpful financial advice in JSON format:
     }),
   });
 
+  console.log('OpenRouter response status:', response.status);
+  
+  if (!response.ok) {
+    console.error('OpenRouter API error:', response.status, response.statusText);
+    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+  }
+
   const data = await response.json();
+  console.log('OpenRouter response data:', JSON.stringify(data, null, 2));
+
+  // Check if response has the expected structure
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    console.error('Unexpected OpenRouter response structure:', data);
+    throw new Error('Invalid response format from OpenRouter API');
+  }
+
   const aiResponse = data.choices[0].message.content;
+  console.log('AI response content:', aiResponse);
 
   try {
     const parsed = JSON.parse(aiResponse);
@@ -164,7 +184,8 @@ Otherwise, just provide helpful financial advice in JSON format:
       analysis: parsed.analysis,
       pendingAction: parsed.action || null
     };
-  } catch {
+  } catch (parseError) {
+    console.log('Response is not JSON, treating as plain text');
     // If not JSON, treat as regular response
     return {
       analysis: aiResponse,
