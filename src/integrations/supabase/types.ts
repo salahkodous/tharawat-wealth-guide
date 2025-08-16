@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -84,6 +84,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cities: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          id: number
+          name: string
+          slug: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          id?: number
+          name: string
+          slug: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          id?: number
+          name?: string
+          slug?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
       }
       debts: {
         Row: {
@@ -259,6 +289,50 @@ export type Database = {
         }
         Relationships: []
       }
+      neighborhoods: {
+        Row: {
+          city_id: number | null
+          city_name: string | null
+          city_slug: string
+          created_at: string | null
+          id: number
+          name: string
+          slug: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          city_id?: number | null
+          city_name?: string | null
+          city_slug: string
+          created_at?: string | null
+          id?: number
+          name: string
+          slug: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          city_id?: number | null
+          city_name?: string | null
+          city_slug?: string
+          created_at?: string | null
+          id?: number
+          name?: string
+          slug?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neighborhoods_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       personal_finances: {
         Row: {
           created_at: string
@@ -340,6 +414,117 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      real_estate_prices: {
+        Row: {
+          avg_price_per_meter: number | null
+          city_name: string | null
+          city_slug: string
+          created_at: string | null
+          currency: string | null
+          id: number
+          last_updated: string | null
+          max_price: number | null
+          max_price_per_meter: number | null
+          min_price: number | null
+          min_price_per_meter: number | null
+          neighborhood_ar: string | null
+          neighborhood_name: string | null
+          neighborhood_slug: string
+          price_per_meter: number | null
+          property_type: string | null
+          total_properties: number | null
+          url: string | null
+        }
+        Insert: {
+          avg_price_per_meter?: number | null
+          city_name?: string | null
+          city_slug: string
+          created_at?: string | null
+          currency?: string | null
+          id?: number
+          last_updated?: string | null
+          max_price?: number | null
+          max_price_per_meter?: number | null
+          min_price?: number | null
+          min_price_per_meter?: number | null
+          neighborhood_ar?: string | null
+          neighborhood_name?: string | null
+          neighborhood_slug: string
+          price_per_meter?: number | null
+          property_type?: string | null
+          total_properties?: number | null
+          url?: string | null
+        }
+        Update: {
+          avg_price_per_meter?: number | null
+          city_name?: string | null
+          city_slug?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: number
+          last_updated?: string | null
+          max_price?: number | null
+          max_price_per_meter?: number | null
+          min_price?: number | null
+          min_price_per_meter?: number | null
+          neighborhood_ar?: string | null
+          neighborhood_name?: string | null
+          neighborhood_slug?: string
+          price_per_meter?: number | null
+          property_type?: string | null
+          total_properties?: number | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      stocks: {
+        Row: {
+          change: number | null
+          change_percent: number | null
+          country: string
+          created_at: string | null
+          currency: string
+          exchange: string
+          id: number
+          last_updated: string | null
+          market_cap: number | null
+          name: string
+          price: number | null
+          symbol: string
+          volume: number | null
+        }
+        Insert: {
+          change?: number | null
+          change_percent?: number | null
+          country: string
+          created_at?: string | null
+          currency: string
+          exchange: string
+          id?: number
+          last_updated?: string | null
+          market_cap?: number | null
+          name: string
+          price?: number | null
+          symbol: string
+          volume?: number | null
+        }
+        Update: {
+          change?: number | null
+          change_percent?: number | null
+          country?: string
+          created_at?: string | null
+          currency?: string
+          exchange?: string
+          id?: number
+          last_updated?: string | null
+          market_cap?: number | null
+          name?: string
+          price?: number | null
+          symbol?: string
+          volume?: number | null
         }
         Relationships: []
       }

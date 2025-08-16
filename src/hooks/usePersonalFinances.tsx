@@ -92,10 +92,15 @@ export const usePersonalFinances = () => {
     }
   };
 
-  const updateFinances = async (field: keyof PersonalFinance, value: number) => {
+  const updateFinances = async (field: keyof PersonalFinance, value: number, options?: { silent?: boolean }) => {
     if (!user) return;
 
     try {
+      // Skip if value didn't change to prevent unnecessary updates/toasts
+      if (finances[field] === value) {
+        return;
+      }
+
       const updatedFinances = { ...finances, [field]: value };
       
       if (finances.id) {
@@ -117,10 +122,12 @@ export const usePersonalFinances = () => {
       }
 
       setFinances(updatedFinances);
-      toast({
-        title: "Success",
-        description: "Personal finances updated",
-      });
+      if (!options?.silent) {
+        toast({
+          title: "Success",
+          description: "Personal finances updated",
+        });
+      }
     } catch (error) {
       console.error('Error updating finances:', error);
       toast({
@@ -132,11 +139,11 @@ export const usePersonalFinances = () => {
   };
 
   const updateMonthlyIncomeFromStreams = async (totalIncome: number) => {
-    await updateFinances('monthly_income', totalIncome);
+    await updateFinances('monthly_income', totalIncome, { silent: true });
   };
 
   const updateMonthlyExpensesFromStreams = async (totalExpenses: number) => {
-    await updateFinances('monthly_expenses', totalExpenses);
+    await updateFinances('monthly_expenses', totalExpenses, { silent: true });
   };
 
   const addDebt = async (debt: Omit<Debt, 'id'>) => {
