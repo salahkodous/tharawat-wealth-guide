@@ -157,6 +157,106 @@ export type Database = {
         }
         Relationships: []
       }
+      deposit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          deposit_id: string
+          description: string | null
+          id: string
+          tx_date: string
+          tx_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          deposit_id: string
+          description?: string | null
+          id?: string
+          tx_date?: string
+          tx_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          deposit_id?: string
+          description?: string | null
+          id?: string
+          tx_date?: string
+          tx_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposit_transactions_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "deposits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deposits: {
+        Row: {
+          accrued_interest: number
+          created_at: string
+          deposit_type: string
+          id: string
+          last_interest_date: string
+          linked_asset: string | null
+          maturity_date: string | null
+          metadata: Json | null
+          principal: number
+          rate: number
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accrued_interest?: number
+          created_at?: string
+          deposit_type: string
+          id?: string
+          last_interest_date?: string
+          linked_asset?: string | null
+          maturity_date?: string | null
+          metadata?: Json | null
+          principal?: number
+          rate?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accrued_interest?: number
+          created_at?: string
+          deposit_type?: string
+          id?: string
+          last_interest_date?: string
+          linked_asset?: string | null
+          maturity_date?: string | null
+          metadata?: Json | null
+          principal?: number
+          rate?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposits_linked_asset_fkey"
+            columns: ["linked_asset"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_streams: {
         Row: {
           amount: number
@@ -533,6 +633,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_deposit_accrual: {
+        Args: { p_deposit_id: string; p_from: string; p_to: string }
+        Returns: number
+      }
       calculate_monthly_expenses: {
         Args: { user_uuid: string }
         Returns: number
@@ -540,6 +644,20 @@ export type Database = {
       calculate_monthly_income: {
         Args: { user_uuid: string }
         Returns: number
+      }
+      get_deposit_view: {
+        Args: { p_deposit_id: string }
+        Returns: Json
+      }
+      process_deposit: {
+        Args: { p_deposit_id: string }
+        Returns: {
+          accrued_amount: number
+          credited: boolean
+          credited_amount: number
+          deposit_id: string
+          status: string
+        }[]
       }
     }
     Enums: {
