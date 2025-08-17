@@ -1,14 +1,16 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, CreditCard, Target, AlertTriangle, Plus, TrendingUp, Banknote } from 'lucide-react';
+import { DollarSign, CreditCard, PiggyBank, AlertTriangle, Plus, TrendingUp, Banknote } from 'lucide-react';
 import GoalManager from '@/components/GoalManager';
 import EditableFinanceCard from '@/components/EditableFinanceCard';
 import DebtManager from '@/components/DebtManager';
 import IncomeStreamManager from '@/components/IncomeStreamManager';
 import ExpenseStreamManager from '@/components/ExpenseStreamManager';
+import { DepositsManager } from '@/components/DepositsManager';
 import { usePersonalFinances } from '@/hooks/usePersonalFinances';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useDeposits } from '@/hooks/useDeposits';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const PersonalFinances = () => {
@@ -25,6 +27,7 @@ const PersonalFinances = () => {
     getTotalDebt,
     getFreeMonthCash
   } = usePersonalFinances();
+  const { getTotalDepositsValue } = useDeposits();
   const { formatAmount } = useCurrency();
   const [showIncomeManager, setShowIncomeManager] = React.useState(false);
   const [showExpenseManager, setShowExpenseManager] = React.useState(false);
@@ -65,11 +68,11 @@ const PersonalFinances = () => {
       field: 'monthly_expenses' as keyof typeof finances
     },
     { 
-      label: 'Net Savings', 
-      value: finances.net_savings, 
-      icon: Target, 
+      label: 'Total Deposits', 
+      value: getTotalDepositsValue(), 
+      icon: PiggyBank, 
       color: 'text-blue-500',
-      field: 'net_savings' as keyof typeof finances
+      field: null
     },
     { 
       label: 'Monthly Investing', 
@@ -169,6 +172,8 @@ const PersonalFinances = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DepositsManager />
+        
         <div>
           <GoalManager />
         </div>

@@ -233,7 +233,7 @@ export const usePersonalFinances = () => {
 
   const getFreeMonthCash = () => {
     const monthlyDebtPayments = getMonthlyDebtPayments();
-    return finances.monthly_income - (finances.monthly_expenses + finances.net_savings + finances.monthly_investing_amount + monthlyDebtPayments);
+    return finances.monthly_income - (finances.monthly_expenses + finances.monthly_investing_amount + monthlyDebtPayments);
   };
 
   useEffect(() => {
