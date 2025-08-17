@@ -10,7 +10,7 @@ import { useDeposits } from '@/hooks/useDeposits';
 import type { CreateDepositData } from '@/hooks/useDeposits';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, PiggyBank, TrendingUp, Building } from 'lucide-react';
+import { Plus, PiggyBank, TrendingUp, Building, Wallet } from 'lucide-react';
 
 export const DepositsManager: React.FC = () => {
   const { deposits, loading, createDeposit, getTotalDepositsValue, getTotalMonthlySavings } = useDeposits();
@@ -18,31 +18,33 @@ export const DepositsManager: React.FC = () => {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<CreateDepositData>({
-    deposit_type: 'savings',
+    deposit_type: 'cash_savings',
     principal: 0,
     rate: 0,
     start_date: new Date().toISOString().split('T')[0],
   });
+  const [monthlySavingTarget, setMonthlySavingTarget] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await createDeposit(formData);
       toast({
-        title: "Deposit Created",
-        description: "Your deposit has been added successfully.",
+        title: "Savings Added",
+        description: "Your savings has been added successfully.",
       });
       setIsDialogOpen(false);
       setFormData({
-        deposit_type: 'savings',
+        deposit_type: 'cash_savings',
         principal: 0,
         rate: 0,
         start_date: new Date().toISOString().split('T')[0],
       });
+      setMonthlySavingTarget(0);
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create deposit. Please try again.",
+        description: "Failed to add savings. Please try again.",
         variant: "destructive",
       });
     }
@@ -56,6 +58,8 @@ export const DepositsManager: React.FC = () => {
         return <PiggyBank className="h-4 w-4" />;
       case 'investment_linked':
         return <TrendingUp className="h-4 w-4" />;
+      case 'cash_savings':
+        return <Wallet className="h-4 w-4" />;
       default:
         return <PiggyBank className="h-4 w-4" />;
     }
@@ -69,6 +73,8 @@ export const DepositsManager: React.FC = () => {
         return 'Savings Account';
       case 'investment_linked':
         return 'Investment Linked';
+      case 'cash_savings':
+        return 'Cash Savings';
       default:
         return type;
     }
@@ -83,18 +89,18 @@ export const DepositsManager: React.FC = () => {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <PiggyBank className="h-5 w-5" />
-          Bank Deposits & Certificates
+          Savings
         </CardTitle>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
-              Add Deposit
+              Add Savings
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Deposit</DialogTitle>
+              <DialogTitle>Add Savings</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -107,6 +113,7 @@ export const DepositsManager: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="cash_savings">Cash Savings</SelectItem>
                     <SelectItem value="savings">Savings Account</SelectItem>
                     <SelectItem value="fixed_cd">Certificate of Deposit</SelectItem>
                     <SelectItem value="investment_linked">Investment Linked</SelectItem>
@@ -127,18 +134,35 @@ export const DepositsManager: React.FC = () => {
                 />
               </div>
               
-              <div>
-                <Label htmlFor="rate">Annual Interest Rate (%)</Label>
-                <Input
-                  id="rate"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.rate}
-                  onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
-                  required
-                />
-              </div>
+              {formData.deposit_type !== 'cash_savings' && (
+                <div>
+                  <Label htmlFor="rate">Annual Interest Rate (%)</Label>
+                  <Input
+                    id="rate"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.rate}
+                    onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+              )}
+
+              {formData.deposit_type === 'cash_savings' && (
+                <div>
+                  <Label htmlFor="monthly_target">Monthly Saving Target</Label>
+                  <Input
+                    id="monthly_target"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={monthlySavingTarget}
+                    onChange={(e) => setMonthlySavingTarget(parseFloat(e.target.value) || 0)}
+                    placeholder="Enter desired monthly saving amount"
+                  />
+                </div>
+              )}
               
               <div>
                 <Label htmlFor="start_date">Start Date</Label>
@@ -167,7 +191,7 @@ export const DepositsManager: React.FC = () => {
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">Create Deposit</Button>
+                <Button type="submit">Add Savings</Button>
               </div>
             </form>
           </DialogContent>
@@ -180,7 +204,7 @@ export const DepositsManager: React.FC = () => {
               <div className="text-2xl font-bold text-primary">
                 {formatAmount(getTotalDepositsValue())}
               </div>
-              <div className="text-sm text-muted-foreground">Total Deposits Value</div>
+              <div className="text-sm text-muted-foreground">Total Savings Value</div>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="text-2xl font-bold text-primary">
@@ -192,7 +216,7 @@ export const DepositsManager: React.FC = () => {
           
           {deposits.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No deposits found. Add your first deposit to get started.
+              No savings found. Add your first savings to get started.
             </div>
           ) : (
             <div className="space-y-3">
@@ -206,7 +230,10 @@ export const DepositsManager: React.FC = () => {
                     <div>
                       <div className="font-medium">{getDepositTypeLabel(deposit.deposit_type)}</div>
                       <div className="text-sm text-muted-foreground">
-                        {deposit.rate}% • Started {new Date(deposit.start_date).toLocaleDateString()}
+                        {deposit.deposit_type === 'cash_savings' 
+                          ? `Cash • Started ${new Date(deposit.start_date).toLocaleDateString()}`
+                          : `${deposit.rate}% • Started ${new Date(deposit.start_date).toLocaleDateString()}`
+                        }
                       </div>
                     </div>
                   </div>

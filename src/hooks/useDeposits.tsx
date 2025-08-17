@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface Deposit {
   id?: string;
-  deposit_type: 'fixed_cd' | 'savings' | 'investment_linked';
+  deposit_type: 'fixed_cd' | 'savings' | 'investment_linked' | 'cash_savings';
   principal: number;
   rate: number;
   start_date: string;
@@ -21,7 +21,7 @@ export interface Deposit {
 }
 
 export interface CreateDepositData {
-  deposit_type: 'fixed_cd' | 'savings' | 'investment_linked';
+  deposit_type: 'fixed_cd' | 'savings' | 'investment_linked' | 'cash_savings';
   principal: number;
   rate: number;
   start_date: string;
