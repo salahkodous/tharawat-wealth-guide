@@ -68,25 +68,11 @@ const PersonalFinances = () => {
       field: 'monthly_expenses' as keyof typeof finances
     },
     { 
-      label: 'Total Deposits', 
-      value: getTotalDepositsValue(), 
-      icon: PiggyBank, 
-      color: 'text-blue-500',
-      field: null
-    },
-    { 
       label: 'Monthly Investing', 
       value: finances.monthly_investing_amount, 
       icon: TrendingUp, 
       color: 'text-purple-500',
       field: 'monthly_investing_amount' as keyof typeof finances
-    },
-    { 
-      label: 'Total Debt', 
-      value: getTotalDebt(), 
-      icon: AlertTriangle, 
-      color: 'text-orange-500',
-      field: null
     },
     { 
       label: 'Free Monthly Cash', 
@@ -104,7 +90,7 @@ const PersonalFinances = () => {
         <h2 className="text-2xl font-bold">Personal Finances</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {financialStats.map((stat, index) => {
           if (stat.field) {
             // Special handling for monthly income to show income stream manager
@@ -171,20 +157,6 @@ const PersonalFinances = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DepositsManager />
-        
-        <div>
-          <GoalManager />
-        </div>
-
-        <DebtManager
-          debts={debts}
-          onAddDebt={addDebt}
-          onUpdateDebt={updateDebt}
-          onDeleteDebt={deleteDebt}
-        />
-      </div>
 
       <Dialog open={showIncomeManager} onOpenChange={setShowIncomeManager}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
