@@ -29,7 +29,7 @@ const AIFinancialAgent = () => {
     {
       id: '1',
       type: 'agent',
-      content: '👋 Hello! I\'m your AI financial advisor. I can help you analyze your finances and make data changes. Try saying something like "my income has been 9000" or "I want to save 2000 monthly".',
+      content: '👋 Hello! I\'m your enhanced AI financial advisor with full access to your financial data and market insights. I can:\n\n🔍 Analyze your complete financial situation\n💰 Update income, expenses, savings & investing amounts\n📊 Manage income & expense streams\n🏦 Handle debts and deposit accounts\n🎯 Create and track financial goals\n📈 Provide market analysis and insights\n🧠 Remember our conversations\n\nTry saying: "analyze my financial situation", "my salary increased to 12000", "add a new expense for education 500 monthly", or "what should I invest in?"',
       timestamp: new Date()
     }
   ]);
@@ -56,14 +56,19 @@ const AIFinancialAgent = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = input;
     setInput('');
     setIsLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-financial-agent', {
         body: {
-          message: input,
-          userId: user.id
+          message: messageToSend,
+          userId: user.id,
+          messages: messages.map(m => ({ 
+            role: m.type === 'user' ? 'user' : 'assistant', 
+            content: m.content 
+          }))
         }
       });
 
