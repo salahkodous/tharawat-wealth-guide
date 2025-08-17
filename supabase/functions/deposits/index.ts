@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         metadata = {},
       } = body ?? {};
 
-      if (!deposit_type || !['fixed_cd', 'savings', 'investment_linked'].includes(deposit_type)) {
+      if (!deposit_type || !['fixed_cd', 'savings', 'investment_linked', 'cash_savings'].includes(deposit_type)) {
         return new Response(JSON.stringify({ error: 'Invalid deposit_type' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
