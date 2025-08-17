@@ -2,12 +2,10 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 console.log('Environment check:');
-console.log('OPENROUTER_API_KEY exists:', !!openRouterApiKey);
 console.log('SUPABASE_URL exists:', !!supabaseUrl);
 console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!supabaseServiceKey);
 
@@ -43,7 +41,9 @@ serve(async (req) => {
     const { message, userId, action, messages } = await req.json();
     console.log('Request data:', { message, userId, actionType: action?.type, messageHistory: messages?.length });
 
-    // Check if API key exists
+    // Read API key at request time to pick up latest secret
+    const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
+    console.log('OPENROUTER_API_KEY exists:', !!openRouterApiKey);
     if (!openRouterApiKey) {
       console.error('OPENROUTER_API_KEY is not configured');
       return new Response(JSON.stringify({ 
@@ -111,7 +111,7 @@ serve(async (req) => {
     
     // Analyze message for potential actions
     console.log('Analyzing user message with full context...');
-    const { analysis, pendingAction } = await analyzeUserMessage(message, userData, agentMemory, marketData, messages);
+    const { analysis, pendingAction } = await analyzeUserMessage(message, userData, agentMemory, marketData, messages, openRouterApiKey as string);
     console.log('Analysis complete:', { 
       analysisLength: analysis.length, 
       hasPendingAction: !!pendingAction 
@@ -258,7 +258,8 @@ async function analyzeUserMessage(
   userData: any, 
   agentMemory: any, 
   marketData: any, 
-  messages: Message[] = []
+  messages: Message[] = [],
+  openRouterApiKey: string
 ): Promise<{ analysis: string, pendingAction: PendingAction | null }> {
   
   const conversationHistory = messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n');
