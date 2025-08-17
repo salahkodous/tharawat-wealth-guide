@@ -2,7 +2,7 @@ import React from 'react';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
-import PersonalFinances from '@/components/PersonalFinances';
+import DashboardFinanceOverview from '@/components/DashboardFinanceOverview';
 import AIFinancialAgent from '@/components/AIFinancialAgent';
 
 const Dashboard = () => {
@@ -24,7 +24,7 @@ const Dashboard = () => {
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <PortfolioSummary />
-              <PersonalFinances />
+              <DashboardFinanceOverview />
             </div>
           </div>
         </section>

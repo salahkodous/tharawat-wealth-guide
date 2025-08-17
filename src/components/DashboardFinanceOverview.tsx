@@ -1,33 +1,22 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { DollarSign, CreditCard, PiggyBank, AlertTriangle, Plus, TrendingUp, Banknote } from 'lucide-react';
-import GoalManager from '@/components/GoalManager';
+import { Card, CardContent } from '@/components/ui/card';
+import { DollarSign, CreditCard, TrendingUp, Banknote } from 'lucide-react';
 import EditableFinanceCard from '@/components/EditableFinanceCard';
-import DebtManager from '@/components/DebtManager';
 import IncomeStreamManager from '@/components/IncomeStreamManager';
 import ExpenseStreamManager from '@/components/ExpenseStreamManager';
-import { DepositsManager } from '@/components/DepositsManager';
 import { usePersonalFinances } from '@/hooks/usePersonalFinances';
 import { useCurrency } from '@/hooks/useCurrency';
-import { useDeposits } from '@/hooks/useDeposits';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-const PersonalFinances = () => {
+const DashboardFinanceOverview = () => {
   const { 
     finances, 
-    debts, 
     loading, 
     updateFinances, 
     updateMonthlyIncomeFromStreams,
     updateMonthlyExpensesFromStreams,
-    addDebt, 
-    updateDebt, 
-    deleteDebt, 
-    getTotalDebt,
     getFreeMonthCash
   } = usePersonalFinances();
-  const { getTotalDepositsValue } = useDeposits();
   const { formatAmount } = useCurrency();
   const [showIncomeManager, setShowIncomeManager] = React.useState(false);
   const [showExpenseManager, setShowExpenseManager] = React.useState(false);
@@ -39,8 +28,8 @@ const PersonalFinances = () => {
           <DollarSign className="w-6 h-6 text-primary" />
           <h2 className="text-2xl font-bold">Personal Finances</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
             <Card key={i} className="glass-card animate-pulse">
               <CardContent className="p-4">
                 <div className="h-16 bg-muted rounded" />
@@ -138,7 +127,7 @@ const PersonalFinances = () => {
               />
             );
           } else {
-            // Total Debt is calculated, not editable
+            // Free cash is calculated, not editable
             const Icon = stat.icon;
             return (
               <Card key={index} className="glass-card">
@@ -155,22 +144,6 @@ const PersonalFinances = () => {
             );
           }
         })}
-      </div>
-
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DepositsManager />
-        
-        <div>
-          <GoalManager />
-        </div>
-
-        <DebtManager
-          debts={debts}
-          onAddDebt={addDebt}
-          onUpdateDebt={updateDebt}
-          onDeleteDebt={deleteDebt}
-        />
       </div>
 
       <Dialog open={showIncomeManager} onOpenChange={setShowIncomeManager}>
@@ -194,4 +167,4 @@ const PersonalFinances = () => {
   );
 };
 
-export default PersonalFinances;
+export default DashboardFinanceOverview;
