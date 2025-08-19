@@ -46,6 +46,7 @@ serve(async (req) => {
     const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN') || Deno.env.get('HUGGINGFACE_API_TOKEN');
     console.log('HUGGING_FACE_ACCESS_TOKEN exists:', !!hfToken);
     console.log('HUGGING_FACE_ACCESS_TOKEN length:', hfToken?.length || 0);
+    console.log('HUGGING_FACE_ACCESS_TOKEN first 10 chars:', hfToken?.substring(0, 10) || 'none');
     if (!hfToken) {
       console.error('HUGGING_FACE_ACCESS_TOKEN is not configured');
       return new Response(JSON.stringify({ 
@@ -138,10 +139,18 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in ai-financial-agent function:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Failed to process request',
-        response: 'Sorry, I encountered an error while processing your request. Please try again.'
+        response: `Sorry, I encountered an error: ${error.message || 'Unknown error'}. Please try again.`,
+        errorDetails: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack?.split('\n')[0] // Just first line of stack
+        }
       }), 
       {
         status: 500,
