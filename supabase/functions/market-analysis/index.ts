@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN') || Deno.env.get('HUGGINGFACE_API_TOKEN');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,30 +33,42 @@ Keep the analysis professional, data-driven, and actionable.`;
 
 Include current market conditions, key trends, and investment outlook.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const hfModel = Deno.env.get('HF_MODEL') || 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
+    const prompt = `${systemPrompt}\n\nUser: ${userPrompt}\nAssistant:`;
+
+    const response = await fetch(`https://api-inference.huggingface.co/models/${hfModel}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${hfToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.6,
-        max_tokens: 800,
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 800,
+          temperature: 0.6,
+          return_full_text: false
+        },
+        options: {
+          wait_for_model: true
+        }
       }),
     });
 
     const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
+      throw new Error(`Hugging Face API error: ${data.error || 'Unknown error'}`);
     }
 
-    const analysis = data.choices[0].message.content;
+    let analysis: string;
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      analysis = data[0].generated_text;
+    } else if ((data as any)?.generated_text) {
+      analysis = (data as any).generated_text;
+    } else {
+      analysis = typeof data === 'string' ? data : JSON.stringify(data);
+    }
 
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -66,7 +78,7 @@ Include current market conditions, key trends, and investment outlook.`;
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Failed to generate market analysis',
-        details: 'Please check if your OpenAI API key is properly configured.'
+        details: 'Please check if your Hugging Face API token is properly configured.'
       }), 
       {
         status: 500,
