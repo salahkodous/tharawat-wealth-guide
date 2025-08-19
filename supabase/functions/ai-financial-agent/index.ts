@@ -8,6 +8,7 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 console.log('Environment check:');
 console.log('SUPABASE_URL exists:', !!supabaseUrl);
 console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!supabaseServiceKey);
+console.log('Function startup timestamp:', new Date().toISOString());
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
