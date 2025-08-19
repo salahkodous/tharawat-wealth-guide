@@ -42,15 +42,15 @@ serve(async (req) => {
     const { message, userId, action, messages } = await req.json();
     console.log('Request data:', { message, userId, actionType: action?.type, messageHistory: messages?.length });
 
-    // Read API key at request time to pick up latest secret
-    const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
-    console.log('OPENROUTER_API_KEY exists:', !!openRouterApiKey);
-    console.log('OPENROUTER_API_KEY length:', openRouterApiKey?.length || 0);
-    if (!openRouterApiKey) {
-      console.error('OPENROUTER_API_KEY is not configured');
+    // Read Hugging Face token at request time to pick up latest secret
+    const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN') || Deno.env.get('HUGGINGFACE_API_TOKEN');
+    console.log('HUGGING_FACE_ACCESS_TOKEN exists:', !!hfToken);
+    console.log('HUGGING_FACE_ACCESS_TOKEN length:', hfToken?.length || 0);
+    if (!hfToken) {
+      console.error('HUGGING_FACE_ACCESS_TOKEN is not configured');
       return new Response(JSON.stringify({ 
-        error: 'OPENROUTER_API_KEY not configured',
-        response: 'I need the OpenRouter API key to be configured. Please check the Supabase Edge Function secrets.'
+        error: 'HUGGING_FACE_ACCESS_TOKEN not configured',
+        response: 'I need the Hugging Face API token to be configured. Please add it in Supabase Edge Function secrets.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -113,7 +113,7 @@ serve(async (req) => {
     
     // Analyze message for potential actions
     console.log('Analyzing user message with full context...');
-    const { analysis, pendingAction } = await analyzeUserMessage(message, userData, agentMemory, marketData, messages, openRouterApiKey as string);
+    const { analysis, pendingAction } = await analyzeUserMessage(message, userData, agentMemory, marketData, messages, hfToken as string);
     console.log('Analysis complete:', { 
       analysisLength: analysis.length, 
       hasPendingAction: !!pendingAction 
@@ -261,7 +261,7 @@ async function analyzeUserMessage(
   agentMemory: any, 
   marketData: any, 
   messages: Message[] = [],
-  openRouterApiKey: string
+  hfToken: string
 ): Promise<{ analysis: string, pendingAction: PendingAction | null }> {
   
   const conversationHistory = messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n');
@@ -332,44 +332,53 @@ For advice only:
 
 Be proactive in suggesting improvements, identifying trends, and providing personalized advice based on their complete financial picture.`;
 
-  console.log('Calling OpenRouter API with enhanced context...');
+  console.log('Calling Hugging Face Inference API with enhanced context...');
   
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const hfModel = Deno.env.get('HF_MODEL') || 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
+  const prompt = `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
+
+  const response = await fetch(`https://api-inference.huggingface.co/models/${hfModel}`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${openRouterApiKey}`,
+      'Authorization': `Bearer ${hfToken}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://lovable.dev',
-      'X-Title': 'Tharawat Investment Platform'
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-3.5-sonnet',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message }
-      ],
-      temperature: 0.7,
-      max_tokens: 3000,
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 1000,
+        temperature: 0.7,
+        return_full_text: false
+      },
+      options: {
+        wait_for_model: true
+      }
     }),
   });
 
-  console.log('OpenRouter response status:', response.status);
+  console.log('Hugging Face response status:', response.status);
   
   if (!response.ok) {
-    console.error('OpenRouter API error:', response.status, response.statusText);
-    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+    const errText = await response.text();
+    console.error('Hugging Face API error:', response.status, response.statusText, errText);
+    throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
-  console.log('OpenRouter response data:', JSON.stringify(data, null, 2));
+  console.log('Hugging Face response data:', JSON.stringify(data, null, 2));
 
-  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-    console.error('Unexpected OpenRouter response structure:', data);
-    throw new Error('Invalid response format from OpenRouter API');
+  let aiResponse: string;
+  if (Array.isArray(data) && data[0]?.generated_text) {
+    aiResponse = data[0].generated_text;
+  } else if ((data as any)?.generated_text) {
+    aiResponse = (data as any).generated_text;
+  } else if (Array.isArray(data) && data[0]?.output_text) {
+    aiResponse = data[0].output_text;
+  } else {
+    aiResponse = typeof data === 'string' ? data : JSON.stringify(data);
   }
 
-  const aiResponse = data.choices[0].message.content;
-  console.log('AI response content:', aiResponse);
+  console.log('AI response content (first 500 chars):', aiResponse.slice(0, 500));
 
   try {
     const parsed = JSON.parse(aiResponse);
