@@ -17,10 +17,16 @@ import {
 
 interface Message {
   id: string;
-  type: 'user' | 'agent';
+  type: 'user' | 'agent' | 'error';
   content: string;
   timestamp: Date;
   pendingAction?: any;
+  errorDetails?: {
+    name?: string;
+    message?: string;
+    stack?: string;
+    statusCode?: number;
+  };
 }
 
 const AIFinancialAgent = () => {
@@ -61,6 +67,8 @@ const AIFinancialAgent = () => {
     setIsLoading(true);
 
     try {
+      console.log('Sending message to AI agent:', messageToSend);
+      
       const { data, error } = await supabase.functions.invoke('ai-financial-agent', {
         body: {
           message: messageToSend,
@@ -72,25 +80,47 @@ const AIFinancialAgent = () => {
         }
       });
 
-      if (error) throw error;
+      console.log('AI agent response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`API Error: ${error.message || 'Unknown error'}`);
+      }
+
+      // Handle both success and error responses from the function
+      if (data?.error) {
+        console.error('Function returned error:', data);
+        throw new Error(data.error);
+      }
 
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
-        content: data.response,
+        content: data?.response || 'No response received',
         timestamp: new Date(),
-        pendingAction: data.pendingAction
+        pendingAction: data?.pendingAction
       };
 
       setMessages(prev => [...prev, agentMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      
+      // Create detailed error message with debugging info
+      const errorDetails = {
+        name: error.name || 'Unknown Error',
+        message: error.message || 'No error message',
+        stack: error.stack?.split('\n')[0] || 'No stack trace',
+        statusCode: error.status || error.statusCode
+      };
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'agent',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date()
+        type: 'error',
+        content: `🚨 **Error Details** (Debug Mode)\n\n**Type:** ${errorDetails.name}\n**Message:** ${errorDetails.message}\n**Status:** ${errorDetails.statusCode || 'N/A'}\n**Stack:** ${errorDetails.stack}\n\n*This detailed error info will be removed once the issue is fixed.*`,
+        timestamp: new Date(),
+        errorDetails
       };
+      
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -103,50 +133,64 @@ const AIFinancialAgent = () => {
 
     setIsLoading(true);
 
-    try {
-      if (accept) {
-        const { data, error } = await supabase.functions.invoke('ai-financial-agent', {
-          body: {
-            message: 'confirm',
-            userId: user.id,
-            action: {
-              type: 'confirm',
-              pendingAction: message.pendingAction
+      try {
+        if (accept) {
+          const { data, error } = await supabase.functions.invoke('ai-financial-agent', {
+            body: {
+              message: 'confirm',
+              userId: user.id,
+              action: {
+                type: 'confirm',
+                pendingAction: message.pendingAction
+              }
             }
+          });
+
+          if (error) throw error;
+
+          const confirmMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            type: 'agent',
+            content: data?.response || 'Action completed',
+            timestamp: new Date()
+          };
+
+          setMessages(prev => [...prev, confirmMessage]);
+        } else {
+          const declineMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            type: 'agent',
+            content: '👍 No problem! The changes have been cancelled. Is there anything else I can help you with?',
+            timestamp: new Date()
+          };
+
+          setMessages(prev => [...prev, declineMessage]);
+        }
+
+        // Remove pending action from the original message
+        setMessages(prev => prev.map(m => 
+          m.id === messageId ? { ...m, pendingAction: undefined } : m
+        ));
+
+      } catch (error: any) {
+        console.error('Error handling action:', error);
+        
+        const errorMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          type: 'error',
+          content: `Failed to execute action: ${error.message || 'Unknown error'}`,
+          timestamp: new Date(),
+          errorDetails: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack?.split('\n')[0]
           }
-        });
-
-        if (error) throw error;
-
-        const confirmMessage: Message = {
-          id: (Date.now() + 2).toString(),
-          type: 'agent',
-          content: data.response,
-          timestamp: new Date()
         };
-
-        setMessages(prev => [...prev, confirmMessage]);
-      } else {
-        const declineMessage: Message = {
-          id: (Date.now() + 2).toString(),
-          type: 'agent',
-          content: '👍 No problem! The changes have been cancelled. Is there anything else I can help you with?',
-          timestamp: new Date()
-        };
-
-        setMessages(prev => [...prev, declineMessage]);
+        
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
       }
-
-      // Remove pending action from the original message
-      setMessages(prev => prev.map(m => 
-        m.id === messageId ? { ...m, pendingAction: undefined } : m
-      ));
-
-    } catch (error) {
-      console.error('Error handling action:', error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -183,9 +227,11 @@ const AIFinancialAgent = () => {
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {messages.map((message) => (
             <div key={message.id} className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : ''}`}>
-              {message.type === 'agent' && (
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-primary" />
+              {(message.type === 'agent' || message.type === 'error') && (
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  message.type === 'error' ? 'bg-red-100' : 'bg-primary/20'
+                }`}>
+                  <Bot className={`w-4 h-4 ${message.type === 'error' ? 'text-red-600' : 'text-primary'}`} />
                 </div>
               )}
               
@@ -193,9 +239,13 @@ const AIFinancialAgent = () => {
                 <div className={`p-3 rounded-lg ${
                   message.type === 'user' 
                     ? 'bg-primary text-primary-foreground ml-auto' 
+                    : message.type === 'error'
+                    ? 'bg-red-50 border border-red-200'
                     : 'bg-muted'
                 }`}>
-                  <p className="text-sm whitespace-pre-line">{message.content}</p>
+                  <p className={`text-sm whitespace-pre-line ${
+                    message.type === 'error' ? 'text-red-800' : ''
+                  }`}>{message.content}</p>
                 </div>
                 
                 {message.pendingAction && (
@@ -274,12 +324,15 @@ const AIFinancialAgent = () => {
         <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <MessageSquare className="w-3 h-3 text-primary" />
-            Powered by OpenRouter
+            Powered by Hugging Face
           </div>
           <div className="flex items-center gap-1">
             <Brain className="w-3 h-3 text-primary" />
-            Claude 3.5 Sonnet
+            DeepSeek R1 Distill
           </div>
+          <Badge variant="outline" className="text-xs">
+            Debug Mode
+          </Badge>
         </div>
       </CardContent>
     </Card>
