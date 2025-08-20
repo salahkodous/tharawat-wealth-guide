@@ -105,20 +105,25 @@ const AIFinancialAgent = () => {
     } catch (error: any) {
       console.error('Error sending message:', error);
       
-      // Create detailed error message with debugging info
-      const errorDetails = {
-        name: error.name || 'Unknown Error',
-        message: error.message || 'No error message',
-        stack: error.stack?.split('\n')[0] || 'No stack trace',
-        statusCode: error.status || error.statusCode
+      // Try to extract server-provided error details from Edge Function
+      let serverBody: any = (error && typeof error === 'object' && 'context' in error) ? (error as any).context?.body : null;
+      if (serverBody && typeof serverBody === 'string') {
+        try { serverBody = JSON.parse(serverBody); } catch {}
+      }
+
+      const mergedDetails = {
+        name: serverBody?.errorDetails?.name || error.name || 'Unknown Error',
+        message: serverBody?.errorDetails?.message || serverBody?.error || error.message || 'No error message',
+        stack: serverBody?.errorDetails?.stack || error.stack?.split('\n')[0] || 'No stack trace',
+        statusCode: (error as any)?.status || (error as any)?.statusCode
       };
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'error',
-        content: `🚨 **Error Details** (Debug Mode)\n\n**Type:** ${errorDetails.name}\n**Message:** ${errorDetails.message}\n**Status:** ${errorDetails.statusCode || 'N/A'}\n**Stack:** ${errorDetails.stack}\n\n*This detailed error info will be removed once the issue is fixed.*`,
+        content: `🚨 **Error Details** (Debug Mode)\n\n**Type:** ${mergedDetails.name}\n**Message:** ${mergedDetails.message}\n**Status:** ${mergedDetails.statusCode || 'N/A'}\n**Stack:** ${mergedDetails.stack}\n\n*This detailed error info will be removed once the issue is fixed.*`,
         timestamp: new Date(),
-        errorDetails
+        errorDetails: mergedDetails
       };
       
       setMessages(prev => [...prev, errorMessage]);
