@@ -536,24 +536,56 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
         return { success: true, message: `Expense stream "${action.data.name}" added: $${action.data.amount} (${action.data.expense_type})` };
 
       case 'add_debt':
+        // Normalize incoming fields from the LLM to match DB schema
+        const d = action?.data || {};
+        const mappedNewDebt: any = {
+          name: d.name ?? d.debt_name ?? d.title,
+          total_amount: Number(d.total_amount ?? d.amount ?? d.principal ?? 0),
+          paid_amount: Number(d.paid_amount ?? 0),
+          monthly_payment: Number(d.monthly_payment ?? d.monthly ?? d.payment ?? 0),
+          interest_rate: Number(d.interest_rate ?? d.interest ?? 0),
+          duration_months: Number(d.duration_months ?? d.months ?? 0),
+          start_date: d.start_date ?? new Date().toISOString().slice(0, 10),
+        };
+        if (!mappedNewDebt.name || !Number.isFinite(mappedNewDebt.total_amount)) {
+          return { success: false, error: 'Invalid debt payload (name/total_amount required)' };
+        }
         const { error: debtError } = await supabase
           .from('debts')
           .insert({ 
             user_id: userId, 
-            ...action.data,
+            ...mappedNewDebt,
             created_at: new Date().toISOString()
           });
         if (debtError) throw debtError;
-        return { success: true, message: `Debt "${action.data.name}" added: $${action.data.total_amount} total, $${action.data.monthly_payment}/month` };
+        return { success: true, message: `Debt "${mappedNewDebt.name}" added: $${mappedNewDebt.total_amount} total, $${mappedNewDebt.monthly_payment}/month` };
 
       case 'update_debt':
+        // Normalize and update only valid columns
+        const ud = action?.data || {};
+        const debtId = ud.id ?? ud.debt_id;
+        if (!debtId) return { success: false, error: 'Debt id is required' };
+
+        const updatePayload: any = {};
+        const toNum = (x: any) => (x === undefined || x === null ? undefined : Number(x));
+        const setIfNum = (key: string, val: any) => {
+          const n = toNum(val);
+          if (Number.isFinite(n)) updatePayload[key] = n;
+        };
+
+        if (ud.name ?? ud.debt_name ?? ud.title) updatePayload.name = ud.name ?? ud.debt_name ?? ud.title;
+        setIfNum('total_amount', ud.total_amount ?? ud.amount ?? ud.principal);
+        setIfNum('paid_amount', ud.paid_amount);
+        setIfNum('monthly_payment', ud.monthly_payment ?? ud.monthly ?? ud.payment);
+        setIfNum('interest_rate', ud.interest_rate ?? ud.interest);
+        setIfNum('duration_months', ud.duration_months ?? ud.months);
+        if (ud.start_date) updatePayload.start_date = ud.start_date;
+        updatePayload.updated_at = new Date().toISOString();
+
         const { error: updateDebtError } = await supabase
           .from('debts')
-          .update({ 
-            ...action.data,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', action.data.id)
+          .update(updatePayload)
+          .eq('id', debtId)
           .eq('user_id', userId);
         if (updateDebtError) throw updateDebtError;
         return { success: true, message: `Debt updated successfully` };
