@@ -408,12 +408,20 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
   try {
     switch (action.type) {
         case 'update_income':
-          // Accept flexible field names from the LLM: monthly_income | income | amount | salary
-          const incomeRaw = action?.data?.monthly_income ?? action?.data?.income ?? action?.data?.amount ?? action?.data?.salary;
-          const incomeValue = Number(incomeRaw);
+          // Accept flexible field names from the LLM and nested income_streams
+          const streams = action?.data?.income_streams ?? action?.data?.incomeStreams ?? action?.data?.streams;
+          const directRaw = action?.data?.monthly_income ?? action?.data?.income ?? action?.data?.amount ?? action?.data?.salary;
+          let resolvedRaw: any = directRaw;
+          if ((resolvedRaw === undefined || resolvedRaw === null || Number.isNaN(Number(resolvedRaw))) && Array.isArray(streams) && streams.length > 0) {
+            const salaryStream = streams.find((s: any) => s?.name?.toLowerCase?.() === 'salary') ?? streams[0];
+            resolvedRaw = salaryStream?.amount ?? salaryStream?.value;
+          }
+          const incomeValue = Number(resolvedRaw);
           if (!Number.isFinite(incomeValue)) {
             return { success: false, error: 'Invalid income amount provided' };
           }
+
+          // Update personal_finances.monthly_income via upsert on user_id
           const { error: incomeError } = await supabase
             .from('personal_finances')
             .upsert(
@@ -425,6 +433,42 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
               { onConflict: 'user_id' }
             );
           if (incomeError) throw incomeError;
+
+          // Keep "salary" income stream in sync as well
+          const { data: existingSalary, error: fetchSalaryError } = await supabase
+            .from('income_streams')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('name', 'salary')
+            .maybeSingle();
+          if (fetchSalaryError) throw fetchSalaryError;
+
+          if (existingSalary?.id) {
+            const { error: updateSalaryError } = await supabase
+              .from('income_streams')
+              .update({
+                amount: incomeValue,
+                income_type: 'salary',
+                is_active: true,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingSalary.id)
+              .eq('user_id', userId);
+            if (updateSalaryError) throw updateSalaryError;
+          } else {
+            const { error: insertSalaryError } = await supabase
+              .from('income_streams')
+              .insert({
+                user_id: userId,
+                name: 'salary',
+                amount: incomeValue,
+                income_type: 'salary',
+                is_active: true,
+                created_at: new Date().toISOString()
+              });
+            if (insertSalaryError) throw insertSalaryError;
+          }
+
           return { success: true, message: `Monthly income updated to $${incomeValue}` };
 
         case 'update_expenses':
