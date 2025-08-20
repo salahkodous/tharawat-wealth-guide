@@ -43,10 +43,11 @@ serve(async (req) => {
     console.log('Request data:', { message, userId, actionType: action?.type, messageHistory: messages?.length });
 
     // Read Hugging Face token at request time to pick up latest secret
-    const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN') || Deno.env.get('HUGGINGFACE_API_TOKEN');
+    const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
     console.log('HUGGING_FACE_ACCESS_TOKEN exists:', !!hfToken);
     console.log('HUGGING_FACE_ACCESS_TOKEN length:', hfToken?.length || 0);
     console.log('HUGGING_FACE_ACCESS_TOKEN first 10 chars:', hfToken?.substring(0, 10) || 'none');
+    
     if (!hfToken) {
       console.error('HUGGING_FACE_ACCESS_TOKEN is not configured');
       return new Response(JSON.stringify({ 
