@@ -407,49 +407,61 @@ Be proactive in suggesting improvements, identifying trends, and providing perso
 async function executePendingAction(userId: string, action: PendingAction): Promise<{ success: boolean, message?: string, error?: string }> {
   try {
     switch (action.type) {
-      case 'update_income':
-        const { error: incomeError } = await supabase
-          .from('personal_finances')
-          .upsert({ 
-            user_id: userId, 
-            monthly_income: action.data.monthly_income,
-            updated_at: new Date().toISOString()
-          });
-        if (incomeError) throw incomeError;
-        return { success: true, message: `Monthly income updated to $${action.data.monthly_income}` };
+        case 'update_income':
+          const { error: incomeError } = await supabase
+            .from('personal_finances')
+            .upsert(
+              { 
+                user_id: userId, 
+                monthly_income: action.data.monthly_income,
+                updated_at: new Date().toISOString()
+              },
+              { onConflict: 'user_id' }
+            );
+          if (incomeError) throw incomeError;
+          return { success: true, message: `Monthly income updated to $${action.data.monthly_income}` };
 
-      case 'update_expenses':
-        const { error: expensesError } = await supabase
-          .from('personal_finances')
-          .upsert({ 
-            user_id: userId, 
-            monthly_expenses: action.data.monthly_expenses,
-            updated_at: new Date().toISOString()
-          });
-        if (expensesError) throw expensesError;
-        return { success: true, message: `Monthly expenses updated to $${action.data.monthly_expenses}` };
+        case 'update_expenses':
+          const { error: expensesError } = await supabase
+            .from('personal_finances')
+            .upsert(
+              { 
+                user_id: userId, 
+                monthly_expenses: action.data.monthly_expenses,
+                updated_at: new Date().toISOString()
+              },
+              { onConflict: 'user_id' }
+            );
+          if (expensesError) throw expensesError;
+          return { success: true, message: `Monthly expenses updated to $${action.data.monthly_expenses}` };
 
-      case 'update_savings':
-        const { error: savingsError } = await supabase
-          .from('personal_finances')
-          .upsert({ 
-            user_id: userId, 
-            net_savings: action.data.net_savings,
-            updated_at: new Date().toISOString()
-          });
-        if (savingsError) throw savingsError;
-        return { success: true, message: `Net savings updated to $${action.data.net_savings}` };
+        case 'update_savings':
+          const { error: savingsError } = await supabase
+            .from('personal_finances')
+            .upsert(
+              { 
+                user_id: userId, 
+                net_savings: action.data.net_savings,
+                updated_at: new Date().toISOString()
+              },
+              { onConflict: 'user_id' }
+            );
+          if (savingsError) throw savingsError;
+          return { success: true, message: `Net savings updated to $${action.data.net_savings}` };
 
-      case 'update_investing':
-        const { error: investingError } = await supabase
-          .from('personal_finances')
-          .upsert({ 
-            user_id: userId, 
-            monthly_investing_amount: action.data.monthly_investing_amount,
-            updated_at: new Date().toISOString()
-          });
-        if (investingError) throw investingError;
-        return { success: true, message: `Monthly investing amount updated to $${action.data.monthly_investing_amount}` };
+        case 'update_investing':
+          const { error: investingError } = await supabase
+            .from('personal_finances')
+            .upsert(
+              { 
+                user_id: userId, 
+                monthly_investing_amount: action.data.monthly_investing_amount,
+                updated_at: new Date().toISOString()
+              },
+              { onConflict: 'user_id' }
+            );
+          if (investingError) throw investingError;
+          return { success: true, message: `Monthly investing amount updated to $${action.data.monthly_investing_amount}` };
 
       case 'add_income_stream':
         const { error: incomeStreamError } = await supabase
