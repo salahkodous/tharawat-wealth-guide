@@ -237,12 +237,22 @@ export const usePersonalFinances = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      setLoading(true);
-      Promise.all([fetchFinances(), fetchDebts()]).finally(() => {
-        setLoading(false);
-      });
-    }
+    if (!user) return;
+
+    setLoading(true);
+    Promise.all([fetchFinances(), fetchDebts()]).finally(() => {
+      setLoading(false);
+    });
+
+    const handler = () => {
+      fetchFinances();
+      fetchDebts();
+    };
+
+    window.addEventListener('finances-updated', handler);
+    return () => {
+      window.removeEventListener('finances-updated', handler);
+    };
   }, [user]);
 
   return {

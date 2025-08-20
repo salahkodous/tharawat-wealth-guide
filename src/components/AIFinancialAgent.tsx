@@ -161,6 +161,8 @@ const AIFinancialAgent = () => {
           };
 
           setMessages(prev => [...prev, confirmMessage]);
+          // Notify other parts of the app to refresh finance data
+          window.dispatchEvent(new Event('finances-updated'));
         } else {
           const declineMessage: Message = {
             id: (Date.now() + 2).toString(),

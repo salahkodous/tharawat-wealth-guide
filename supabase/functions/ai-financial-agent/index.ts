@@ -408,18 +408,24 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
   try {
     switch (action.type) {
         case 'update_income':
+          // Accept flexible field names from the LLM: monthly_income | income | amount | salary
+          const incomeRaw = action?.data?.monthly_income ?? action?.data?.income ?? action?.data?.amount ?? action?.data?.salary;
+          const incomeValue = Number(incomeRaw);
+          if (!Number.isFinite(incomeValue)) {
+            return { success: false, error: 'Invalid income amount provided' };
+          }
           const { error: incomeError } = await supabase
             .from('personal_finances')
             .upsert(
               { 
                 user_id: userId, 
-                monthly_income: action.data.monthly_income,
+                monthly_income: incomeValue,
                 updated_at: new Date().toISOString()
               },
               { onConflict: 'user_id' }
             );
           if (incomeError) throw incomeError;
-          return { success: true, message: `Monthly income updated to $${action.data.monthly_income}` };
+          return { success: true, message: `Monthly income updated to $${incomeValue}` };
 
         case 'update_expenses':
           const { error: expensesError } = await supabase
