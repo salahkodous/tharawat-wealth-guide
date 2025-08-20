@@ -39,20 +39,18 @@ serve(async (req) => {
 
   try {
     console.log('Parsing request body...');
-    const { message, userId, action, messages } = await req.json();
-    console.log('Request data:', { message, userId, actionType: action?.type, messageHistory: messages?.length });
+    const { message, userId, action, messages, model } = await req.json();
+    console.log('Request data:', { message, userId, actionType: action?.type, messageHistory: messages?.length, model });
 
-    // Read Hugging Face token at request time to pick up latest secret
-    const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
-    console.log('HUGGING_FACE_ACCESS_TOKEN exists:', !!hfToken);
-    console.log('HUGGING_FACE_ACCESS_TOKEN length:', hfToken?.length || 0);
-    console.log('HUGGING_FACE_ACCESS_TOKEN first 10 chars:', hfToken?.substring(0, 10) || 'none');
-    
-    if (!hfToken) {
-      console.error('HUGGING_FACE_ACCESS_TOKEN is not configured');
+    // Read GROQ API key at request time to pick up latest secret
+    const groqApiKey = Deno.env.get('GROQ');
+    console.log('GROQ key exists:', !!groqApiKey);
+
+    if (!groqApiKey) {
+      console.error('GROQ API key is not configured');
       return new Response(JSON.stringify({ 
-        error: 'HUGGING_FACE_ACCESS_TOKEN not configured',
-        response: 'I need the Hugging Face API token to be configured. Please add it in Supabase Edge Function secrets.'
+        error: 'GROQ API key not configured',
+        response: 'I need the GROQ API key configured in Supabase Edge Function secrets.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -115,7 +113,7 @@ serve(async (req) => {
     
     // Analyze message for potential actions
     console.log('Analyzing user message with full context...');
-    const { analysis, pendingAction } = await analyzeUserMessage(message, userData, agentMemory, marketData, messages, hfToken as string);
+    const { analysis, pendingAction } = await analyzeUserMessage(message, userData, agentMemory, marketData, messages, groqApiKey as string, model);
     console.log('Analysis complete:', { 
       analysisLength: analysis.length, 
       hasPendingAction: !!pendingAction 
@@ -271,7 +269,8 @@ async function analyzeUserMessage(
   agentMemory: any, 
   marketData: any, 
   messages: Message[] = [],
-  hfToken: string
+  groqApiKey: string,
+  preferredModel?: string
 ): Promise<{ analysis: string, pendingAction: PendingAction | null }> {
   
   const conversationHistory = messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n');
@@ -342,51 +341,51 @@ For advice only:
 
 Be proactive in suggesting improvements, identifying trends, and providing personalized advice based on their complete financial picture.`;
 
-  console.log('Calling Hugging Face Inference API with enhanced context...');
-  
-  const hfModel = Deno.env.get('HF_MODEL') || 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B';
-  const prompt = `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
+  console.log('Calling GROQ Chat Completions with enhanced context...');
 
-  const response = await fetch(`https://api-inference.huggingface.co/models/${hfModel}`, {
+  // Determine model: prefer request input, then env, default to 70B for best quality
+  const selectedModel = (preferredModel === '8b' || preferredModel === 'llama-3.1-8b-instant')
+    ? 'llama-3.1-8b-instant'
+    : (preferredModel === '70b' || preferredModel === 'llama-3.1-70b-versatile')
+      ? 'llama-3.1-70b-versatile'
+      : (Deno.env.get('GROQ_MODEL') || 'llama-3.1-70b-versatile');
+
+  const chatMessages = [
+    { role: 'system', content: systemPrompt },
+    ...messages.slice(-5).map(m => ({ role: m.role, content: m.content })),
+    { role: 'user', content: message }
+  ];
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${hfToken}`,
+      'Authorization': `Bearer ${groqApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 1000,
-        temperature: 0.7,
-        return_full_text: false
-      },
-      options: {
-        wait_for_model: true
-      }
+      model: selectedModel,
+      messages: chatMessages,
+      max_tokens: 1000,
+      temperature: 0.2,
     }),
   });
 
-  console.log('Hugging Face response status:', response.status);
-  
+  console.log('GROQ response status:', response.status);
+
   if (!response.ok) {
     const errText = await response.text();
-    console.error('Hugging Face API error:', response.status, response.statusText, errText);
-    throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
+    console.error('GROQ API error:', response.status, response.statusText, errText);
+    throw new Error(`GROQ API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
-  console.log('Hugging Face response data:', JSON.stringify(data, null, 2));
+  console.log('GROQ response data (truncated):', JSON.stringify({
+    model: data.model,
+    usage: data.usage,
+    messagePreview: data.choices?.[0]?.message?.content?.slice(0, 200)
+  }));
 
-  let aiResponse: string;
-  if (Array.isArray(data) && data[0]?.generated_text) {
-    aiResponse = data[0].generated_text;
-  } else if ((data as any)?.generated_text) {
-    aiResponse = (data as any).generated_text;
-  } else if (Array.isArray(data) && data[0]?.output_text) {
-    aiResponse = data[0].output_text;
-  } else {
-    aiResponse = typeof data === 'string' ? data : JSON.stringify(data);
-  }
+  const aiResponse = data.choices?.[0]?.message?.content?.trim() || JSON.stringify(data);
 
   console.log('AI response content (first 500 chars):', aiResponse.slice(0, 500));
 
