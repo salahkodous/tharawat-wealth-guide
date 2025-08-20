@@ -343,12 +343,12 @@ Be proactive in suggesting improvements, identifying trends, and providing perso
 
   console.log('Calling GROQ Chat Completions with enhanced context...');
 
-  // Determine model: prefer request input, then env, default to 70B for best quality
+  // Determine model: prefer request input, then env, default to 8B for reliability
   const selectedModel = (preferredModel === '8b' || preferredModel === 'llama-3.1-8b-instant')
     ? 'llama-3.1-8b-instant'
-    : (preferredModel === '70b' || preferredModel === 'llama-3.1-70b-versatile')
-      ? 'llama-3.1-70b-versatile'
-      : (Deno.env.get('GROQ_MODEL') || 'llama-3.1-70b-versatile');
+    : (preferredModel === '70b' || preferredModel === 'llama-3.3-70b-versatile')
+      ? 'llama-3.3-70b-versatile'
+      : (Deno.env.get('GROQ_MODEL') || 'llama-3.1-8b-instant');
 
   const chatMessages = [
     { role: 'system', content: systemPrompt },
