@@ -117,9 +117,11 @@ const Index = () => {
               <TharawatLogo size="lg" />
               
               <nav className="hidden md:flex items-center gap-6">
+                <Button variant="ghost" className="hover:text-primary" onClick={() => navigate('/about')}>
+                  About
+                </Button>
                 <Button variant="ghost" className="hover:text-primary">Features</Button>
                 <Button variant="ghost" className="hover:text-primary">Pricing</Button>
-                <Button variant="ghost" className="hover:text-primary">About</Button>
                 <Button 
                   className="gradient-electric text-primary-foreground"
                   onClick={() => navigate('/auth')}
