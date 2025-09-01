@@ -3,7 +3,6 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import AIAssistantWithCharts from '@/components/AIAssistantWithCharts';
 import AIRecommendations from '@/components/AIRecommendations';
-import AIFinancialAgent from '@/components/AIFinancialAgent';
 
 const Assistant = () => {
   return (
@@ -20,12 +19,9 @@ const Assistant = () => {
               <p className="text-muted-foreground">Get personalized insights and recommendations</p>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <AIFinancialAgent />
-              <div className="space-y-8">
-                <AIAssistantWithCharts />
-                <AIRecommendations />
-              </div>
+            <div className="space-y-8">
+              <AIAssistantWithCharts />
+              <AIRecommendations />
             </div>
           </div>
         </section>
