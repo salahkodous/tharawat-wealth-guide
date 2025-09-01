@@ -112,7 +112,7 @@
     /* Card system with glassmorphism */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
-    --card-border: 240 6% 90%;
+    --card-border: 240 5.9% 80%;
     
     /* Secondary elements */
     --secondary: 240 4.8% 95.9%;
@@ -120,7 +120,7 @@
     
     /* Muted elements */
     --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted-foreground: 240 3.8% 35%;
     
     /* Accent elements */
     --accent: 240 4.8% 95.9%;
@@ -131,8 +131,8 @@
     --destructive-foreground: 0 0% 98%;
     
     /* Form elements */
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
+    --border: 240 5.9% 85%;
+    --input: 240 5.9% 96%;
     --ring: 195 100% 39%;
     
     /* Electric gradients */
