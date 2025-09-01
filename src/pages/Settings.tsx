@@ -14,6 +14,7 @@ import { useTheme } from 'next-themes';
 import { supabase } from '@/integrations/supabase/client';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
+import { LanguageDisplay } from '@/components/LanguageDisplay';
 import { 
   User, 
   Globe, 
@@ -335,6 +336,7 @@ const Settings = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2">Settings</h1>
               <p className="text-muted-foreground">Manage your account preferences and privacy settings</p>
+              <LanguageDisplay />
             </div>
 
             {/* Profile Settings */}
