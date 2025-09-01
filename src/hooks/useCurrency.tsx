@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
+import { useSettings } from './useSettings';
 
 interface CurrencyContextType {
   currency: string;
@@ -37,13 +38,17 @@ const currencySymbols: Record<string, string> = {
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [currency, setCurrency] = useState('USD');
 
   useEffect(() => {
-    if (user?.user_metadata?.currency) {
+    // Prefer settings context over user metadata
+    if (settings.currency) {
+      setCurrency(settings.currency);
+    } else if (user?.user_metadata?.currency) {
       setCurrency(user.user_metadata.currency);
     }
-  }, [user]);
+  }, [user, settings.currency]);
 
   const formatAmount = (amount: number): string => {
     const symbol = currencySymbols[currency] || currency;

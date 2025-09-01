@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useSettings } from '@/hooks/useSettings';
+import { useTheme } from 'next-themes';
 import { supabase } from '@/integrations/supabase/client';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
@@ -28,24 +30,27 @@ const Settings = () => {
   const { user, signOut } = useAuth();
   const { currency } = useCurrency();
   const { toast } = useToast();
+  const { settings, updateSettings, refreshSettings } = useSettings();
+  const { setTheme, theme } = useTheme();
   
   const [profile, setProfile] = useState({
     full_name: '',
     avatar_url: ''
   });
   
+  // Initialize preferences from settings context
   const [preferences, setPreferences] = useState({
-    currency: 'USD',
-    language: 'en',
-    theme: 'system',
+    currency: settings.currency,
+    language: settings.language,
+    theme: settings.theme,
     notifications: {
-      email: true,
-      push: true,
-      sms: false
+      email: settings.email_notifications,
+      push: settings.push_notifications,
+      sms: settings.sms_notifications
     },
     privacy: {
-      profileVisibility: 'private',
-      dataSharing: false
+      profileVisibility: settings.profile_visibility,
+      dataSharing: settings.data_sharing
     }
   });
   
@@ -58,6 +63,24 @@ const Settings = () => {
       loadProfile();
     }
   }, [user]);
+
+  // Update local preferences when settings change
+  useEffect(() => {
+    setPreferences({
+      currency: settings.currency,
+      language: settings.language,
+      theme: settings.theme,
+      notifications: {
+        email: settings.email_notifications,
+        push: settings.push_notifications,
+        sms: settings.sms_notifications
+      },
+      privacy: {
+        profileVisibility: settings.profile_visibility,
+        dataSharing: settings.data_sharing
+      }
+    });
+  }, [settings]);
 
   const loadProfile = async () => {
     try {
@@ -186,6 +209,18 @@ const Settings = () => {
 
       if (settingsError) throw settingsError;
 
+      // Update the settings context with new values
+      updateSettings({
+        currency: settingsToSave.currency,
+        language: settingsToSave.language,
+        theme: settingsToSave.theme,
+        email_notifications: settingsToSave.notifications.email,
+        push_notifications: settingsToSave.notifications.push,
+        sms_notifications: settingsToSave.notifications.sms,
+        data_sharing: settingsToSave.privacy.dataSharing,
+        profile_visibility: settingsToSave.privacy.profileVisibility
+      });
+
       // Update user metadata for currency (so useCurrency hook works)
       try {
         await supabase.auth.updateUser({
@@ -196,9 +231,12 @@ const Settings = () => {
         // Don't throw here as the main settings were saved successfully
       }
 
+      // Apply theme immediately
+      setTheme(settingsToSave.theme);
+
       setHasUnsavedChanges(false);
       toast({
-        title: "Settings Saved",
+        title: "Settings Saved", 
         description: "Your preferences have been updated successfully."
       });
     } catch (error) {
@@ -216,6 +254,11 @@ const Settings = () => {
   const updatePreferences = (newPreferences: typeof preferences) => {
     setPreferences(newPreferences);
     setHasUnsavedChanges(true);
+    
+    // Apply theme change immediately
+    if (newPreferences.theme !== preferences.theme) {
+      setTheme(newPreferences.theme);
+    }
   };
 
   const exportData = async () => {
