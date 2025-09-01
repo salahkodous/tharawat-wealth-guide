@@ -158,7 +158,6 @@ const Settings = () => {
         .maybeSingle();
 
       const settingsData = {
-        user_id: user.id,
         currency: settingsToSave.currency,
         language: settingsToSave.language,
         theme: settingsToSave.theme,
@@ -181,7 +180,7 @@ const Settings = () => {
         // Insert new record
         const { error } = await supabase
           .from('user_settings')
-          .insert(settingsData);
+          .insert({ ...settingsData, user_id: user.id });
         settingsError = error;
       }
 
@@ -197,10 +196,16 @@ const Settings = () => {
         // Don't throw here as the main settings were saved successfully
       }
 
+      // Force a page refresh to ensure all components pick up the new settings
+      // This is a simple solution to ensure all currency displays update
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
       setHasUnsavedChanges(false);
       toast({
         title: "Settings Saved",
-        description: "Your preferences have been updated successfully."
+        description: "Your preferences have been updated successfully. Page will refresh to apply changes."
       });
     } catch (error) {
       console.error('Error saving settings:', error);
