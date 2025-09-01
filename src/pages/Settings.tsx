@@ -150,29 +150,52 @@ const Settings = () => {
     
     setSavingSettings(true);
     try {
-      // Save to user_settings table
-      const { error: settingsError } = await supabase
+      // Check if settings exist first
+      const { data: existingSettings } = await supabase
         .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          currency: settingsToSave.currency,
-          language: settingsToSave.language,
-          theme: settingsToSave.theme,
-          email_notifications: settingsToSave.notifications.email,
-          push_notifications: settingsToSave.notifications.push,
-          sms_notifications: settingsToSave.notifications.sms,
-          data_sharing: settingsToSave.privacy.dataSharing,
-          profile_visibility: settingsToSave.privacy.profileVisibility
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const settingsData = {
+        user_id: user.id,
+        currency: settingsToSave.currency,
+        language: settingsToSave.language,
+        theme: settingsToSave.theme,
+        email_notifications: settingsToSave.notifications.email,
+        push_notifications: settingsToSave.notifications.push,
+        sms_notifications: settingsToSave.notifications.sms,
+        data_sharing: settingsToSave.privacy.dataSharing,
+        profile_visibility: settingsToSave.privacy.profileVisibility
+      };
+
+      let settingsError;
+      if (existingSettings) {
+        // Update existing record
+        const { error } = await supabase
+          .from('user_settings')
+          .update(settingsData)
+          .eq('user_id', user.id);
+        settingsError = error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('user_settings')
+          .insert(settingsData);
+        settingsError = error;
+      }
 
       if (settingsError) throw settingsError;
 
       // Update user metadata for currency (so useCurrency hook works)
-      const { error: userError } = await supabase.auth.updateUser({
-        data: { currency: settingsToSave.currency }
-      });
-
-      if (userError) throw userError;
+      try {
+        await supabase.auth.updateUser({
+          data: { currency: settingsToSave.currency }
+        });
+      } catch (userError) {
+        console.warn('Could not update user metadata:', userError);
+        // Don't throw here as the main settings were saved successfully
+      }
 
       setHasUnsavedChanges(false);
       toast({
