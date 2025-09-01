@@ -26,7 +26,7 @@ const Navigation = () => {
   };
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Dashboard' },
+    { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/portfolio', icon: Briefcase, label: 'Portfolio' },
     { path: '/finances', icon: Calculator, label: 'Finances' },
     { path: '/assistant', icon: Bot, label: 'AI Assistant' },
