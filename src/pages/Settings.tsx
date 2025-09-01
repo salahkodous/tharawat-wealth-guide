@@ -196,16 +196,10 @@ const Settings = () => {
         // Don't throw here as the main settings were saved successfully
       }
 
-      // Force a page refresh to ensure all components pick up the new settings
-      // This is a simple solution to ensure all currency displays update
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-
       setHasUnsavedChanges(false);
       toast({
         title: "Settings Saved",
-        description: "Your preferences have been updated successfully. Page will refresh to apply changes."
+        description: "Your preferences have been updated successfully."
       });
     } catch (error) {
       console.error('Error saving settings:', error);

@@ -3,8 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CurrencyProvider } from "@/hooks/useCurrency";
+import { SettingsProvider } from "@/hooks/useSettings";
+import { ThemeSync } from "@/components/ThemeSync";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
@@ -81,17 +84,22 @@ const AppRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <CurrencyProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </CurrencyProvider>
-      </AuthProvider>
-    </TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <SettingsProvider>
+            <CurrencyProvider>
+              <BrowserRouter>
+                <ThemeSync />
+                <AppRoutes />
+              </BrowserRouter>
+            </CurrencyProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
