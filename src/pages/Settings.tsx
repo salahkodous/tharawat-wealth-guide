@@ -20,7 +20,8 @@ import {
   Shield, 
   Download,
   Palette,
-  Monitor
+  Monitor,
+  Save
 } from 'lucide-react';
 
 const Settings = () => {
@@ -49,6 +50,8 @@ const Settings = () => {
   });
   
   const [loading, setLoading] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -58,32 +61,56 @@ const Settings = () => {
 
   const loadProfile = async () => {
     try {
-      const { data, error } = await supabase
+      // Load profile data
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (profileError) {
+        console.error('Error loading profile:', profileError);
       }
 
-      if (data) {
+      if (profileData) {
         setProfile({
-          full_name: data.full_name || '',
-          avatar_url: data.avatar_url || ''
+          full_name: profileData.full_name || '',
+          avatar_url: profileData.avatar_url || ''
         });
       }
-      
-      // Set currency from user metadata
-      if (user?.user_metadata?.currency) {
-        setPreferences(prev => ({
-          ...prev,
-          currency: user.user_metadata.currency
-        }));
+
+      // Load user settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (settingsError) {
+        console.error('Error loading settings:', settingsError);
+      }
+
+      if (settingsData) {
+        setPreferences({
+          currency: settingsData.currency || 'USD',
+          language: settingsData.language || 'en',
+          theme: settingsData.theme || 'system',
+          notifications: {
+            email: settingsData.email_notifications ?? true,
+            push: settingsData.push_notifications ?? true,
+            sms: settingsData.sms_notifications ?? false
+          },
+          privacy: {
+            profileVisibility: settingsData.profile_visibility || 'private',
+            dataSharing: settingsData.data_sharing ?? false
+          }
+        });
+      } else {
+        // Initialize default settings if none exist
+        await saveSettings(preferences);
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('Error loading profile and settings:', error);
     }
   };
 
@@ -118,11 +145,107 @@ const Settings = () => {
     }
   };
 
-  const exportData = () => {
-    toast({
-      title: "Data Export Started",
-      description: "Your data export will be sent to your email shortly."
-    });
+  const saveSettings = async (settingsToSave = preferences) => {
+    if (!user) return;
+    
+    setSavingSettings(true);
+    try {
+      // Save to user_settings table
+      const { error: settingsError } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          currency: settingsToSave.currency,
+          language: settingsToSave.language,
+          theme: settingsToSave.theme,
+          email_notifications: settingsToSave.notifications.email,
+          push_notifications: settingsToSave.notifications.push,
+          sms_notifications: settingsToSave.notifications.sms,
+          data_sharing: settingsToSave.privacy.dataSharing,
+          profile_visibility: settingsToSave.privacy.profileVisibility
+        });
+
+      if (settingsError) throw settingsError;
+
+      // Update user metadata for currency (so useCurrency hook works)
+      const { error: userError } = await supabase.auth.updateUser({
+        data: { currency: settingsToSave.currency }
+      });
+
+      if (userError) throw userError;
+
+      setHasUnsavedChanges(false);
+      toast({
+        title: "Settings Saved",
+        description: "Your preferences have been updated successfully."
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings.",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const updatePreferences = (newPreferences: typeof preferences) => {
+    setPreferences(newPreferences);
+    setHasUnsavedChanges(true);
+  };
+
+  const exportData = async () => {
+    if (!user) return;
+    
+    try {
+      // Get all user data
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      const { data: settingsData } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id);
+
+      const { data: financesData } = await supabase
+        .from('personal_finances')
+        .select('*')
+        .eq('user_id', user.id);
+
+      const exportData = {
+        profile: profileData,
+        settings: settingsData,
+        finances: financesData,
+        exported_at: new Date().toISOString()
+      };
+
+      // Create and download JSON file
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tharawat-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Data Export Complete",
+        description: "Your data has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export your data.",
+        variant: "destructive"
+      });
+    }
   };
 
   const deleteAccount = async () => {
@@ -204,7 +327,7 @@ const Settings = () => {
                   <div>
                     <Label htmlFor="currency">Currency</Label>
                     <Select value={preferences.currency} onValueChange={(value) => 
-                      setPreferences({ ...preferences, currency: value })
+                      updatePreferences({ ...preferences, currency: value })
                     }>
                       <SelectTrigger>
                         <SelectValue />
@@ -225,7 +348,7 @@ const Settings = () => {
                   <div>
                     <Label htmlFor="language">Language</Label>
                     <Select value={preferences.language} onValueChange={(value) => 
-                      setPreferences({ ...preferences, language: value })
+                      updatePreferences({ ...preferences, language: value })
                     }>
                       <SelectTrigger>
                         <SelectValue />
@@ -241,7 +364,7 @@ const Settings = () => {
                 <div>
                   <Label htmlFor="theme">Theme</Label>
                   <Select value={preferences.theme} onValueChange={(value) => 
-                    setPreferences({ ...preferences, theme: value })
+                    updatePreferences({ ...preferences, theme: value })
                   }>
                     <SelectTrigger className="w-full md:w-[200px]">
                       <SelectValue />
@@ -253,6 +376,14 @@ const Settings = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <Button 
+                  onClick={() => saveSettings()} 
+                  disabled={savingSettings || !hasUnsavedChanges}
+                  className="w-full md:w-auto"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {savingSettings ? 'Saving...' : 'Save Preferences'}
+                </Button>
               </CardContent>
             </Card>
 
@@ -273,7 +404,7 @@ const Settings = () => {
                   <Switch 
                     checked={preferences.notifications.email}
                     onCheckedChange={(checked) => 
-                      setPreferences({
+                      updatePreferences({
                         ...preferences,
                         notifications: { ...preferences.notifications, email: checked }
                       })
@@ -288,7 +419,7 @@ const Settings = () => {
                   <Switch 
                     checked={preferences.notifications.push}
                     onCheckedChange={(checked) => 
-                      setPreferences({
+                      updatePreferences({
                         ...preferences,
                         notifications: { ...preferences.notifications, push: checked }
                       })
@@ -303,7 +434,7 @@ const Settings = () => {
                   <Switch 
                     checked={preferences.notifications.sms}
                     onCheckedChange={(checked) => 
-                      setPreferences({
+                      updatePreferences({
                         ...preferences,
                         notifications: { ...preferences.notifications, sms: checked }
                       })
@@ -330,7 +461,7 @@ const Settings = () => {
                   <Switch 
                     checked={preferences.privacy.dataSharing}
                     onCheckedChange={(checked) => 
-                      setPreferences({
+                      updatePreferences({
                         ...preferences,
                         privacy: { ...preferences.privacy, dataSharing: checked }
                       })

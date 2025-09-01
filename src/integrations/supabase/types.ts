@@ -112,6 +112,195 @@ export type Database = {
           },
         ]
       }
+      bank_products: {
+        Row: {
+          bank_name: string
+          bank_name_ar: string | null
+          created_at: string | null
+          currency: string | null
+          early_withdrawal_penalty: number | null
+          eligibility: string | null
+          eligibility_ar: string | null
+          features: string | null
+          features_ar: string | null
+          id: number
+          interest_rate: number | null
+          is_active: boolean | null
+          last_updated: string | null
+          maximum_amount: number | null
+          minimum_amount: number | null
+          monthly_fee: number | null
+          opening_fee: number | null
+          product_name: string
+          product_name_ar: string | null
+          product_type: string
+          term_description: string | null
+          term_description_ar: string | null
+          term_months: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bank_name: string
+          bank_name_ar?: string | null
+          created_at?: string | null
+          currency?: string | null
+          early_withdrawal_penalty?: number | null
+          eligibility?: string | null
+          eligibility_ar?: string | null
+          features?: string | null
+          features_ar?: string | null
+          id?: number
+          interest_rate?: number | null
+          is_active?: boolean | null
+          last_updated?: string | null
+          maximum_amount?: number | null
+          minimum_amount?: number | null
+          monthly_fee?: number | null
+          opening_fee?: number | null
+          product_name: string
+          product_name_ar?: string | null
+          product_type: string
+          term_description?: string | null
+          term_description_ar?: string | null
+          term_months?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bank_name?: string
+          bank_name_ar?: string | null
+          created_at?: string | null
+          currency?: string | null
+          early_withdrawal_penalty?: number | null
+          eligibility?: string | null
+          eligibility_ar?: string | null
+          features?: string | null
+          features_ar?: string | null
+          id?: number
+          interest_rate?: number | null
+          is_active?: boolean | null
+          last_updated?: string | null
+          maximum_amount?: number | null
+          minimum_amount?: number | null
+          monthly_fee?: number | null
+          opening_fee?: number | null
+          product_name?: string
+          product_name_ar?: string | null
+          product_type?: string
+          term_description?: string | null
+          term_description_ar?: string | null
+          term_months?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      bonds: {
+        Row: {
+          accrued_interest: number | null
+          ask_price: number | null
+          bid_price: number | null
+          bond_type: string
+          callable: boolean | null
+          clean_price: number | null
+          country: string | null
+          coupon_frequency: string | null
+          coupon_rate: number | null
+          created_at: string | null
+          credit_rating: string | null
+          currency: string | null
+          current_price: number | null
+          dirty_price: number | null
+          duration: number | null
+          exchange: string | null
+          face_value: number | null
+          id: number
+          isin: string | null
+          issue_date: string | null
+          issuer: string
+          issuer_ar: string | null
+          last_trade_price: number | null
+          last_updated: string | null
+          maturity_date: string | null
+          name: string
+          name_ar: string | null
+          puttable: boolean | null
+          sector: string | null
+          symbol: string
+          updated_at: string | null
+          volume: number | null
+          yield_to_maturity: number | null
+        }
+        Insert: {
+          accrued_interest?: number | null
+          ask_price?: number | null
+          bid_price?: number | null
+          bond_type: string
+          callable?: boolean | null
+          clean_price?: number | null
+          country?: string | null
+          coupon_frequency?: string | null
+          coupon_rate?: number | null
+          created_at?: string | null
+          credit_rating?: string | null
+          currency?: string | null
+          current_price?: number | null
+          dirty_price?: number | null
+          duration?: number | null
+          exchange?: string | null
+          face_value?: number | null
+          id?: number
+          isin?: string | null
+          issue_date?: string | null
+          issuer: string
+          issuer_ar?: string | null
+          last_trade_price?: number | null
+          last_updated?: string | null
+          maturity_date?: string | null
+          name: string
+          name_ar?: string | null
+          puttable?: boolean | null
+          sector?: string | null
+          symbol: string
+          updated_at?: string | null
+          volume?: number | null
+          yield_to_maturity?: number | null
+        }
+        Update: {
+          accrued_interest?: number | null
+          ask_price?: number | null
+          bid_price?: number | null
+          bond_type?: string
+          callable?: boolean | null
+          clean_price?: number | null
+          country?: string | null
+          coupon_frequency?: string | null
+          coupon_rate?: number | null
+          created_at?: string | null
+          credit_rating?: string | null
+          currency?: string | null
+          current_price?: number | null
+          dirty_price?: number | null
+          duration?: number | null
+          exchange?: string | null
+          face_value?: number | null
+          id?: number
+          isin?: string | null
+          issue_date?: string | null
+          issuer?: string
+          issuer_ar?: string | null
+          last_trade_price?: number | null
+          last_updated?: string | null
+          maturity_date?: string | null
+          name?: string
+          name_ar?: string | null
+          puttable?: boolean | null
+          sector?: string | null
+          symbol?: string
+          updated_at?: string | null
+          volume?: number | null
+          yield_to_maturity?: number | null
+        }
+        Relationships: []
+      }
       cities: {
         Row: {
           country: string | null
@@ -139,6 +328,132 @@ export type Database = {
           slug?: string
           updated_at?: string | null
           url?: string | null
+        }
+        Relationships: []
+      }
+      cryptocurrencies: {
+        Row: {
+          ath: number | null
+          atl: number | null
+          blockchain: string | null
+          category: string | null
+          change_24h: number | null
+          change_percentage_24h: number | null
+          circulating_supply: number | null
+          created_at: string | null
+          high_24h: number | null
+          id: number
+          last_updated: string | null
+          low_24h: number | null
+          market_cap: number | null
+          max_supply: number | null
+          name: string
+          price_egp: number | null
+          price_usd: number | null
+          rank: number | null
+          symbol: string
+          total_supply: number | null
+          updated_at: string | null
+          volume_24h: number | null
+        }
+        Insert: {
+          ath?: number | null
+          atl?: number | null
+          blockchain?: string | null
+          category?: string | null
+          change_24h?: number | null
+          change_percentage_24h?: number | null
+          circulating_supply?: number | null
+          created_at?: string | null
+          high_24h?: number | null
+          id?: number
+          last_updated?: string | null
+          low_24h?: number | null
+          market_cap?: number | null
+          max_supply?: number | null
+          name: string
+          price_egp?: number | null
+          price_usd?: number | null
+          rank?: number | null
+          symbol: string
+          total_supply?: number | null
+          updated_at?: string | null
+          volume_24h?: number | null
+        }
+        Update: {
+          ath?: number | null
+          atl?: number | null
+          blockchain?: string | null
+          category?: string | null
+          change_24h?: number | null
+          change_percentage_24h?: number | null
+          circulating_supply?: number | null
+          created_at?: string | null
+          high_24h?: number | null
+          id?: number
+          last_updated?: string | null
+          low_24h?: number | null
+          market_cap?: number | null
+          max_supply?: number | null
+          name?: string
+          price_egp?: number | null
+          price_usd?: number | null
+          rank?: number | null
+          symbol?: string
+          total_supply?: number | null
+          updated_at?: string | null
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
+      currency_rates: {
+        Row: {
+          ask_rate: number | null
+          base_currency: string
+          bid_rate: number | null
+          change_24h: number | null
+          change_percentage_24h: number | null
+          created_at: string | null
+          exchange_rate: number
+          high_24h: number | null
+          id: number
+          last_updated: string | null
+          low_24h: number | null
+          source: string
+          target_currency: string
+          updated_at: string | null
+        }
+        Insert: {
+          ask_rate?: number | null
+          base_currency: string
+          bid_rate?: number | null
+          change_24h?: number | null
+          change_percentage_24h?: number | null
+          created_at?: string | null
+          exchange_rate: number
+          high_24h?: number | null
+          id?: number
+          last_updated?: string | null
+          low_24h?: number | null
+          source: string
+          target_currency: string
+          updated_at?: string | null
+        }
+        Update: {
+          ask_rate?: number | null
+          base_currency?: string
+          bid_rate?: number | null
+          change_24h?: number | null
+          change_percentage_24h?: number | null
+          created_at?: string | null
+          exchange_rate?: number
+          high_24h?: number | null
+          id?: number
+          last_updated?: string | null
+          low_24h?: number | null
+          source?: string
+          target_currency?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -284,6 +599,84 @@ export type Database = {
           },
         ]
       }
+      etfs: {
+        Row: {
+          benchmark: string | null
+          category: string | null
+          change: number | null
+          change_percentage: number | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          dividend_yield: number | null
+          exchange: string | null
+          expense_ratio: number | null
+          fund_manager: string | null
+          id: number
+          inception_date: string | null
+          last_updated: string | null
+          market_cap: number | null
+          name: string
+          name_ar: string | null
+          nav: number | null
+          premium_discount: number | null
+          price: number | null
+          symbol: string
+          updated_at: string | null
+          volume: number | null
+        }
+        Insert: {
+          benchmark?: string | null
+          category?: string | null
+          change?: number | null
+          change_percentage?: number | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          dividend_yield?: number | null
+          exchange?: string | null
+          expense_ratio?: number | null
+          fund_manager?: string | null
+          id?: number
+          inception_date?: string | null
+          last_updated?: string | null
+          market_cap?: number | null
+          name: string
+          name_ar?: string | null
+          nav?: number | null
+          premium_discount?: number | null
+          price?: number | null
+          symbol: string
+          updated_at?: string | null
+          volume?: number | null
+        }
+        Update: {
+          benchmark?: string | null
+          category?: string | null
+          change?: number | null
+          change_percentage?: number | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          dividend_yield?: number | null
+          exchange?: string | null
+          expense_ratio?: number | null
+          fund_manager?: string | null
+          id?: number
+          inception_date?: string | null
+          last_updated?: string | null
+          market_cap?: number | null
+          name?: string
+          name_ar?: string | null
+          nav?: number | null
+          premium_discount?: number | null
+          price?: number | null
+          symbol?: string
+          updated_at?: string | null
+          volume?: number | null
+        }
+        Relationships: []
+      }
       expense_streams: {
         Row: {
           amount: number
@@ -362,6 +755,63 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gold_prices: {
+        Row: {
+          change_24h: number | null
+          change_percentage_24h: number | null
+          created_at: string | null
+          id: number
+          last_updated: string | null
+          price_14k_egp: number | null
+          price_18k_egp: number | null
+          price_21k_egp: number | null
+          price_22k_egp: number | null
+          price_24k_egp: number | null
+          price_per_gram_egp: number
+          price_per_gram_usd: number | null
+          price_per_ounce_egp: number
+          price_per_ounce_usd: number | null
+          source: string
+          updated_at: string | null
+        }
+        Insert: {
+          change_24h?: number | null
+          change_percentage_24h?: number | null
+          created_at?: string | null
+          id?: number
+          last_updated?: string | null
+          price_14k_egp?: number | null
+          price_18k_egp?: number | null
+          price_21k_egp?: number | null
+          price_22k_egp?: number | null
+          price_24k_egp?: number | null
+          price_per_gram_egp: number
+          price_per_gram_usd?: number | null
+          price_per_ounce_egp: number
+          price_per_ounce_usd?: number | null
+          source: string
+          updated_at?: string | null
+        }
+        Update: {
+          change_24h?: number | null
+          change_percentage_24h?: number | null
+          created_at?: string | null
+          id?: number
+          last_updated?: string | null
+          price_14k_egp?: number | null
+          price_18k_egp?: number | null
+          price_21k_egp?: number | null
+          price_22k_egp?: number | null
+          price_24k_egp?: number | null
+          price_per_gram_egp?: number
+          price_per_gram_usd?: number | null
+          price_per_ounce_egp?: number
+          price_per_ounce_usd?: number | null
+          source?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -655,6 +1105,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          currency: string | null
+          data_sharing: boolean | null
+          email_notifications: boolean | null
+          id: string
+          language: string | null
+          profile_visibility: string | null
+          push_notifications: boolean | null
+          sms_notifications: boolean | null
+          theme: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          data_sharing?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          profile_visibility?: string | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          data_sharing?: boolean | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          profile_visibility?: string | null
+          push_notifications?: boolean | null
+          sms_notifications?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -672,9 +1167,53 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      cleanup_old_currency_rates: {
+        Args: { keep_records?: number }
+        Returns: number
+      }
+      cleanup_old_gold_prices: {
+        Args: { keep_records?: number }
+        Returns: number
+      }
+      get_bond_market_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avg_coupon: number
+          avg_yield: number
+          corporate_bonds: number
+          government_bonds: number
+          sukuk_bonds: number
+          total_bonds: number
+          total_face_value: number
+          treasury_bonds: number
+        }[]
+      }
+      get_crypto_market_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avg_change: number
+          bitcoin_dominance: number
+          negative_cryptos: number
+          positive_cryptos: number
+          total_cryptos: number
+          total_market_cap: number
+          total_volume_24h: number
+        }[]
+      }
       get_deposit_view: {
         Args: { p_deposit_id: string }
         Returns: Json
+      }
+      get_etf_performance_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avg_change: number
+          negative_etfs: number
+          positive_etfs: number
+          total_etfs: number
+          total_market_cap: number
+          total_volume: number
+        }[]
       }
       process_deposit: {
         Args: { p_deposit_id: string }
