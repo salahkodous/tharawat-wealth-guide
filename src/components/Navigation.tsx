@@ -12,6 +12,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Link, useLocation } from 'react-router-dom';
 import TharawatLogo from '@/components/TharawatLogo';
 import { useState } from 'react';
@@ -20,21 +21,22 @@ const Navigation = () => {
   const { signOut } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t, isRTL } = useTranslation();
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   const navItems = [
-    { path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { path: '/portfolio', icon: Briefcase, label: 'Portfolio' },
-    { path: '/finances', icon: Calculator, label: 'Finances' },
-    { path: '/assistant', icon: Bot, label: 'AI Assistant' },
-    { path: '/analytics', icon: TrendingUp, label: 'Analytics' },
+    { path: '/dashboard', icon: Home, label: t('dashboard') },
+    { path: '/portfolio', icon: Briefcase, label: t('portfolio') },
+    { path: '/finances', icon: Calculator, label: t('finances') },
+    { path: '/assistant', icon: Bot, label: t('assistant') },
+    { path: '/analytics', icon: TrendingUp, label: t('analytics') },
   ];
 
   return (
-    <header className="border-b border-border/20 backdrop-blur-md bg-background/80 sticky top-0 z-50">
+    <header className={`border-b border-border/20 backdrop-blur-md bg-background/80 sticky top-0 z-50 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <TharawatLogo size="lg" />
@@ -59,7 +61,7 @@ const Navigation = () => {
             <Link to="/settings">
               <Button variant="ghost" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
-                Settings
+                {t('settings')}
               </Button>
             </Link>
             <Button 
@@ -68,7 +70,7 @@ const Navigation = () => {
               onClick={handleSignOut}
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              {t('signOut')}
             </Button>
           </div>
 
@@ -100,7 +102,7 @@ const Navigation = () => {
               <Link to="/settings" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
                   <Settings className="w-4 h-4" />
-                  Settings
+                  {t('settings')}
                 </Button>
               </Link>
               <Button 
@@ -109,7 +111,7 @@ const Navigation = () => {
                 onClick={handleSignOut}
               >
                 <LogOut className="w-4 h-4" />
-                Sign Out
+                {t('signOut')}
               </Button>
             </nav>
           </div>
