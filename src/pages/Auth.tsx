@@ -130,7 +130,7 @@ const Auth = () => {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <TharawatLogo size="lg" />
-            <h1 className="mt-6 text-3xl font-bold">Welcome to Tharawat</h1>
+            <h1 className="mt-6 text-3xl font-bold text-foreground">Welcome to Tharawat</h1>
             <p className="mt-2 text-muted-foreground">
               Your AI-powered investment guide for Arab markets
             </p>
