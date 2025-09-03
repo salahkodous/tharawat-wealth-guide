@@ -12,21 +12,14 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   ArrowLeft, 
   ArrowRight, 
-  MapPin, 
-  Building, 
   Calendar as CalendarIcon,
-  DollarSign,
-  TrendingUp,
-  Coins,
-  Landmark,
-  Car,
-  Briefcase,
   CheckCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import AssetBrowser from '@/components/AssetBrowser';
 
 interface PortfolioManagerProps {
   onAssetAdded?: () => void;
@@ -36,89 +29,27 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedAssetType, setSelectedAssetType] = useState('');
-  const [selectedAsset, setSelectedAsset] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [propertyType, setPropertyType] = useState('');
-  const [area, setArea] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [quantity, setQuantity] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [purchaseDate, setPurchaseDate] = useState<Date>();
   const [loading, setLoading] = useState(false);
 
-  const countries = [
-    { code: 'egypt', name: 'Egypt • مصر', flag: '🇪🇬' },
-    { code: 'saudi', name: 'Saudi Arabia • السعودية', flag: '🇸🇦' },
-    { code: 'uae', name: 'UAE • الإمارات', flag: '🇦🇪' },
-    { code: 'kuwait', name: 'Kuwait • الكويت', flag: '🇰🇼' }
-  ];
-
-  const assetTypes = [
-    { id: 'stocks', name: 'Stocks • الأسهم', icon: TrendingUp },
-    { id: 'crypto', name: 'Cryptocurrency • العملات الرقمية', icon: Coins },
-    { id: 'real_estate', name: 'Real Estate • العقارات', icon: Building },
-    { id: 'gold', name: 'Gold • الذهب', icon: DollarSign },
-    { id: 'bonds', name: 'Bonds • السندات', icon: Landmark },
-    { id: 'etf', name: 'ETFs • صناديق المؤشرات', icon: Briefcase }
-  ];
-
-  const assetsByCountryAndType: Record<string, Record<string, string[]>> = {
-    egypt: {
-      stocks: ['Commercial International Bank (COMI)', 'Telecom Egypt (ETEL)', 'Credit Agricole Egypt (CIBE)'],
-      crypto: ['Bitcoin', 'Ethereum', 'Binance Coin'],
-      real_estate: ['Cairo Residential', 'Alexandria Commercial', 'New Capital Office'],
-      gold: ['Egyptian Gold Bars', 'Gold Jewelry', 'Gold Coins'],
-      bonds: ['Government Bonds', 'Corporate Bonds'],
-      etf: ['EGX30 ETF', 'Real Estate ETF']
-    },
-    saudi: {
-      stocks: ['Saudi Aramco (2222)', 'SABIC (2010)', 'STC (7010)', 'Al Rajhi Bank (1120)'],
-      crypto: ['Bitcoin', 'Ethereum', 'Binance Coin'],
-      real_estate: ['Riyadh Residential', 'Jeddah Commercial', 'Dammam Industrial'],
-      gold: ['Saudi Gold', 'Gold Bars', 'Gold Coins'],
-      bonds: ['Government Sukuk', 'Corporate Sukuk'],
-      etf: ['Tadawul All Share ETF', 'REIT ETF']
-    },
-    uae: {
-      stocks: ['Emaar Properties (EMAAR)', 'Emirates NBD (ENBD)', 'ADCB (ADCB)', 'Dubai Islamic Bank (DIB)'],
-      crypto: ['Bitcoin', 'Ethereum', 'Binance Coin'],
-      real_estate: ['Dubai Marina', 'Abu Dhabi Corniche', 'Sharjah City Centre'],
-      gold: ['UAE Gold', 'Dubai Gold', 'Gold Bars'],
-      bonds: ['UAE Sukuk', 'Corporate Bonds'],
-      etf: ['DFM General Index ETF', 'ADX General Index ETF']
-    },
-    kuwait: {
-      stocks: ['National Bank of Kuwait (NBK)', 'Zain Kuwait (ZAIN)', 'Kuwait Finance House (KFH)'],
-      crypto: ['Bitcoin', 'Ethereum', 'Binance Coin'],
-      real_estate: ['Kuwait City', 'Hawalli', 'Ahmadi'],
-      gold: ['Kuwaiti Gold', 'Gold Bars', 'Gold Jewelry'],
-      bonds: ['Government Bonds', 'Corporate Bonds'],
-      etf: ['Kuwait All Share ETF']
+  const handleAssetSelect = (asset: any, type: string) => {
+    setSelectedAssetType(type);
+    setSelectedAsset(asset);
+    
+    // Set default values based on asset type and current market price
+    if (asset.price || asset.current_price || asset.price_usd) {
+      const currentPrice = asset.price || asset.current_price || asset.price_usd || asset.exchange_rate;
+      setPurchasePrice(currentPrice?.toString() || '');
     }
+    
+    nextStep();
   };
 
-  const citiesByCountry: Record<string, string[]> = {
-    egypt: ['Cairo', 'Alexandria', 'Giza', 'Luxor', 'Aswan', 'New Administrative Capital'],
-    saudi: ['Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar'],
-    uae: ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Fujairah', 'Ras Al Khaimah'],
-    kuwait: ['Kuwait City', 'Hawalli', 'Ahmadi', 'Jahra', 'Mubarak Al-Kabeer', 'Farwaniya']
-  };
-
-  const districtsByCity: Record<string, string[]> = {
-    'Cairo': ['Zamalek', 'Maadi', 'Heliopolis', 'New Cairo', 'Nasr City'],
-    'Dubai': ['Marina', 'Downtown', 'Business Bay', 'JBR', 'Palm Jumeirah'],
-    'Riyadh': ['King Fahd District', 'Olaya', 'Al Malaz', 'Al Naseem', 'King Abdullah Financial District'],
-    'Kuwait City': ['Salmiya', 'Hawalli', 'Jabriya', 'Mangaf', 'Fintas']
-  };
-
-  const propertyTypes = [
-    { id: 'residential', name: 'Residential • سكني' },
-    { id: 'commercial', name: 'Commercial • تجاري' },
-    { id: 'land', name: 'Land • أرض' },
-    { id: 'industrial', name: 'Industrial • صناعي' }
-  ];
+  // Real market data will be loaded from AssetBrowser component
 
   const saveAsset = async () => {
     if (!user) return;
@@ -144,20 +75,41 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
       }
 
       // Prepare asset data
+      const getAssetName = () => {
+        if (selectedAsset.name) return selectedAsset.name;
+        if (selectedAsset.product_name) return selectedAsset.product_name;
+        if (selectedAsset.neighborhood_name) return selectedAsset.neighborhood_name + ', ' + selectedAsset.city_name;
+        return 'Unknown Asset';
+      };
+
+      const getCurrentPrice = () => {
+        return selectedAsset.price || 
+               selectedAsset.current_price || 
+               selectedAsset.price_usd || 
+               selectedAsset.exchange_rate || 
+               parseFloat(purchasePrice) || 0;
+      };
+
       const assetData = {
         portfolio_id: portfolio.id,
         user_id: user.id,
-        country: selectedCountry,
+        country: selectedAsset.country || 'Unknown',
         asset_type: selectedAssetType,
-        asset_name: selectedAsset,
+        asset_name: getAssetName(),
+        symbol: selectedAsset.symbol || null,
         quantity: parseFloat(quantity) || 1,
         purchase_price: parseFloat(purchasePrice) || 0,
-        current_price: parseFloat(purchasePrice) || 0, // Initially same as purchase price
+        current_price: getCurrentPrice(),
         purchase_date: purchaseDate?.toISOString().split('T')[0],
-        city: selectedAssetType === 'real_estate' ? selectedCity : null,
-        district: selectedAssetType === 'real_estate' ? selectedDistrict : null,
-        property_type: selectedAssetType === 'real_estate' ? propertyType : null,
-        area_sqm: selectedAssetType === 'real_estate' ? parseFloat(area) || null : null,
+        city: selectedAsset.city_name || null,
+        district: selectedAsset.neighborhood_name || null,
+        property_type: selectedAsset.property_type || null,
+        area_sqm: selectedAsset.area_sqm || null,
+        metadata: {
+          original_asset_id: selectedAsset.id,
+          source: selectedAsset.source || selectedAsset.exchange || null,
+          additional_data: selectedAsset
+        }
       };
 
       const { error } = await supabase.from('assets').insert(assetData);
@@ -166,7 +118,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
       toast({
         title: "Asset Added Successfully!",
-        description: `${selectedAsset} has been added to your portfolio.`,
+        description: `${getAssetName()} has been added to your portfolio.`,
       });
 
       resetForm();
@@ -185,20 +137,15 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
   const resetForm = () => {
     setCurrentStep(1);
-    setSelectedCountry('');
     setSelectedAssetType('');
-    setSelectedAsset('');
-    setSelectedCity('');
-    setSelectedDistrict('');
-    setPropertyType('');
-    setArea('');
+    setSelectedAsset(null);
     setQuantity('');
     setPurchasePrice('');
     setPurchaseDate(undefined);
   };
 
   const nextStep = () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -211,14 +158,8 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 1: return selectedCountry !== '';
-      case 2: return selectedAssetType !== '';
-      case 3: 
-        if (selectedAssetType === 'real_estate') {
-          return selectedCity !== '' && selectedDistrict !== '' && propertyType !== '' && area !== '';
-        }
-        return selectedAsset !== '';
-      case 4: return quantity !== '' && purchasePrice !== '' && purchaseDate !== undefined;
+      case 1: return selectedAsset !== null;
+      case 2: return quantity !== '' && purchasePrice !== '' && purchaseDate !== undefined;
       default: return false;
     }
   };
@@ -229,28 +170,14 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-2xl font-bold mb-2">Select Country</h3>
-              <p className="text-muted-foreground">Choose the market where you want to invest</p>
+              <h3 className="text-2xl font-bold mb-2">Browse & Select Assets</h3>
+              <p className="text-muted-foreground">Choose from real market data across MENA region</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {countries.map((country) => (
-                <Card
-                  key={country.code}
-                  className={`cursor-pointer transition-all duration-300 hover:scale-105 ${
-                    selectedCountry === country.code 
-                      ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20' 
-                      : 'glass-card hover:border-primary/50'
-                  }`}
-                  onClick={() => setSelectedCountry(country.code)}
-                >
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-3">{country.flag}</div>
-                    <h4 className="font-semibold text-lg" dir="auto">{country.name}</h4>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <AssetBrowser 
+              onAssetSelect={handleAssetSelect}
+              selectedAssetType={selectedAssetType}
+            />
           </div>
         );
 
@@ -258,140 +185,40 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-2xl font-bold mb-2">Select Asset Type</h3>
-              <p className="text-muted-foreground">What type of investment are you adding?</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {assetTypes.map((type) => {
-                const Icon = type.icon;
-                return (
-                  <Card
-                    key={type.id}
-                    className={`cursor-pointer transition-all duration-300 hover:scale-105 ${
-                      selectedAssetType === type.id 
-                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20' 
-                        : 'glass-card hover:border-primary/50'
-                    }`}
-                    onClick={() => setSelectedAssetType(type.id)}
-                  >
-                    <CardContent className="p-6 text-center">
-                      <Icon className="w-12 h-12 mx-auto mb-3 text-primary" />
-                      <h4 className="font-semibold" dir="auto">{type.name}</h4>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        );
-
-      case 3:
-        if (selectedAssetType === 'real_estate') {
-          return (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h3 className="text-2xl font-bold mb-2">Real Estate Details</h3>
-                <p className="text-muted-foreground">Provide details about your property</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Select value={selectedCity} onValueChange={setSelectedCity}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select city" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {citiesByCountry[selectedCountry]?.map((city) => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="district">District</Label>
-                  <Select value={selectedDistrict} onValueChange={setSelectedDistrict} disabled={!selectedCity}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select district" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {districtsByCity[selectedCity]?.map((district) => (
-                        <SelectItem key={district} value={district}>{district}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="propertyType">Property Type</Label>
-                  <Select value={propertyType} onValueChange={setPropertyType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select property type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {propertyTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="area">Area (Square Meters)</Label>
-                  <Input
-                    id="area"
-                    type="number"
-                    placeholder="Enter area in m²"
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold mb-2">Select Asset</h3>
-              <p className="text-muted-foreground">Choose the specific asset to add</p>
-            </div>
-            
-            <div className="space-y-3">
-              {assetsByCountryAndType[selectedCountry]?.[selectedAssetType]?.map((asset) => (
-                <Card
-                  key={asset}
-                  className={`cursor-pointer transition-all duration-300 hover:scale-105 ${
-                    selectedAsset === asset 
-                      ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20' 
-                      : 'glass-card hover:border-primary/50'
-                  }`}
-                  onClick={() => setSelectedAsset(asset)}
-                >
-                  <CardContent className="p-4">
-                    <h4 className="font-semibold">{asset}</h4>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
               <h3 className="text-2xl font-bold mb-2">Purchase Details</h3>
               <p className="text-muted-foreground">Enter your investment details</p>
             </div>
+
+            {selectedAsset && (
+              <Card className="bg-secondary/20 border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold">
+                        {selectedAsset.name || selectedAsset.product_name || 
+                         (selectedAsset.neighborhood_name + ', ' + selectedAsset.city_name)}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAsset.symbol || selectedAsset.bank_name} • {selectedAssetType}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">Current Price</p>
+                      <p className="text-lg">
+                        {selectedAsset.price || selectedAsset.current_price || 
+                         selectedAsset.price_usd || selectedAsset.exchange_rate || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="quantity">
-                  {selectedAssetType === 'real_estate' ? 'Number of Properties' : 'Quantity/Shares'}
+                  {selectedAssetType === 'real_estate' ? 'Number of Properties' : 
+                   selectedAssetType === 'banking' ? 'Investment Amount' : 'Quantity/Shares'}
                 </Label>
                 <Input
                   id="quantity"
@@ -441,7 +268,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
               {quantity && purchasePrice && (
                 <div className="md:col-span-2">
-                  <Card className="glass-card">
+                  <Card className="bg-primary/5 border-primary/20">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Total Investment:</span>

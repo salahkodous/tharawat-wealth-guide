@@ -15,6 +15,115 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const getMarketDataSummary = async (supabase: any): Promise<MarketDataSummary> => {
+  try {
+    // Get stocks data
+    const { data: stocks } = await supabase
+      .from('stocks')
+      .select('name, symbol, price, change_percent, country, market_cap')
+      .order('market_cap', { ascending: false })
+      .limit(10);
+
+    // Get crypto data
+    const { data: crypto } = await supabase
+      .from('cryptocurrencies')
+      .select('name, symbol, price_usd, change_percentage_24h, market_cap, rank')
+      .order('rank', { ascending: true })
+      .limit(10);
+
+    // Get real estate data
+    const { data: realEstate } = await supabase
+      .from('real_estate_prices')
+      .select('city_name, neighborhood_name, avg_price_per_meter, property_type')
+      .order('avg_price_per_meter', { ascending: false })
+      .limit(10);
+
+    // Get bonds data
+    const { data: bonds } = await supabase
+      .from('bonds')
+      .select('name, bond_type, yield_to_maturity, current_price, issuer')
+      .order('yield_to_maturity', { ascending: false });
+
+    // Get ETFs data
+    const { data: etfs } = await supabase
+      .from('etfs')
+      .select('name, symbol, price, change_percentage, market_cap, category')
+      .order('market_cap', { ascending: false });
+
+    // Get gold prices
+    const { data: goldPrices } = await supabase
+      .from('gold_prices')
+      .select('price_24k_egp, change_percentage_24h, source')
+      .order('last_updated', { ascending: false })
+      .limit(1);
+
+    // Get currency rates
+    const { data: currencyRates } = await supabase
+      .from('currency_rates')
+      .select('base_currency, target_currency, exchange_rate, change_percentage_24h')
+      .in('base_currency', ['USD', 'EUR', 'GBP'])
+      .order('last_updated', { ascending: false })
+      .limit(10);
+
+    // Get bank products
+    const { data: bankProducts } = await supabase
+      .from('bank_products')
+      .select('bank_name, product_name, interest_rate, product_type, minimum_amount')
+      .eq('is_active', true)
+      .order('interest_rate', { ascending: false })
+      .limit(10);
+
+    return {
+      stocks: {
+        total: stocks?.length || 0,
+        countries: [...new Set(stocks?.map(s => s.country) || [])],
+        top_performers: stocks || []
+      },
+      crypto: {
+        total: crypto?.length || 0,
+        top_by_market_cap: crypto || []
+      },
+      real_estate: {
+        total_neighborhoods: realEstate?.length || 0,
+        cities: [...new Set(realEstate?.map(r => r.city_name) || [])],
+        avg_price_ranges: realEstate || []
+      },
+      bonds: {
+        total: bonds?.length || 0,
+        avg_yield: bonds?.reduce((sum, b) => sum + (b.yield_to_maturity || 0), 0) / (bonds?.length || 1),
+        types: [...new Set(bonds?.map(b => b.bond_type) || [])]
+      },
+      etfs: {
+        total: etfs?.length || 0,
+        categories: [...new Set(etfs?.map(e => e.category) || [])]
+      },
+      gold_prices: {
+        current_24k: goldPrices?.[0]?.price_24k_egp || null,
+        change_24h: goldPrices?.[0]?.change_percentage_24h || null
+      },
+      currency_rates: {
+        major_pairs: currencyRates || []
+      },
+      bank_products: {
+        total: bankProducts?.length || 0,
+        best_rates: bankProducts || []
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching market data:', error);
+    return {
+      stocks: { total: 0, countries: [], top_performers: [] },
+      crypto: { total: 0, top_by_market_cap: [] },
+      real_estate: { total_neighborhoods: 0, cities: [], avg_price_ranges: [] },
+      bonds: { total: 0, avg_yield: 0, types: [] },
+      etfs: { total: 0, categories: [] },
+      gold_prices: { current_24k: null, change_24h: null },
+      currency_rates: { major_pairs: [] },
+      bank_products: { total: 0, best_rates: [] }
+    };
+  }
+};
+
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 interface PendingAction {
