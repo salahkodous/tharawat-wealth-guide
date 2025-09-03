@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,40 +20,178 @@ import {
 } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useUserCountry } from '@/hooks/useUserCountry';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const EnhancedPortfolioOverview = () => {
-  const { formatAmount } = useCurrency();
+  const { formatAmount, convertAmount, currency } = useCurrency();
+  const { user } = useAuth();
   const { userCountry } = useUserCountry();
   const [selectedTab, setSelectedTab] = useState('overview');
+  const [assets, setAssets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const portfolioMetrics = {
-    totalValue: 2450000,
-    dayChange: 18500,
-    dayChangePercent: 0.76,
-    totalReturn: 245000,
-    totalReturnPercent: 11.1,
-    localAllocation: 68.5,
-    internationalAllocation: 31.5,
-    riskScore: 7.2,
-    sharpeRatio: 1.8,
-    diversificationScore: 82
+  useEffect(() => {
+    fetchAssets();
+  }, [user]);
+
+  const fetchAssets = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from('assets')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      setAssets(data || []);
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const assetBreakdown = [
-    { type: 'Real Estate', value: 1225000, allocation: 50, change: 8.2, icon: Building2, color: 'text-success' },
-    { type: 'Stocks', value: 735000, allocation: 30, change: 12.5, icon: TrendingUp, color: 'text-primary' },
-    { type: 'Bonds', value: 294000, allocation: 12, change: 4.1, icon: Home, color: 'text-purple-400' },
-    { type: 'Gold', value: 147000, allocation: 6, change: -2.3, icon: DollarSign, color: 'text-warning' },
-    { type: 'Crypto', value: 49000, allocation: 2, change: 23.7, icon: Factory, color: 'text-orange-400' }
-  ];
+  const getAssetCurrency = (asset: any) => {
+    // Return the currency based on the asset's country or type
+    if (asset.country === 'Egypt') return 'EGP';
+    if (asset.country === 'Saudi Arabia') return 'SAR';
+    if (asset.country === 'UAE') return 'AED';
+    if (asset.country === 'Qatar') return 'QAR';
+    if (asset.country === 'Kuwait') return 'KWD';
+    return 'USD'; // Default fallback
+  };
 
-  const geographicBreakdown = [
-    { region: userCountry?.name || 'Local', flag: userCountry?.flag || '🏠', value: 1678250, allocation: 68.5 },
-    { region: 'Saudi Arabia', flag: '🇸🇦', value: 490000, allocation: 20 },
-    { region: 'Egypt', flag: '🇪🇬', value: 171500, allocation: 7 },
-    { region: 'Qatar', flag: '🇶🇦', value: 73500, allocation: 3 },
-    { region: 'Global', flag: '🌍', value: 36750, allocation: 1.5 }
-  ];
+  const portfolioMetrics = {
+    totalValue: assets.reduce((sum, asset) => {
+      const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
+      return sum + convertAmount(assetValue, getAssetCurrency(asset), currency);
+    }, 0),
+    dayChange: assets.reduce((sum, asset) => {
+      const currentValue = (asset.current_price || 0) * (asset.quantity || 0);
+      const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
+      const change = currentValue - purchaseValue;
+      return sum + convertAmount(change, getAssetCurrency(asset), currency);
+    }, 0),
+    dayChangePercent: assets.length > 0 ? 
+      (assets.reduce((sum, asset) => {
+        const currentValue = (asset.current_price || 0) * (asset.quantity || 0);
+        const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
+        return sum + (purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0);
+      }, 0) / assets.length) : 0,
+    totalReturn: assets.reduce((sum, asset) => {
+      const currentValue = (asset.current_price || 0) * (asset.quantity || 0);
+      const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
+      const profit = currentValue - purchaseValue;
+      return sum + convertAmount(profit, getAssetCurrency(asset), currency);
+    }, 0),
+    totalReturnPercent: 0, // Will calculate
+    riskScore: 7.2,
+    sharpeRatio: 1.8
+  };
+
+  // Calculate total return percentage
+  const totalInvested = assets.reduce((sum, asset) => {
+    const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
+    return sum + convertAmount(purchaseValue, getAssetCurrency(asset), currency);
+  }, 0);
+  
+  portfolioMetrics.totalReturnPercent = totalInvested > 0 
+    ? (portfolioMetrics.totalReturn / totalInvested) * 100 
+    : 0;
+
+  const assetBreakdown = assets.reduce((acc: any[], asset) => {
+    const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
+    const convertedValue = convertAmount(assetValue, getAssetCurrency(asset), currency);
+    
+    const assetType = asset.asset_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Unknown';
+    const existingType = acc.find(item => item.type === assetType);
+    
+    if (existingType) {
+      existingType.value += convertedValue;
+    } else {
+      acc.push({
+        type: assetType,
+        value: convertedValue,
+        allocation: 0, // Will calculate after
+        change: Math.random() * 20 - 10, // Mock change for now
+        icon: getAssetIcon(asset.asset_type),
+        color: getAssetColor(asset.asset_type)
+      });
+    }
+    return acc;
+  }, []);
+
+  // Calculate allocations
+  const totalPortfolioValue = assetBreakdown.reduce((sum, item) => sum + item.value, 0);
+  assetBreakdown.forEach(item => {
+    item.allocation = totalPortfolioValue > 0 ? (item.value / totalPortfolioValue) * 100 : 0;
+  });
+
+  const geographicBreakdown = assets.reduce((acc: any[], asset) => {
+    const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
+    const convertedValue = convertAmount(assetValue, getAssetCurrency(asset), currency);
+    
+    const country = asset.country || 'Unknown';
+    const existingCountry = acc.find(item => item.region === country);
+    if (existingCountry) {
+      existingCountry.value += convertedValue;
+    } else {
+      acc.push({
+        region: country,
+        flag: getCountryFlag(country),
+        value: convertedValue,
+        allocation: 0 // Will calculate after
+      });
+    }
+    return acc;
+  }, []);
+
+  // Calculate geographic allocations
+  geographicBreakdown.forEach(item => {
+    item.allocation = totalPortfolioValue > 0 ? (item.value / totalPortfolioValue) * 100 : 0;
+  });
+
+  function getAssetIcon(assetType: string) {
+    switch (assetType) {
+      case 'real_estate': return Building2;
+      case 'stocks': return TrendingUp;
+      case 'bonds': return Home;
+      case 'gold': return DollarSign;
+      case 'cryptocurrencies': return Factory;
+      case 'banking': return Home;
+      default: return Globe;
+    }
+  }
+
+  function getAssetColor(assetType: string) {
+    switch (assetType) {
+      case 'real_estate': return 'text-success';
+      case 'stocks': return 'text-primary';
+      case 'bonds': return 'text-purple-400';
+      case 'gold': return 'text-warning';
+      case 'cryptocurrencies': return 'text-orange-400';
+      case 'banking': return 'text-blue-400';
+      default: return 'text-foreground';
+    }
+  }
+
+  function getCountryFlag(country: string) {
+    switch (country) {
+      case 'Egypt': return '🇪🇬';
+      case 'Saudi Arabia': return '🇸🇦';
+      case 'Qatar': return '🇶🇦';
+      case 'UAE': return '🇦🇪';
+      case 'Kuwait': return '🇰🇼';
+      case 'Jordan': return '🇯🇴';
+      case 'Lebanon': return '🇱🇧';
+      case 'Morocco': return '🇲🇦';
+      case 'Tunisia': return '🇹🇳';
+      case 'Algeria': return '🇩🇿';
+      case 'Iraq': return '🇮🇶';
+      default: return '🌍';
+    }
+  }
 
   const performanceMetrics = [
     { label: 'Beta', value: '1.15', description: 'Market sensitivity', status: 'neutral' },
@@ -68,6 +206,23 @@ const EnhancedPortfolioOverview = () => {
     { name: 'Sector Risk', level: 'High', color: 'text-destructive', description: '50% in real estate' },
     { name: 'Liquidity Risk', level: 'Medium', color: 'text-warning', description: 'Mixed liquidity profile' }
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-muted-foreground">Loading portfolio...</div>
+      </div>
+    );
+  }
+
+  if (assets.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-lg font-medium text-muted-foreground mb-2">No assets in portfolio</div>
+        <div className="text-sm text-muted-foreground">Add some investments to see your portfolio overview.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -97,7 +252,7 @@ const EnhancedPortfolioOverview = () => {
                     <TrendingDown className="w-4 h-4 text-destructive mr-1" />
                   )}
                   <span className={portfolioMetrics.dayChangePercent > 0 ? 'text-success' : 'text-destructive'}>
-                    {formatAmount(portfolioMetrics.dayChange)} ({portfolioMetrics.dayChangePercent}%)
+                    {formatAmount(portfolioMetrics.dayChange)} ({portfolioMetrics.dayChangePercent.toFixed(2)}%)
                   </span>
                 </div>
               </CardContent>
@@ -110,10 +265,10 @@ const EnhancedPortfolioOverview = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-success">
-                  +{formatAmount(portfolioMetrics.totalReturn)}
+                  {portfolioMetrics.totalReturn >= 0 ? '+' : ''}{formatAmount(portfolioMetrics.totalReturn)}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  +{portfolioMetrics.totalReturnPercent}% all time
+                  {portfolioMetrics.totalReturnPercent >= 0 ? '+' : ''}{portfolioMetrics.totalReturnPercent.toFixed(1)}% all time
                 </p>
               </CardContent>
             </Card>
@@ -149,13 +304,13 @@ const EnhancedPortfolioOverview = () => {
                         <IconComponent className={`w-5 h-5 ${asset.color}`} />
                         <div>
                           <div className="font-medium">{asset.type}</div>
-                          <div className="text-sm text-muted-foreground">{asset.allocation}%</div>
+                          <div className="text-sm text-muted-foreground">{asset.allocation.toFixed(1)}%</div>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold">{formatAmount(asset.value)}</div>
                         <div className={`text-sm ${asset.change > 0 ? 'text-success' : 'text-destructive'}`}>
-                          {asset.change > 0 ? '+' : ''}{asset.change}%
+                          {asset.change > 0 ? '+' : ''}{asset.change.toFixed(1)}%
                         </div>
                       </div>
                     </div>
@@ -178,7 +333,7 @@ const EnhancedPortfolioOverview = () => {
                       <span className="text-2xl">{geo.flag}</span>
                       <div>
                         <div className="font-medium">{geo.region}</div>
-                        <div className="text-sm text-muted-foreground">{geo.allocation}%</div>
+                        <div className="text-sm text-muted-foreground">{geo.allocation.toFixed(1)}%</div>
                       </div>
                     </div>
                     <div className="font-semibold">{formatAmount(geo.value)}</div>
@@ -200,7 +355,7 @@ const EnhancedPortfolioOverview = () => {
                   <div key={item.type} className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">{item.type}</span>
-                      <span className={`text-sm font-medium ${item.color}`}>{item.allocation}%</span>
+                      <span className={`text-sm font-medium ${item.color}`}>{item.allocation.toFixed(1)}%</span>
                     </div>
                     <Progress value={item.allocation} className="h-2" />
                   </div>
@@ -220,7 +375,7 @@ const EnhancedPortfolioOverview = () => {
                         <span>{item.flag}</span>
                         <span className="text-sm font-medium">{item.region}</span>
                       </div>
-                      <span className="text-sm font-medium text-primary">{item.allocation}%</span>
+                      <span className="text-sm font-medium text-primary">{item.allocation.toFixed(1)}%</span>
                     </div>
                     <Progress value={item.allocation} className="h-2" />
                   </div>
