@@ -1,99 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TrendingUp, TrendingDown, MoreHorizontal, Edit3, BarChart3, Trash2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, MoreHorizontal, Edit3, BarChart3, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/hooks/useCurrency';
 import PortfolioManager from '@/components/PortfolioManager';
 
 const PortfolioTable = () => {
+  const { user } = useAuth();
+  const { formatAmount, convertAmount, currency } = useCurrency();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<string | null>(null);
+  const [assets, setAssets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const holdings = [
-    {
-      id: 1,
-      name: 'Saudi Aramco',
-      symbol: 'ARAMCO',
-      type: 'Stock',
-      country: 'Saudi Arabia',
-      quantity: 100,
-      avgPrice: 32.50,
-      currentPrice: 34.20,
-      value: 3420,
-      change: 5.23,
-      changePercent: 1.85
-    },
-    {
-      id: 2,
-      name: 'Commercial Intl Bank',
-      symbol: 'COMI',
-      type: 'Stock',
-      country: 'Egypt',
-      quantity: 500,
-      avgPrice: 45.30,
-      currentPrice: 47.10,
-      value: 23550,
-      change: 900,
-      changePercent: 3.97
-    },
-    {
-      id: 3,
-      name: 'Dubai Properties',
-      symbol: 'Real Estate',
-      type: 'Real Estate',
-      country: 'UAE',
-      quantity: 1,
-      avgPrice: 850000,
-      currentPrice: 920000,
-      value: 920000,
-      change: 70000,
-      changePercent: 8.24
-    },
-    {
-      id: 4,
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      type: 'Crypto',
-      country: 'Global',
-      quantity: 0.5,
-      avgPrice: 45000,
-      currentPrice: 43200,
-      value: 21600,
-      change: -900,
-      changePercent: -2.04
-    },
-    {
-      id: 5,
-      name: 'Kuwait Finance House',
-      symbol: 'KFH',
-      type: 'Stock',
-      country: 'Kuwait',
-      quantity: 200,
-      avgPrice: 1.85,
-      currentPrice: 1.92,
-      value: 384,
-      change: 14,
-      changePercent: 3.78
-    }
-  ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
+  useEffect(() => {
+    if (user) {
+      fetchAssets();
+    }
+  }, [user]);
+
+  const fetchAssets = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('assets')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      setAssets(data || []);
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load portfolio assets.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const totalValue = holdings.reduce((sum, holding) => sum + holding.value, 0);
-  const totalChange = holdings.reduce((sum, holding) => sum + holding.change, 0);
-  const totalChangePercent = (totalChange / (totalValue - totalChange)) * 100;
+  const getAssetCurrency = (asset: any) => {
+    if (asset.country === 'Egypt') return 'EGP';
+    if (asset.country === 'Saudi Arabia') return 'SAR';
+    if (asset.country === 'UAE') return 'AED';
+    if (asset.country === 'Qatar') return 'QAR';
+    if (asset.country === 'Kuwait') return 'KWD';
+    return 'USD';
+  };
+
+  const calculateAssetMetrics = (asset: any) => {
+    const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
+    const currentValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
+    const change = currentValue - purchaseValue;
+    const changePercent = purchaseValue > 0 ? (change / purchaseValue) * 100 : 0;
+
+    return {
+      value: currentValue,
+      change,
+      changePercent,
+      purchaseValue
+    };
+  };
+
+  const holdings = assets.map(asset => {
+    const metrics = calculateAssetMetrics(asset);
+    return {
+      id: asset.id,
+      name: asset.asset_name,
+      symbol: asset.symbol || asset.asset_type,
+      type: asset.asset_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Unknown',
+      country: asset.country,
+      quantity: asset.quantity,
+      avgPrice: asset.purchase_price,
+      currentPrice: asset.current_price || asset.purchase_price,
+      value: metrics.value,
+      change: metrics.change,
+      changePercent: metrics.changePercent,
+      currency: getAssetCurrency(asset),
+      rawAsset: asset
+    };
+  });
+
+  const totalValue = holdings.reduce((sum, holding) => {
+    return sum + convertAmount(holding.value, holding.currency, currency);
+  }, 0);
+  
+  const totalChange = holdings.reduce((sum, holding) => {
+    return sum + convertAmount(holding.change, holding.currency, currency);
+  }, 0);
+  
+  const totalPurchaseValue = holdings.reduce((sum, holding) => {
+    const purchaseValue = (holding.avgPrice || 0) * (holding.quantity || 0);
+    return sum + convertAmount(purchaseValue, holding.currency, currency);
+  }, 0);
+  
+  const totalChangePercent = totalPurchaseValue > 0 ? (totalChange / totalPurchaseValue) * 100 : 0;
 
   const handleEdit = (asset: any) => {
     setSelectedAsset(asset);
@@ -101,7 +114,7 @@ const PortfolioTable = () => {
   };
 
   const handleAnalyze = async (asset: any) => {
-    setIsAnalyzing(asset.id.toString());
+    setIsAnalyzing(asset.id);
     
     try {
       toast({
@@ -116,7 +129,8 @@ const PortfolioTable = () => {
           currentPrice: asset.currentPrice,
           avgPrice: asset.avgPrice,
           quantity: asset.quantity,
-          country: asset.country
+          country: asset.country,
+          currency: asset.currency
         }
       });
 
@@ -141,12 +155,65 @@ const PortfolioTable = () => {
 
   const handleDelete = async (asset: any) => {
     if (window.confirm(`Are you sure you want to delete ${asset.name} from your portfolio?`)) {
-      toast({
-        title: "Asset Removed",
-        description: `${asset.name} has been removed from your portfolio.`,
-      });
+      try {
+        const { error } = await supabase
+          .from('assets')
+          .delete()
+          .eq('id', asset.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Asset Removed",
+          description: `${asset.name} has been removed from your portfolio.`,
+        });
+
+        // Refresh assets list
+        fetchAssets();
+      } catch (error) {
+        console.error('Error deleting asset:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete asset. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <Card className="glass-card">
+        <CardContent className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <span className="text-lg text-muted-foreground">Loading portfolio...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card className="glass-card">
+        <CardContent className="text-center py-12">
+          <div className="text-lg text-muted-foreground">Please sign in to view your portfolio.</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (assets.length === 0) {
+    return (
+      <Card className="glass-card">
+        <CardContent className="text-center py-12">
+          <div className="text-lg font-medium text-muted-foreground mb-2">Your portfolio is empty</div>
+          <div className="text-sm text-muted-foreground">Add some investments to get started.</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-card">
@@ -154,16 +221,16 @@ const PortfolioTable = () => {
         <div className="flex items-center justify-between">
           <CardTitle>Portfolio Holdings</CardTitle>
           <div className="text-right">
-            <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
+            <div className="text-2xl font-bold">{formatAmount(totalValue)}</div>
             <div className={`flex items-center gap-1 text-sm font-medium ${
-              totalChange >= 0 ? 'text-green-500' : 'text-red-500'
+              totalChange >= 0 ? 'text-success' : 'text-destructive'
             }`}>
               {totalChange >= 0 ? (
                 <TrendingUp className="w-4 h-4" />
               ) : (
                 <TrendingDown className="w-4 h-4" />
               )}
-              {formatCurrency(Math.abs(totalChange))} ({totalChangePercent.toFixed(2)}%)
+              {formatAmount(Math.abs(totalChange))} ({totalChangePercent.toFixed(2)}%)
             </div>
           </div>
         </div>
@@ -210,20 +277,20 @@ const PortfolioTable = () => {
                      holding.quantity.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(holding.avgPrice)}
+                    {formatAmount(holding.avgPrice, holding.currency)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(holding.currentPrice)}
+                    {formatAmount(holding.currentPrice, holding.currency)}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatCurrency(holding.value)}
+                    {formatAmount(holding.value, holding.currency)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className={`${
-                      holding.change >= 0 ? 'text-green-500' : 'text-red-500'
+                      holding.change >= 0 ? 'text-success' : 'text-destructive'
                     }`}>
                       <div className="font-medium">
-                        {holding.change >= 0 ? '+' : ''}{formatCurrency(holding.change)}
+                        {holding.change >= 0 ? '+' : ''}{formatAmount(holding.change, holding.currency)}
                       </div>
                       <div className="text-sm">
                         ({holding.change >= 0 ? '+' : ''}{holding.changePercent.toFixed(2)}%)
@@ -244,10 +311,10 @@ const PortfolioTable = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleAnalyze(holding)}
-                          disabled={isAnalyzing === holding.id.toString()}
+                          disabled={isAnalyzing === holding.id}
                         >
                           <BarChart3 className="w-4 h-4 mr-2" />
-                          {isAnalyzing === holding.id.toString() ? 'Analyzing...' : 'Analyze'}
+                          {isAnalyzing === holding.id ? 'Analyzing...' : 'Analyze'}
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleDelete(holding)}
@@ -274,7 +341,7 @@ const PortfolioTable = () => {
           <PortfolioManager 
             onAssetAdded={() => {
               setEditDialogOpen(false);
-              // Refresh portfolio data here if needed
+              fetchAssets(); // Refresh portfolio data
             }}
           />
         </DialogContent>
