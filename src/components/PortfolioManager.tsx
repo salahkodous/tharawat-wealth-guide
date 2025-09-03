@@ -34,6 +34,8 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
   const [quantity, setQuantity] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [purchaseDate, setPurchaseDate] = useState<Date>();
+  const [areaSize, setAreaSize] = useState('');
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleAssetSelect = (asset: any, type: string) => {
@@ -104,7 +106,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         city: selectedAsset.city_name || null,
         district: selectedAsset.neighborhood_name || null,
         property_type: selectedAsset.property_type || null,
-        area_sqm: selectedAsset.area_sqm || null,
+        area_sqm: parseFloat(areaSize) || selectedAsset.area_sqm || null,
         metadata: {
           original_asset_id: selectedAsset.id,
           source: selectedAsset.source || selectedAsset.exchange || null,
@@ -142,11 +144,40 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
     setQuantity('');
     setPurchasePrice('');
     setPurchaseDate(undefined);
+    setAreaSize('');
+    setCalculatedPrice(0);
   };
 
-  const nextStep = () => {
-    if (currentStep < 3) {
+  const nextStep = async () => {
+    if (currentStep < 4) {
+      // If moving to step 3 and it's real estate, calculate price
+      if (currentStep === 2 && selectedAssetType === 'real_estate' && areaSize) {
+        await calculateRealEstatePrice();
+      }
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const calculateRealEstatePrice = async () => {
+    if (!selectedAsset || !areaSize) return;
+    
+    try {
+      const { data: priceData } = await supabase
+        .from('real_estate_prices')
+        .select('avg_price_per_meter, min_price_per_meter, max_price_per_meter, currency')
+        .eq('neighborhood_slug', selectedAsset.neighborhood_slug || selectedAsset.slug)
+        .eq('city_name', selectedAsset.city_name)
+        .eq('property_type', selectedAsset.property_type || 'mixed')
+        .single();
+      
+      if (priceData) {
+        const pricePerMeter = priceData.avg_price_per_meter || 0;
+        const totalPrice = pricePerMeter * parseFloat(areaSize);
+        setCalculatedPrice(totalPrice);
+        setPurchasePrice(totalPrice.toString());
+      }
+    } catch (error) {
+      console.error('Error calculating real estate price:', error);
     }
   };
 
@@ -159,7 +190,12 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
   const canProceed = () => {
     switch (currentStep) {
       case 1: return selectedAsset !== null;
-      case 2: return quantity !== '' && purchasePrice !== '' && purchaseDate !== undefined;
+      case 2: 
+        if (selectedAssetType === 'real_estate') {
+          return quantity !== '' && areaSize !== '' && purchaseDate !== undefined;
+        }
+        return quantity !== '' && purchasePrice !== '' && purchaseDate !== undefined;
+      case 3: return true; // Review step
       default: return false;
     }
   };
@@ -229,16 +265,29 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="purchasePrice">Purchase Price (per unit)</Label>
-                <Input
-                  id="purchasePrice"
-                  type="number"
-                  placeholder="Enter purchase price"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(e.target.value)}
-                />
-              </div>
+              {selectedAssetType === 'real_estate' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="areaSize">Area (Square Meters)</Label>
+                  <Input
+                    id="areaSize"
+                    type="number"
+                    placeholder="Enter area in m²"
+                    value={areaSize}
+                    onChange={(e) => setAreaSize(e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="purchasePrice">Purchase Price (per unit)</Label>
+                  <Input
+                    id="purchasePrice"
+                    type="number"
+                    placeholder="Enter purchase price"
+                    value={purchasePrice}
+                    onChange={(e) => setPurchasePrice(e.target.value)}
+                  />
+                </div>
+              )}
 
               <div className="space-y-2 md:col-span-2">
                 <Label>Purchase Date</Label>
@@ -281,6 +330,74 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                 </div>
               )}
             </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-2">Review Investment</h3>
+              <p className="text-muted-foreground">Confirm your investment details</p>
+            </div>
+
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-lg">Investment Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Asset</Label>
+                    <p className="font-semibold">
+                      {selectedAsset?.name || selectedAsset?.product_name || 
+                       (selectedAsset?.neighborhood_name + ', ' + selectedAsset?.city_name)}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Type</Label>
+                    <p className="font-semibold capitalize">{selectedAssetType}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Quantity</Label>
+                    <p className="font-semibold">{quantity}</p>
+                  </div>
+                  {selectedAssetType === 'real_estate' && areaSize && (
+                    <div>
+                      <Label className="text-muted-foreground">Area</Label>
+                      <p className="font-semibold">{areaSize} m²</p>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-muted-foreground">
+                      {selectedAssetType === 'real_estate' ? 'Total Price' : 'Price per Unit'}
+                    </Label>
+                    <p className="font-semibold">
+                      {selectedAssetType === 'real_estate' ? 
+                        `$${calculatedPrice.toLocaleString()}` : 
+                        `$${purchasePrice}`}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Purchase Date</Label>
+                    <p className="font-semibold">
+                      {purchaseDate ? format(purchaseDate, "PPP") : "Not set"}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t">
+                  <div className="flex justify-between items-center text-lg">
+                    <span className="font-bold">Total Investment:</span>
+                    <span className="font-bold text-primary">
+                      ${selectedAssetType === 'real_estate' ? 
+                        (calculatedPrice * parseFloat(quantity || '1')).toLocaleString() :
+                        (parseFloat(quantity || '0') * parseFloat(purchasePrice || '0')).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         );
 
