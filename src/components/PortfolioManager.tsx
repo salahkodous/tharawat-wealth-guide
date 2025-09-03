@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import AssetBrowser from '@/components/AssetBrowser';
 
 interface PortfolioManagerProps {
@@ -28,6 +29,7 @@ interface PortfolioManagerProps {
 const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { formatCurrency } = useCurrencyConversion();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedAssetType, setSelectedAssetType] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
@@ -149,7 +151,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
   };
 
   const nextStep = async () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       // If moving to step 3 and it's real estate, calculate price
       if (currentStep === 2 && selectedAssetType === 'real_estate' && areaSize) {
         await calculateRealEstatePrice();
@@ -322,7 +324,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Total Investment:</span>
                         <span className="text-xl font-bold text-primary">
-                          ${(parseFloat(quantity) * parseFloat(purchasePrice)).toLocaleString()}
+                          {formatCurrency((parseFloat(quantity) * parseFloat(purchasePrice)), selectedAsset?.currency || 'EGP')}
                         </span>
                       </div>
                     </CardContent>
@@ -374,8 +376,8 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                     </Label>
                     <p className="font-semibold">
                       {selectedAssetType === 'real_estate' ? 
-                        `$${calculatedPrice.toLocaleString()}` : 
-                        `$${purchasePrice}`}
+                        formatCurrency(calculatedPrice, selectedAsset?.currency || 'EGP') : 
+                        formatCurrency(parseFloat(purchasePrice || '0'), selectedAsset?.currency || 'EGP')}
                     </p>
                   </div>
                   <div>
@@ -390,9 +392,9 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                   <div className="flex justify-between items-center text-lg">
                     <span className="font-bold">Total Investment:</span>
                     <span className="font-bold text-primary">
-                      ${selectedAssetType === 'real_estate' ? 
-                        (calculatedPrice * parseFloat(quantity || '1')).toLocaleString() :
-                        (parseFloat(quantity || '0') * parseFloat(purchasePrice || '0')).toLocaleString()}
+                      {selectedAssetType === 'real_estate' ? 
+                        formatCurrency((calculatedPrice * parseFloat(quantity || '1')), selectedAsset?.currency || 'EGP') :
+                        formatCurrency((parseFloat(quantity || '0') * parseFloat(purchasePrice || '0')), selectedAsset?.currency || 'EGP')}
                     </span>
                   </div>
                 </div>
@@ -416,14 +418,14 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         {/* Progress Steps */}
         <div className="flex justify-center mt-6">
           <div className="flex items-center space-x-4">
-            {[1, 2, 3, 4].map((step) => (
+            {[1, 2, 3].map((step) => (
               <React.Fragment key={step}>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                   step <= currentStep ? 'gradient-electric text-white' : 'bg-muted text-muted-foreground'
                 }`}>
                   {step}
                 </div>
-                {step < 4 && (
+                {step < 3 && (
                   <div className={`w-12 h-1 ${step < currentStep ? 'bg-primary' : 'bg-muted'}`} />
                 )}
               </React.Fragment>
@@ -447,7 +449,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
             Previous
           </Button>
 
-          {currentStep === 4 ? (
+          {currentStep === 3 ? (
             <Button 
               onClick={saveAsset}
               className="gradient-electric w-full max-w-xs"
