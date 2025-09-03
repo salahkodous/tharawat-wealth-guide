@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
 import { useSettings } from './useSettings';
+import { useCurrencyConversion } from './useCurrencyConversion';
 
 interface CurrencyContextType {
   currency: string;
-  formatAmount: (amount: number) => string;
+  formatAmount: (amount: number, fromCurrency?: string) => string;
+  convertAmount: (amount: number, fromCurrency: string, toCurrency?: string) => number;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -39,6 +41,7 @@ const currencySymbols: Record<string, string> = {
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { settings } = useSettings();
+  const { convertCurrency, formatCurrency } = useCurrencyConversion();
   const [currency, setCurrency] = useState('USD');
 
   useEffect(() => {
@@ -50,14 +53,22 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [user, settings.currency]);
 
-  const formatAmount = (amount: number): string => {
-    const symbol = currencySymbols[currency] || currency;
-    return `${symbol}${amount.toLocaleString()}`;
+  const formatAmount = (amount: number, fromCurrency?: string): string => {
+    if (fromCurrency && fromCurrency !== currency) {
+      const convertedAmount = convertCurrency(amount, fromCurrency, currency);
+      return formatCurrency(convertedAmount, currency);
+    }
+    return formatCurrency(amount, currency);
+  };
+
+  const convertAmount = (amount: number, fromCurrency: string, toCurrency?: string): number => {
+    return convertCurrency(amount, fromCurrency, toCurrency);
   };
 
   const value = {
     currency,
     formatAmount,
+    convertAmount,
   };
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;

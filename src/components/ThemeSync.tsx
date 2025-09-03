@@ -3,14 +3,13 @@ import { useTheme } from 'next-themes';
 import { useSettings } from '@/hooks/useSettings';
 
 export const ThemeSync = () => {
-  const { setTheme, theme } = useTheme();
+  const { setTheme } = useTheme();
   const { settings } = useSettings();
 
   useEffect(() => {
-    if (settings.theme && settings.theme !== theme) {
-      setTheme(settings.theme);
-    }
-  }, [settings.theme, setTheme, theme]);
+    // Force dark mode only
+    setTheme('dark');
+  }, [setTheme]);
 
   // Apply language direction
   useEffect(() => {

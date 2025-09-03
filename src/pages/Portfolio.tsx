@@ -20,7 +20,10 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioTable from '@/components/PortfolioTable';
 import PortfolioManager from '@/components/PortfolioManager';
+import PortfolioSummary from '@/components/PortfolioSummary';
+import EnhancedPortfolioOverview from '@/components/EnhancedPortfolioOverview';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface Asset {
   id: string;
@@ -46,6 +49,7 @@ interface Goal {
 }
 
 const Portfolio = () => {
+  const { formatAmount } = useCurrency();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,40 +166,42 @@ const Portfolio = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+              <Card className="glass-card border-primary/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-foreground">{formatAmount(totalValue)}</div>
                   <p className="text-xs text-muted-foreground">+2.5% from last month</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+              <Card className="glass-card border-success/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Gains</CardTitle>
                   <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-500">${totalGains.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-success">{formatAmount(totalGains)}</div>
                   <p className="text-xs text-muted-foreground">+12.5% return</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+              <Card className="glass-card border-primary/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Active Goals</CardTitle>
-                  <Target className="h-4 w-4 text-blue-500" />
+                  <Target className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{goals.length}</div>
+                  <div className="text-2xl font-bold text-foreground">{goals.length}</div>
                   <p className="text-xs text-muted-foreground">Financial objectives</p>
                 </CardContent>
               </Card>
             </div>
 
+            <EnhancedPortfolioOverview />
+            
             <PortfolioTable />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
