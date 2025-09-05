@@ -24,6 +24,32 @@ const PortfolioSummary = () => {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Define constants before they're used
+  const assetTypeIcons = {
+    stocks: TrendingUp,
+    real_estate: Building2,
+    gold: DollarSign,
+    crypto: Factory,
+    bonds: Home,
+    banking: Briefcase
+  };
+
+  const assetTypeColors = {
+    stocks: 'text-primary',
+    real_estate: 'text-success',
+    gold: 'text-warning',
+    crypto: 'text-orange-400',
+    bonds: 'text-purple-400',
+    banking: 'text-blue-400'
+  };
+
+  const countryFlags = {
+    'UAE': '🇦🇪', 'Saudi Arabia': '🇸🇦', 'Egypt': '🇪🇬', 'Qatar': '🇶🇦',
+    'Kuwait': '🇰🇼', 'Bahrain': '🇧🇭', 'Oman': '🇴🇲', 'Jordan': '🇯🇴',
+    'Lebanon': '🇱🇧', 'Morocco': '🇲🇦', 'Tunisia': '🇹🇳', 'Algeria': '🇩🇿',
+    'Iraq': '🇮🇶', 'US': '🇺🇸', 'UK': '🇬🇧', 'EU': '🇪🇺', 'GLOBAL': '🌍'
+  };
+
   useEffect(() => {
     if (user) {
       fetchAssets();
@@ -159,30 +185,6 @@ const PortfolioSummary = () => {
     color: 'text-primary'
   }));
 
-  const assetTypeIcons = {
-    stocks: TrendingUp,
-    real_estate: Building2,
-    gold: DollarSign,
-    crypto: Factory,
-    bonds: Home,
-    banking: Briefcase
-  };
-
-  const assetTypeColors = {
-    stocks: 'text-primary',
-    real_estate: 'text-success',
-    gold: 'text-warning',
-    crypto: 'text-orange-400',
-    bonds: 'text-purple-400',
-    banking: 'text-blue-400'
-  };
-
-  const countryFlags = {
-    'UAE': '🇦🇪', 'Saudi Arabia': '🇸🇦', 'Egypt': '🇪🇬', 'Qatar': '🇶🇦',
-    'Kuwait': '🇰🇼', 'Bahrain': '🇧🇭', 'Oman': '🇴🇲', 'Jordan': '🇯🇴',
-    'Lebanon': '🇱🇧', 'Morocco': '🇲🇦', 'Tunisia': '🇹🇳', 'Algeria': '🇩🇿',
-    'Iraq': '🇮🇶', 'US': '🇺🇸', 'UK': '🇬🇧', 'EU': '🇪🇺', 'GLOBAL': '🌍'
-  };
 
   if (loading) {
     return (
