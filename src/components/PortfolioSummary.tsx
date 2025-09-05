@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -15,69 +15,149 @@ import {
   Globe
 } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const PortfolioSummary = () => {
-  const { formatAmount } = useCurrency();
-  
-  const portfolioStats = [
-    { label: 'Total Value', value: formatAmount(125450), change: '+8.5%', positive: true },
-    { label: 'Today\'s Gain', value: '+' + formatAmount(2340), change: '+1.9%', positive: true },
-    { label: 'Total Return', value: '+' + formatAmount(15450), change: '+14.1%', positive: true },
-    { label: 'Assets', value: '12', change: '+2', positive: true }
-  ];
+  const { formatAmount, convertAmount } = useCurrency();
+  const { user } = useAuth();
+  const [assets, setAssets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const topHoldings = [
+  useEffect(() => {
+    if (user) {
+      fetchAssets();
+    }
+  }, [user]);
+
+  const fetchAssets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('assets')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      setAssets(data || []);
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAssetCurrency = (country: string) => {
+    const currencyMap: { [key: string]: string } = {
+      'UAE': 'AED', 'Saudi Arabia': 'SAR', 'Egypt': 'EGP', 'Qatar': 'QAR',
+      'Kuwait': 'KWD', 'Bahrain': 'BHD', 'Oman': 'OMR', 'Jordan': 'JOD',
+      'Lebanon': 'LBP', 'Morocco': 'MAD', 'Tunisia': 'TND', 'Algeria': 'DZD',
+      'Iraq': 'IQD', 'US': 'USD', 'UK': 'GBP', 'EU': 'EUR'
+    };
+    return currencyMap[country] || 'USD';
+  };
+
+  const calculateAssetMetrics = (asset: any) => {
+    const currency = getAssetCurrency(asset.country);
+    const value = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 1);
+    const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 1);
+    const change = value - purchaseValue;
+    const changePercent = purchaseValue > 0 ? ((change / purchaseValue) * 100) : 0;
+    
+    return { value, change, changePercent, currency };
+  };
+
+  const holdings = assets.map(asset => {
+    const metrics = calculateAssetMetrics(asset);
+    return {
+      name: asset.asset_name,
+      symbol: asset.symbol || asset.asset_name.substring(0, 6).toUpperCase(),
+      value: metrics.value,
+      change: metrics.change,
+      changePercent: metrics.changePercent,
+      type: asset.asset_type,
+      country: asset.country,
+      currency: metrics.currency
+    };
+  });
+
+  const totalValue = holdings.reduce((sum, holding) => 
+    sum + convertAmount(holding.value, holding.currency), 0);
+  const totalChange = holdings.reduce((sum, holding) => 
+    sum + convertAmount(holding.change, holding.currency), 0);
+  const totalChangePercent = totalValue > 0 ? ((totalChange / (totalValue - totalChange)) * 100) : 0;
+
+  const portfolioStats = [
     { 
-      name: 'Saudi Aramco', 
-      symbol: 'ARAMCO', 
-      value: formatAmount(25600, 'SAR'), 
-      allocation: '20.4%', 
-      change: '+2.1%', 
-      positive: true,
-      type: 'stocks',
-      country: 'SA'
+      label: 'Total Value', 
+      value: formatAmount(totalValue), 
+      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
+      positive: totalChangePercent >= 0 
     },
     { 
-      name: 'Commercial Intl Bank', 
-      symbol: 'COMI', 
-      value: formatAmount(18900, 'EGP'), 
-      allocation: '15.1%', 
-      change: '+1.8%', 
-      positive: true,
-      type: 'stocks',
-      country: 'EG'
+      label: 'Today\'s Gain', 
+      value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`, 
+      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
+      positive: totalChange >= 0 
     },
     { 
-      name: 'Emirates NBD', 
-      symbol: 'ENBD', 
-      value: formatAmount(15200, 'AED'), 
-      allocation: '12.1%', 
-      change: '-0.5%', 
-      positive: false,
-      type: 'stocks',
-      country: 'AE'
+      label: 'Total Return', 
+      value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`, 
+      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
+      positive: totalChange >= 0 
     },
     { 
-      name: 'Dubai Marina Apt', 
-      symbol: 'REAL-01', 
-      value: formatAmount(850000, 'AED'), 
-      allocation: '35.2%', 
-      change: '+8.2%', 
-      positive: true,
-      type: 'real_estate',
-      country: 'AE'
-    },
-    { 
-      name: 'Gold 24K', 
-      symbol: 'AU24K', 
-      value: formatAmount(12800, 'USD'), 
-      allocation: '5.3%', 
-      change: '+1.2%', 
-      positive: true,
-      type: 'gold',
-      country: 'GLOBAL'
+      label: 'Assets', 
+      value: assets.length.toString(), 
+      change: assets.length > 0 ? `+${assets.length}` : '0', 
+      positive: assets.length > 0 
     }
   ];
+
+  const topHoldings = holdings
+    .sort((a, b) => convertAmount(b.value, b.currency) - convertAmount(a.value, a.currency))
+    .slice(0, 5)
+    .map(holding => {
+      const totalPortfolioValue = totalValue > 0 ? totalValue : 1;
+      const allocation = ((convertAmount(holding.value, holding.currency) / totalPortfolioValue) * 100).toFixed(1);
+      
+      return {
+        name: holding.name,
+        symbol: holding.symbol,
+        value: formatAmount(holding.value, holding.currency),
+        allocation: `${allocation}%`,
+        change: `${holding.changePercent >= 0 ? '+' : ''}${holding.changePercent.toFixed(1)}%`,
+        positive: holding.changePercent >= 0,
+        type: holding.type,
+        country: holding.country
+      };
+    });
+
+  // Calculate asset allocation
+  const assetTypeAllocation = holdings.reduce((acc, holding) => {
+    const value = convertAmount(holding.value, holding.currency);
+    acc[holding.type] = (acc[holding.type] || 0) + value;
+    return acc;
+  }, {} as { [key: string]: number });
+
+  const assetAllocation = Object.entries(assetTypeAllocation).map(([type, value]) => ({
+    name: type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    value: totalValue > 0 ? ((value / totalValue) * 100) : 0,
+    color: assetTypeColors[type as keyof typeof assetTypeColors] || 'text-muted-foreground'
+  }));
+
+  // Calculate geographic allocation
+  const countryAllocation = holdings.reduce((acc, holding) => {
+    const value = convertAmount(holding.value, holding.currency);
+    acc[holding.country] = (acc[holding.country] || 0) + value;
+    return acc;
+  }, {} as { [key: string]: number });
+
+  const geographicAllocation = Object.entries(countryAllocation).map(([country, value]) => ({
+    country,
+    flag: countryFlags[country as keyof typeof countryFlags] || '🌍',
+    value: totalValue > 0 ? ((value / totalValue) * 100) : 0,
+    color: 'text-primary'
+  }));
 
   const assetTypeIcons = {
     stocks: TrendingUp,
@@ -98,13 +178,47 @@ const PortfolioSummary = () => {
   };
 
   const countryFlags = {
-    SA: '🇸🇦',
-    AE: '🇦🇪',
-    EG: '🇪🇬',
-    QA: '🇶🇦',
-    KW: '🇰🇼',
-    GLOBAL: '🌍'
+    'UAE': '🇦🇪', 'Saudi Arabia': '🇸🇦', 'Egypt': '🇪🇬', 'Qatar': '🇶🇦',
+    'Kuwait': '🇰🇼', 'Bahrain': '🇧🇭', 'Oman': '🇴🇲', 'Jordan': '🇯🇴',
+    'Lebanon': '🇱🇧', 'Morocco': '🇲🇦', 'Tunisia': '🇹🇳', 'Algeria': '🇩🇿',
+    'Iraq': '🇮🇶', 'US': '🇺🇸', 'UK': '🇬🇧', 'EU': '🇪🇺', 'GLOBAL': '🌍'
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Briefcase className="w-6 h-6 text-primary" />
+          <h2 className="text-2xl font-bold">Portfolio Summary</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="glass-card animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-16 bg-muted rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Briefcase className="w-6 h-6 text-primary" />
+          <h2 className="text-2xl font-bold">Portfolio Summary</h2>
+        </div>
+        <Card className="glass-card">
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">Please sign in to view your portfolio.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -145,7 +259,7 @@ const PortfolioSummary = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {topHoldings.map((holding, index) => {
+            {topHoldings.length > 0 ? topHoldings.map((holding, index) => {
               const IconComponent = assetTypeIcons[holding.type as keyof typeof assetTypeIcons] || Building2;
               const iconColor = assetTypeColors[holding.type as keyof typeof assetTypeColors] || 'text-muted-foreground';
               
@@ -179,7 +293,12 @@ const PortfolioSummary = () => {
                   </div>
                 </div>
               );
-            })}
+            }) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No assets in your portfolio yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Start by adding your first investment!</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -193,21 +312,19 @@ const PortfolioSummary = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { name: 'Real Estate', value: 45, color: 'text-success' },
-              { name: 'Stocks', value: 35, color: 'text-primary' },
-              { name: 'Bonds', value: 12, color: 'text-purple-400' },
-              { name: 'Gold', value: 5, color: 'text-warning' },
-              { name: 'Cash', value: 3, color: 'text-muted-foreground' },
-            ].map((item) => (
+            {assetAllocation.length > 0 ? assetAllocation.map((item) => (
               <div key={item.name} className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">{item.name}</span>
-                  <span className={`text-sm font-medium ${item.color}`}>{item.value}%</span>
+                  <span className={`text-sm font-medium ${item.color}`}>{item.value.toFixed(1)}%</span>
                 </div>
                 <Progress value={item.value} className="h-2" />
               </div>
-            ))}
+            )) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No assets to display allocation
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -219,24 +336,22 @@ const PortfolioSummary = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { country: 'UAE', flag: '🇦🇪', value: 42, color: 'text-success' },
-              { country: 'Saudi Arabia', flag: '🇸🇦', value: 28, color: 'text-primary' },
-              { country: 'Egypt', flag: '🇪🇬', value: 18, color: 'text-warning' },
-              { country: 'Qatar', flag: '🇶🇦', value: 8, color: 'text-purple-400' },
-              { country: 'Global', flag: '🌍', value: 4, color: 'text-muted-foreground' },
-            ].map((item) => (
+            {geographicAllocation.length > 0 ? geographicAllocation.map((item) => (
               <div key={item.country} className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{item.flag}</span>
                     <span className="text-sm font-medium">{item.country}</span>
                   </div>
-                  <span className={`text-sm font-medium ${item.color}`}>{item.value}%</span>
+                  <span className={`text-sm font-medium ${item.color}`}>{item.value.toFixed(1)}%</span>
                 </div>
                 <Progress value={item.value} className="h-2" />
               </div>
-            ))}
+            )) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No assets to display geographic allocation
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
