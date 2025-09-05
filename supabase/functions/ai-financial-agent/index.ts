@@ -1033,6 +1033,10 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
         return { success: true, message: `Portfolio "${action.data.name || 'My Portfolio'}" created successfully` };
 
       case 'add_asset':
+        // Clean the asset name (remove extra text like "in the current value/price")
+        let cleanAssetName = (action.data.asset_name || action.data.name || '').trim();
+        cleanAssetName = cleanAssetName.replace(/\s+(in\s+the\s+current\s+(value|price))$/i, '').trim();
+        
         // Get or create default portfolio
         let portfolioId = action.data.portfolio_id;
         if (!portfolioId) {
@@ -1060,23 +1064,54 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
           }
         }
 
-        const { error: assetError } = await supabase
+        // Check if asset already exists with similar name
+        const { data: existingAssets } = await supabase
           .from('assets')
-          .insert({ 
-            user_id: userId, 
-            portfolio_id: portfolioId,
-            asset_name: action.data.asset_name || action.data.name,
-            asset_type: action.data.asset_type || 'stocks',
-            symbol: action.data.symbol || null,
-            quantity: Number(action.data.quantity) || 1,
-            purchase_price: Number(action.data.purchase_price) || 0,
-            current_price: Number(action.data.current_price) || Number(action.data.purchase_price) || 0,
-            purchase_date: action.data.purchase_date || new Date().toISOString().slice(0, 10),
-            country: action.data.country || 'Egypt',
-            created_at: new Date().toISOString()
-          });
-        if (assetError) throw assetError;
-        return { success: true, message: `Asset "${action.data.asset_name || action.data.name}" added to portfolio` };
+          .select('*')
+          .eq('user_id', userId)
+          .eq('portfolio_id', portfolioId)
+          .ilike('asset_name', `%${cleanAssetName}%`);
+
+        if (existingAssets && existingAssets.length > 0) {
+          // Update existing asset by adding quantities and adjusting prices
+          const existingAsset = existingAssets[0];
+          const newQuantity = existingAsset.quantity + Number(action.data.quantity);
+          const newTotalValue = (existingAsset.quantity * existingAsset.purchase_price) + 
+                               (Number(action.data.quantity) * Number(action.data.purchase_price || action.data.current_price));
+          const newAvgPrice = newTotalValue / newQuantity;
+
+          const { error: updateError } = await supabase
+            .from('assets')
+            .update({
+              quantity: newQuantity,
+              purchase_price: newAvgPrice,
+              current_price: Number(action.data.current_price) || existingAsset.current_price,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingAsset.id);
+
+          if (updateError) throw updateError;
+          return { success: true, message: `Added ${action.data.quantity} shares to existing "${cleanAssetName}" (Total: ${newQuantity} shares)` };
+        } else {
+          // Create new asset
+          const { error: assetError } = await supabase
+            .from('assets')
+            .insert({ 
+              user_id: userId, 
+              portfolio_id: portfolioId,
+              asset_name: cleanAssetName,
+              asset_type: action.data.asset_type || 'stocks',
+              symbol: action.data.symbol || null,
+              quantity: Number(action.data.quantity) || 1,
+              purchase_price: Number(action.data.purchase_price) || Number(action.data.current_price) || 0,
+              current_price: Number(action.data.current_price) || Number(action.data.purchase_price) || 0,
+              purchase_date: action.data.purchase_date || new Date().toISOString().slice(0, 10),
+              country: action.data.country || 'Egypt',
+              created_at: new Date().toISOString()
+            });
+          if (assetError) throw assetError;
+          return { success: true, message: `Asset "${cleanAssetName}" added to portfolio` };
+        }
 
       case 'update_asset':
         const updateAssetPayload: any = { updated_at: new Date().toISOString() };
