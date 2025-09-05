@@ -731,6 +731,26 @@ For advice/analysis only:
   } catch (parseError) {
     console.log('Response is not JSON, treating as plain text');
     
+    // Try to extract action from text response for salary changes
+    if (message.toLowerCase().includes('salary') && (message.toLowerCase().includes('change') || message.toLowerCase().includes('update'))) {
+      const salaryMatch = message.match(/(\d+)/);
+      if (salaryMatch) {
+        const newSalary = parseInt(salaryMatch[0]);
+        
+        return {
+          analysis: `I need to update your salary to $${newSalary}. This will update both your personal finance summary and your salary income stream. Do you want me to proceed?`,
+          pendingAction: {
+            type: 'update_income',
+            data: {
+              monthly_income: newSalary,
+              salary: newSalary
+            },
+            description: `Update your monthly salary to $${newSalary}`
+          }
+        };
+      }
+    }
+    
     // Check if the response contains action keywords - if so, try to extract action intent
     const actionKeywords = ['add', 'update', 'create', 'delete', 'remove'];
     const hasActionIntent = actionKeywords.some(keyword => 
