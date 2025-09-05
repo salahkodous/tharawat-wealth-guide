@@ -706,6 +706,41 @@ For advice/analysis only:
     };
   } catch (parseError) {
     console.log('Response is not JSON, treating as plain text');
+    
+    // Check if the response contains action keywords - if so, try to extract action intent
+    const actionKeywords = ['add', 'update', 'create', 'delete', 'remove'];
+    const hasActionIntent = actionKeywords.some(keyword => 
+      message.toLowerCase().includes(keyword) && 
+      (message.toLowerCase().includes('stock') || 
+       message.toLowerCase().includes('asset') || 
+       message.toLowerCase().includes('portfolio'))
+    );
+
+    if (hasActionIntent && message.toLowerCase().includes('add') && message.toLowerCase().includes('stock')) {
+      // Extract stock details from the message
+      const stockMatch = message.match(/(\d+)\s+stock(?:s)?\s+of\s+([^,\n]+)/i);
+      if (stockMatch) {
+        const quantity = parseInt(stockMatch[1]);
+        const stockName = stockMatch[2].trim();
+        
+        return {
+          analysis: `I can add ${quantity} shares of ${stockName} to your portfolio. This will create a new asset entry with the current market price. Do you want me to proceed?`,
+          pendingAction: {
+            type: 'add_asset',
+            data: {
+              asset_name: stockName,
+              asset_type: 'stocks',
+              quantity: quantity,
+              purchase_price: 115, // Default price - should be fetched from market data
+              current_price: 115,
+              country: 'Egypt'
+            },
+            description: `Add ${quantity} shares of ${stockName} to your portfolio at current market price`
+          }
+        };
+      }
+    }
+    
     return {
       analysis: aiResponse,
       pendingAction: null
