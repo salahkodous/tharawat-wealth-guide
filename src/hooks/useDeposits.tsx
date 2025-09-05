@@ -124,6 +124,31 @@ export const useDeposits = () => {
       fetchDeposits().finally(() => {
         setLoading(false);
       });
+
+      // Set up real-time subscription for deposits
+      const channel = supabase
+        .channel('deposits-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'deposits', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Deposits updated via realtime:', payload);
+            fetchDeposits();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'deposit_transactions', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Deposit transactions updated via realtime:', payload);
+            fetchDeposits();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

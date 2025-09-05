@@ -112,6 +112,23 @@ export const useExpenseStreams = () => {
       fetchExpenseStreams().finally(() => {
         setLoading(false);
       });
+
+      // Set up real-time subscription for expense streams
+      const channel = supabase
+        .channel('expense-streams-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'expense_streams', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Expense streams updated via realtime:', payload);
+            fetchExpenseStreams();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

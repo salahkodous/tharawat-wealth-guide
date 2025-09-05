@@ -112,6 +112,23 @@ export const useIncomeStreams = () => {
       fetchIncomeStreams().finally(() => {
         setLoading(false);
       });
+
+      // Set up real-time subscription for income streams
+      const channel = supabase
+        .channel('income-streams-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'income_streams', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Income streams updated via realtime:', payload);
+            fetchIncomeStreams();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

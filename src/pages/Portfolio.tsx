@@ -122,18 +122,28 @@ const Portfolio = () => {
     if (!user) return;
 
     const channel = supabase
-      .channel('portfolio-changes')
+      .channel('portfolio-realtime-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'assets', filter: `user_id=eq.${user.id}` },
-        () => {
+        (payload) => {
+          console.log('Assets updated via realtime:', payload);
           fetchPortfolioData();
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'financial_goals', filter: `user_id=eq.${user.id}` },
-        () => {
+        (payload) => {
+          console.log('Financial goals updated via realtime:', payload);
+          fetchPortfolioData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'portfolios', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          console.log('Portfolios updated via realtime:', payload);
           fetchPortfolioData();
         }
       )

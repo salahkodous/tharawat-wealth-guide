@@ -244,13 +244,52 @@ export const usePersonalFinances = () => {
       setLoading(false);
     });
 
+    // Set up real-time subscription for personal_finances changes
+    const financesChannel = supabase
+      .channel('personal-finances-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'personal_finances', filter: `user_id=eq.${user.id}` },
+        () => {
+          console.log('Personal finances updated, refetching...');
+          fetchFinances();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'debts', filter: `user_id=eq.${user.id}` },
+        () => {
+          console.log('Debts updated, refetching...');
+          fetchDebts();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'income_streams', filter: `user_id=eq.${user.id}` },
+        () => {
+          console.log('Income streams updated, refetching finances...');
+          fetchFinances();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'expense_streams', filter: `user_id=eq.${user.id}` },
+        () => {
+          console.log('Expense streams updated, refetching finances...');
+          fetchFinances();
+        }
+      )
+      .subscribe();
+
     const handler = () => {
       fetchFinances();
       fetchDebts();
     };
 
     window.addEventListener('finances-updated', handler);
+    
     return () => {
+      supabase.removeChannel(financesChannel);
       window.removeEventListener('finances-updated', handler);
     };
   }, [user]);
