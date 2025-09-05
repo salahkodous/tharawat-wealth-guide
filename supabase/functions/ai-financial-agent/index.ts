@@ -700,9 +700,33 @@ For advice/analysis only:
 
   try {
     const parsed = JSON.parse(aiResponse);
+    console.log('Parsed AI response:', parsed);
+    
+    // Handle different response formats
+    let analysis = '';
+    let pendingAction = null;
+    
+    if (parsed.analysis && parsed.action) {
+      // Format: { "analysis": "...", "action": {...} }
+      analysis = parsed.analysis;
+      pendingAction = parsed.action;
+    } else if (typeof parsed === 'string') {
+      // Plain text response
+      analysis = parsed;
+    } else if (parsed.response && parsed.action) {
+      // Format: { "response": "...", "action": {...} }
+      analysis = parsed.response;
+      pendingAction = parsed.action;
+    } else {
+      // Fallback: treat as analysis
+      analysis = typeof parsed === 'object' ? JSON.stringify(parsed) : parsed;
+    }
+    
+    console.log('Extracted pendingAction:', pendingAction);
+    
     return {
-      analysis: parsed.analysis,
-      pendingAction: parsed.action || null
+      analysis: analysis,
+      pendingAction: pendingAction
     };
   } catch (parseError) {
     console.log('Response is not JSON, treating as plain text');
