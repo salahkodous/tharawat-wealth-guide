@@ -53,6 +53,23 @@ const PortfolioSummary = () => {
   useEffect(() => {
     if (user) {
       fetchAssets();
+
+      // Set up real-time subscription for assets
+      const channel = supabase
+        .channel('portfolio-summary-assets')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'assets', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Portfolio summary: Assets updated via realtime:', payload);
+            fetchAssets();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
