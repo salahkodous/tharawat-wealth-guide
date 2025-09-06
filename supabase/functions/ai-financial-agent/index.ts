@@ -828,7 +828,7 @@ For advice/analysis only:
     }
     
     // Investment amount changes
-    if ((textLower.includes('invest') || textLower.includes('investing')) && (textLower.includes('change') || textLower.includes('update'))) {
+    if ((textLower.includes('invest') || textLower.includes('investing')) && (textLower.includes('change') || textLower.includes('update') || textLower.includes('set') || textLower.includes('increase') || textLower.includes('decrease') || textLower.includes('add'))) {
       const investMatch = message.match(/(\d+)/);
       if (investMatch) {
         const newInvesting = parseInt(investMatch[0]);
@@ -843,6 +843,51 @@ For advice/analysis only:
             description: `Update your monthly investing amount to $${newInvesting}`
           }
         };
+      }
+    }
+    
+    // Savings: add deposit accounts
+    if ((textLower.includes('deposit') || textLower.includes('savings')) && (textLower.includes('add') || textLower.includes('create') || textLower.includes('open'))) {
+      const amtMatch = message.match(/(\d+[\d,]*\.?\d*)/);
+      const rateMatch = message.match(/(\d+(?:\.\d+)?)%/);
+      const amount = amtMatch ? Number(amtMatch[1].replace(/,/g, '')) : undefined;
+      const rate = rateMatch ? Number(rateMatch[1]) : 5; // sensible default
+      if (Number.isFinite(amount)) {
+        let depositType: 'savings' | 'fixed_cd' | 'investment_linked' = 'savings';
+        if (textLower.includes('cd') || textLower.includes('certificate') || textLower.includes('fixed')) depositType = 'fixed_cd';
+        if (textLower.includes('investment') && textLower.includes('linked')) depositType = 'investment_linked';
+        
+        return {
+          analysis: `I can open a ${depositType.replace('_',' ')} account with $${amount} at ${rate}%. Do you want me to proceed?`,
+          pendingAction: {
+            type: 'add_deposit',
+            data: {
+              deposit_type: depositType,
+              principal: amount,
+              rate,
+              start_date: new Date().toISOString().slice(0,10)
+            },
+            description: `Create ${depositType} deposit: $${amount} at ${rate}%`
+          }
+        };
+      }
+    }
+
+    // Savings: update net savings total
+    if (textLower.includes('savings') && (textLower.includes('set') || textLower.includes('change') || textLower.includes('update')) && !textLower.includes('deposit')) {
+      const savingsMatch = message.match(/(\d+[\d,]*\.?\d*)/);
+      if (savingsMatch) {
+        const net = Number(savingsMatch[1].replace(/,/g, ''));
+        if (Number.isFinite(net)) {
+          return {
+            analysis: `I need to update your net savings to $${net}. Do you want me to proceed?`,
+            pendingAction: {
+              type: 'update_savings',
+              data: { net_savings: net },
+              description: `Update net savings to $${net}`
+            }
+          };
+        }
       }
     }
     
