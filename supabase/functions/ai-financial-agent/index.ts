@@ -734,42 +734,96 @@ For advice/analysis only:
     // Try to extract financial actions from text response
     const textLower = message.toLowerCase();
     
-    // Salary/Income changes
-    if ((textLower.includes('salary') || textLower.includes('income')) && (textLower.includes('change') || textLower.includes('update'))) {
+    // Income/Salary changes or additions
+    if ((textLower.includes('salary') || textLower.includes('income')) && 
+        (textLower.includes('change') || textLower.includes('update') || textLower.includes('add') || textLower.includes('create'))) {
       const salaryMatch = message.match(/(\d+)/);
+      
       if (salaryMatch) {
-        const newSalary = parseInt(salaryMatch[0]);
+        const incomeAmount = parseInt(salaryMatch[0]);
         
-        return {
-          analysis: `I need to update your salary to $${newSalary}. This will update both your personal finance summary and your salary income stream. Do you want me to proceed?`,
-          pendingAction: {
-            type: 'update_income',
-            data: {
-              monthly_income: newSalary,
-              salary: newSalary
-            },
-            description: `Update your monthly salary to $${newSalary}`
-          }
-        };
+        // Check if it's adding a new income stream vs updating salary
+        if ((textLower.includes('add') || textLower.includes('create')) && !textLower.includes('salary')) {
+          // Extract income name
+          const incomeNameMatch = message.match(/(?:add|create)\s+([^,.\n]+?)\s+income/i) || 
+                                  message.match(/(?:income)\s+([^,.\n\d]+)/i) ||
+                                  message.match(/([a-zA-Z\s]+)\s+income/i);
+          
+          const incomeName = incomeNameMatch ? incomeNameMatch[1].trim() : 'New Income';
+          
+          return {
+            analysis: `I can add a new income stream "${incomeName}" with $${incomeAmount} monthly income. Do you want me to proceed?`,
+            pendingAction: {
+              type: 'add_income_stream',
+              data: {
+                name: incomeName,
+                amount: incomeAmount,
+                income_type: 'stable',
+                is_active: true
+              },
+              description: `Add income stream: ${incomeName} ($${incomeAmount})`
+            }
+          };
+        } else {
+          // Update salary/total income
+          return {
+            analysis: `I need to update your salary to $${incomeAmount}. This will update both your personal finance summary and your salary income stream. Do you want me to proceed?`,
+            pendingAction: {
+              type: 'update_income',
+              data: {
+                monthly_income: incomeAmount,
+                salary: incomeAmount
+              },
+              description: `Update your monthly salary to $${incomeAmount}`
+            }
+          };
+        }
       }
     }
     
-    // Expense changes
-    if ((textLower.includes('expense') || textLower.includes('spending')) && (textLower.includes('change') || textLower.includes('update'))) {
+    // Expense changes or additions
+    if ((textLower.includes('expense') || textLower.includes('spending')) && 
+        (textLower.includes('change') || textLower.includes('update') || textLower.includes('add') || textLower.includes('create'))) {
       const expenseMatch = message.match(/(\d+)/);
+      
       if (expenseMatch) {
-        const newExpenses = parseInt(expenseMatch[0]);
+        const expenseAmount = parseInt(expenseMatch[0]);
         
-        return {
-          analysis: `I need to update your monthly expenses to $${newExpenses}. This will update your personal finance summary. Do you want me to proceed?`,
-          pendingAction: {
-            type: 'update_expenses',
-            data: {
-              monthly_expenses: newExpenses
-            },
-            description: `Update your monthly expenses to $${newExpenses}`
-          }
-        };
+        // Check if it's adding a new expense stream vs updating total expenses
+        if (textLower.includes('add') || textLower.includes('create')) {
+          // Extract expense name
+          const expenseNameMatch = message.match(/(?:add|create)\s+([^,.\n]+?)\s+expense/i) || 
+                                   message.match(/(?:expense(?:s)?)\s+([^,.\n\d]+)/i) ||
+                                   message.match(/([a-zA-Z\s]+)\s+expense/i);
+          
+          const expenseName = expenseNameMatch ? expenseNameMatch[1].trim() : 'New Expense';
+          
+          return {
+            analysis: `I can add a new expense stream "${expenseName}" with $${expenseAmount} monthly cost. Do you want me to proceed?`,
+            pendingAction: {
+              type: 'add_expense_stream',
+              data: {
+                name: expenseName,
+                amount: expenseAmount,
+                expense_type: 'fixed',
+                is_active: true
+              },
+              description: `Add expense stream: ${expenseName} ($${expenseAmount})`
+            }
+          };
+        } else {
+          // Update total monthly expenses
+          return {
+            analysis: `I need to update your monthly expenses to $${expenseAmount}. This will update your personal finance summary. Do you want me to proceed?`,
+            pendingAction: {
+              type: 'update_expenses',
+              data: {
+                monthly_expenses: expenseAmount
+              },
+              description: `Update your monthly expenses to $${expenseAmount}`
+            }
+          };
+        }
       }
     }
     
@@ -795,11 +849,13 @@ For advice/analysis only:
     // Goal creation
     if ((textLower.includes('goal') || textLower.includes('save for')) && (textLower.includes('add') || textLower.includes('create'))) {
       const goalMatch = message.match(/(\d+)/);
-      const goalNameMatch = message.match(/(?:goal|save for)\s+([^,.\n]+)/i);
+      let goalNameMatch = message.match(/(?:goal|save for)\s+([^,.\n\d]+)/i) ||
+                         message.match(/(?:add|create)\s+([^,.\n]+?)\s+goal/i) ||
+                         message.match(/goal\s+([^,.\n\d]+)/i);
       
-      if (goalMatch && goalNameMatch) {
+      if (goalMatch) {
         const targetAmount = parseInt(goalMatch[0]);
-        const goalName = goalNameMatch[1].trim();
+        const goalName = goalNameMatch ? goalNameMatch[1].trim() : 'Financial Goal';
         
         return {
           analysis: `I can create a new financial goal "${goalName}" with a target of $${targetAmount}. Do you want me to proceed?`,
@@ -817,14 +873,16 @@ For advice/analysis only:
       }
     }
     
-    // Debt management
+    // Debt management  
     if ((textLower.includes('debt') || textLower.includes('loan')) && (textLower.includes('add') || textLower.includes('create'))) {
       const debtMatch = message.match(/(\d+)/);
-      const debtNameMatch = message.match(/(?:debt|loan)\s+([^,.\n]+)/i);
+      let debtNameMatch = message.match(/(?:debt|loan)\s+([^,.\n\d]+)/i) ||
+                         message.match(/(?:add|create)\s+([^,.\n]+?)\s+(?:debt|loan)/i) ||
+                         message.match(/([a-zA-Z\s]+)\s+(?:debt|loan)/i);
       
-      if (debtMatch && debtNameMatch) {
+      if (debtMatch) {
         const totalAmount = parseInt(debtMatch[0]);
-        const debtName = debtNameMatch[1].trim();
+        const debtName = debtNameMatch ? debtNameMatch[1].trim() : 'New Debt';
         
         return {
           analysis: `I can add a new debt "${debtName}" with a total amount of $${totalAmount}. Do you want me to proceed?`,
