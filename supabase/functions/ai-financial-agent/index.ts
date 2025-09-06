@@ -731,8 +731,11 @@ For advice/analysis only:
   } catch (parseError) {
     console.log('Response is not JSON, treating as plain text');
     
-    // Try to extract action from text response for salary changes
-    if (message.toLowerCase().includes('salary') && (message.toLowerCase().includes('change') || message.toLowerCase().includes('update'))) {
+    // Try to extract financial actions from text response
+    const textLower = message.toLowerCase();
+    
+    // Salary/Income changes
+    if ((textLower.includes('salary') || textLower.includes('income')) && (textLower.includes('change') || textLower.includes('update'))) {
       const salaryMatch = message.match(/(\d+)/);
       if (salaryMatch) {
         const newSalary = parseInt(salaryMatch[0]);
@@ -746,6 +749,95 @@ For advice/analysis only:
               salary: newSalary
             },
             description: `Update your monthly salary to $${newSalary}`
+          }
+        };
+      }
+    }
+    
+    // Expense changes
+    if ((textLower.includes('expense') || textLower.includes('spending')) && (textLower.includes('change') || textLower.includes('update'))) {
+      const expenseMatch = message.match(/(\d+)/);
+      if (expenseMatch) {
+        const newExpenses = parseInt(expenseMatch[0]);
+        
+        return {
+          analysis: `I need to update your monthly expenses to $${newExpenses}. This will update your personal finance summary. Do you want me to proceed?`,
+          pendingAction: {
+            type: 'update_expenses',
+            data: {
+              monthly_expenses: newExpenses
+            },
+            description: `Update your monthly expenses to $${newExpenses}`
+          }
+        };
+      }
+    }
+    
+    // Investment amount changes
+    if ((textLower.includes('invest') || textLower.includes('investing')) && (textLower.includes('change') || textLower.includes('update'))) {
+      const investMatch = message.match(/(\d+)/);
+      if (investMatch) {
+        const newInvesting = parseInt(investMatch[0]);
+        
+        return {
+          analysis: `I need to update your monthly investing amount to $${newInvesting}. This will update your personal finance summary. Do you want me to proceed?`,
+          pendingAction: {
+            type: 'update_investing',
+            data: {
+              monthly_investing_amount: newInvesting
+            },
+            description: `Update your monthly investing amount to $${newInvesting}`
+          }
+        };
+      }
+    }
+    
+    // Goal creation
+    if ((textLower.includes('goal') || textLower.includes('save for')) && (textLower.includes('add') || textLower.includes('create'))) {
+      const goalMatch = message.match(/(\d+)/);
+      const goalNameMatch = message.match(/(?:goal|save for)\s+([^,.\n]+)/i);
+      
+      if (goalMatch && goalNameMatch) {
+        const targetAmount = parseInt(goalMatch[0]);
+        const goalName = goalNameMatch[1].trim();
+        
+        return {
+          analysis: `I can create a new financial goal "${goalName}" with a target of $${targetAmount}. Do you want me to proceed?`,
+          pendingAction: {
+            type: 'create_goal',
+            data: {
+              title: goalName,
+              target_amount: targetAmount,
+              current_amount: 0,
+              category: 'general'
+            },
+            description: `Create financial goal: ${goalName} ($${targetAmount})`
+          }
+        };
+      }
+    }
+    
+    // Debt management
+    if ((textLower.includes('debt') || textLower.includes('loan')) && (textLower.includes('add') || textLower.includes('create'))) {
+      const debtMatch = message.match(/(\d+)/);
+      const debtNameMatch = message.match(/(?:debt|loan)\s+([^,.\n]+)/i);
+      
+      if (debtMatch && debtNameMatch) {
+        const totalAmount = parseInt(debtMatch[0]);
+        const debtName = debtNameMatch[1].trim();
+        
+        return {
+          analysis: `I can add a new debt "${debtName}" with a total amount of $${totalAmount}. Do you want me to proceed?`,
+          pendingAction: {
+            type: 'add_debt',
+            data: {
+              name: debtName,
+              total_amount: totalAmount,
+              paid_amount: 0,
+              monthly_payment: 0,
+              interest_rate: 0
+            },
+            description: `Add debt: ${debtName} ($${totalAmount})`
           }
         };
       }
@@ -987,6 +1079,7 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
         if (deleteDebtError) throw deleteDebtError;
         return { success: true, message: `Debt deleted successfully` };
 
+      case 'create_goal':
       case 'add_goal':
         const { error: goalError } = await supabase
           .from('financial_goals')
@@ -996,7 +1089,7 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
             created_at: new Date().toISOString()
           });
         if (goalError) throw goalError;
-        return { success: true, message: `Financial goal "${action.data.title}" added: $${action.data.target_amount} by ${action.data.target_date}` };
+        return { success: true, message: `Financial goal "${action.data.title}" added: $${action.data.target_amount}${action.data.target_date ? ` by ${action.data.target_date}` : ''}` };
 
       case 'update_goal':
         const { error: updateGoalError } = await supabase
