@@ -105,6 +105,23 @@ export const useDeposits = () => {
     }
   };
 
+  const deleteDeposit = async (id: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('deposits')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await fetchDeposits();
+      return true;
+    } catch (error) {
+      console.error('Error deleting deposit:', error);
+      throw error;
+    }
+  };
+
   const getTotalDepositsValue = () => {
     return deposits.reduce((total, deposit) => {
       const totalValue = deposit.computed?.total_value || (deposit.principal + deposit.accrued_interest);
@@ -158,6 +175,7 @@ export const useDeposits = () => {
     createDeposit,
     getDepositView,
     processDeposit,
+    deleteDeposit,
     getTotalDepositsValue,
     getTotalMonthlySavings,
     refetch: fetchDeposits,

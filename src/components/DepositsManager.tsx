@@ -5,15 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useDeposits } from '@/hooks/useDeposits';
 import type { CreateDepositData } from '@/hooks/useDeposits';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, PiggyBank, TrendingUp, Building, Wallet } from 'lucide-react';
+import { Plus, PiggyBank, TrendingUp, Building, Wallet, Trash2 } from 'lucide-react';
 
 export const DepositsManager: React.FC = () => {
-  const { deposits, loading, createDeposit, getTotalDepositsValue, getTotalMonthlySavings } = useDeposits();
+  const { deposits, loading, createDeposit, getTotalDepositsValue, getTotalMonthlySavings, deleteDeposit } = useDeposits();
   const { formatAmount } = useCurrency();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -237,13 +238,44 @@ export const DepositsManager: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-medium">
-                      {formatAmount(deposit.computed?.total_value || (deposit.principal + deposit.accrued_interest))}
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <div className="font-medium">
+                        {formatAmount(deposit.computed?.total_value || (deposit.principal + deposit.accrued_interest))}
+                      </div>
+                      <Badge variant={deposit.status === 'active' ? 'default' : 'secondary'}>
+                        {deposit.status}
+                      </Badge>
                     </div>
-                    <Badge variant={deposit.status === 'active' ? 'default' : 'secondary'}>
-                      {deposit.status}
-                    </Badge>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this savings?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this savings entry.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={async () => {
+                            try {
+                              await deleteDeposit(deposit.id!);
+                              toast({ title: 'Deleted', description: 'Savings deleted successfully.' });
+                            } catch (e) {
+                              toast({ title: 'Error', description: 'Failed to delete savings.', variant: 'destructive' });
+                            }
+                          }}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}

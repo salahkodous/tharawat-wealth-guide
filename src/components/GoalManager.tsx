@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
-import { Plus, Edit3, Save, X } from 'lucide-react';
+import { Plus, Edit3, Save, X, Trash2 } from 'lucide-react';
 
 interface Goal {
   id: string;
@@ -148,6 +149,23 @@ const GoalManager = () => {
     updateGoal(goalId, { current_amount: currentAmount });
   };
 
+  const deleteGoal = async (goalId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('financial_goals')
+        .delete()
+        .eq('id', goalId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setGoals(goals.filter((g) => g.id !== goalId));
+      toast({ title: 'Deleted', description: 'Goal deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      toast({ title: 'Error', description: 'Failed to delete goal', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -234,10 +252,36 @@ const GoalManager = () => {
                         Monthly saving: {formatAmount(goal.monthly_saving_amount)}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-muted-foreground">
-                        {percentage.toFixed(1)}% complete
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-sm text-muted-foreground">
+                          {percentage.toFixed(1)}% complete
+                        </div>
                       </div>
+                      {editMode && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <Trash2 className="w-4 h-4" />
+                              <span className="sr-only">Delete goal</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this goal.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={async () => {
+                                await deleteGoal(goal.id);
+                              }}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
 
