@@ -846,6 +846,41 @@ For advice/analysis only:
       }
     }
     
+    // Savings: update a specific deposit by name (e.g., "reduce the cash savings to 4500")
+    if ((textLower.includes('savings') || textLower.includes('deposit')) &&
+        (textLower.includes('reduce') || textLower.includes('lower') || textLower.includes('raise') || textLower.includes('increase') || textLower.includes('decrease') || textLower.includes('set') || textLower.includes('change') || textLower.includes('update'))) {
+      const amtMatch = message.match(/(\d+[\d,]*\.?\d*)/);
+      if (amtMatch) {
+        const amount = Number(amtMatch[1].replace(/,/g, ''));
+        if (Number.isFinite(amount)) {
+          // Try to extract a deposit name before the word "savings" or "deposit"
+          let nameMatch = message.match(/the\s+([a-zA-Z_\s]+?)\s+savings/i) ||
+                          message.match(/([a-zA-Z_\s]+?)\s+savings/i) ||
+                          message.match(/the\s+([a-zA-Z_\s]+?)\s+deposit/i) ||
+                          message.match(/([a-zA-Z_\s]+?)\s+deposit/i);
+          let depositName = nameMatch ? nameMatch[1].trim() : undefined;
+          if (depositName) {
+            // Clean common determiners
+            depositName = depositName.replace(/^(the|my)\s+/i, '').trim();
+          }
+
+          if (depositName) {
+            return {
+              analysis: `I will update the ${depositName} savings/deposit to $${amount}. Do you want me to proceed?`,
+              pendingAction: {
+                type: 'update_deposit',
+                data: {
+                  name: depositName,
+                  principal: amount
+                },
+                description: `Update deposit \"${depositName}\" to $${amount}`
+              }
+            };
+          }
+        }
+      }
+    }
+    
     // Savings: add deposit accounts
     if ((textLower.includes('deposit') || textLower.includes('savings')) && (textLower.includes('add') || textLower.includes('create') || textLower.includes('open'))) {
       const amtMatch = message.match(/(\d+[\d,]*\.?\d*)/);
@@ -1205,6 +1240,54 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
           .eq('user_id', userId);
         if (updateGoalError) throw updateGoalError;
         return { success: true, message: `Financial goal updated successfully` };
+
+      case 'update_deposit':
+        try {
+          const rawName = (action.data?.name ?? action.data?.deposit_name ?? action.data?.title ?? '').toString();
+          const targetPrincipal = Number(action.data?.principal ?? action.data?.amount);
+          const newRate = action.data?.interest_rate ?? action.data?.rate;
+          if (!rawName || !Number.isFinite(targetPrincipal)) {
+            return { success: false, error: 'Deposit name and valid amount are required' };
+          }
+          const name = rawName.trim();
+          const snake = name.toLowerCase().replace(/\s+/g, '_');
+
+          // Try to find by metadata->>name ilike
+          let { data: depositRow, error: findErr } = await supabase
+            .from('deposits')
+            .select('id, metadata')
+            .eq('user_id', userId)
+            .ilike('metadata->>name', `%${name}%`)
+            .maybeSingle();
+
+          if (!depositRow && name !== snake) {
+            const res2 = await supabase
+              .from('deposits')
+              .select('id, metadata')
+              .eq('user_id', userId)
+              .ilike('metadata->>name', `%${snake}%`)
+              .maybeSingle();
+            depositRow = res2.data as any;
+            findErr = res2.error as any;
+          }
+          if (findErr) throw findErr;
+          if (!depositRow?.id) {
+            return { success: false, error: `No deposit found with name similar to "${name}"` };
+          }
+
+          const updatePayload: any = { principal: targetPrincipal, updated_at: new Date().toISOString() };
+          if (newRate !== undefined) updatePayload.rate = Number(newRate);
+
+          const { error: updErr } = await supabase
+            .from('deposits')
+            .update(updatePayload)
+            .eq('id', depositRow.id)
+            .eq('user_id', userId);
+          if (updErr) throw updErr;
+          return { success: true, message: `Deposit "${name}" updated to $${targetPrincipal}${newRate !== undefined ? ` at ${Number(newRate)}%` : ''}` };
+        } catch (e: any) {
+          return { success: false, error: e?.message || 'Failed to update deposit' };
+        }
 
       case 'add_deposit':
         const { data: depositData, error: depositError } = await supabase.functions.invoke('deposits', {
