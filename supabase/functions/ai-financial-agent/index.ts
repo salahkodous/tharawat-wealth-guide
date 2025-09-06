@@ -1272,10 +1272,48 @@ async function executePendingAction(userId: string, action: PendingAction): Prom
           }
           if (findErr) throw findErr;
           if (!depositRow?.id) {
-            return { success: false, error: `No deposit found with name similar to "${name}"` };
+            // Heuristic fallback by deposit type and common aliases
+            const nameLower = name.toLowerCase();
+            let desiredType: 'savings' | 'fixed_cd' | 'investment_linked' | undefined;
+            if (nameLower.includes('saving')) desiredType = 'savings';
+            if (!desiredType && (nameLower.includes('cd') || nameLower.includes('certificate') || nameLower.includes('fixed'))) desiredType = 'fixed_cd';
+            if (!desiredType && nameLower.includes('investment') && nameLower.includes('linked')) desiredType = 'investment_linked';
+            if (!desiredType && nameLower.includes('cash')) desiredType = 'savings';
+
+            if (desiredType) {
+              const { data: byType } = await supabase
+                .from('deposits')
+                .select('id, metadata, deposit_type, rate')
+                .eq('user_id', userId)
+                .eq('deposit_type', desiredType)
+                .order('rate', { ascending: true, nullsFirst: true })
+                .limit(1)
+                .maybeSingle();
+              if (byType?.id) {
+                depositRow = byType as any;
+              }
+            }
+
+            // If still not found, create a new deposit with this friendly name
+            if (!depositRow?.id) {
+              const defaultType: 'savings' | 'fixed_cd' | 'investment_linked' = desiredType ?? (nameLower.includes('cd') ? 'fixed_cd' : 'savings');
+              const inferredRate = newRate !== undefined ? Number(newRate) : (defaultType === 'savings' && nameLower.includes('cash') ? 0 : 5);
+              const { error: createErr } = await supabase
+                .from('deposits')
+                .insert({
+                  user_id: userId,
+                  deposit_type: defaultType,
+                  principal: targetPrincipal,
+                  rate: inferredRate,
+                  start_date: new Date().toISOString().slice(0,10),
+                  metadata: { name }
+                });
+              if (createErr) throw createErr;
+              return { success: true, message: `Deposit "${name}" created and set to $${targetPrincipal}${inferredRate !== undefined ? ` at ${inferredRate}%` : ''}` };
+            }
           }
 
-          const updatePayload: any = { principal: targetPrincipal, updated_at: new Date().toISOString() };
+          const updatePayload: any = { principal: targetPrincipal, updated_at: new Date().toISOString(), metadata: { ...(depositRow.metadata || {}), name } };
           if (newRate !== undefined) updatePayload.rate = Number(newRate);
 
           const { error: updErr } = await supabase
