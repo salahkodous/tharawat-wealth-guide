@@ -25,22 +25,25 @@ const Auth = () => {
   });
 
   const countries = [
-    { code: 'AE', name: 'United Arab Emirates', currency: 'AED' },
-    { code: 'SA', name: 'Saudi Arabia', currency: 'SAR' },
-    { code: 'QA', name: 'Qatar', currency: 'QAR' },
-    { code: 'KW', name: 'Kuwait', currency: 'KWD' },
-    { code: 'BH', name: 'Bahrain', currency: 'BHD' },
-    { code: 'OM', name: 'Oman', currency: 'OMR' },
-    { code: 'JO', name: 'Jordan', currency: 'JOD' },
-    { code: 'LB', name: 'Lebanon', currency: 'LBP' },
-    { code: 'EG', name: 'Egypt', currency: 'EGP' },
-    { code: 'MA', name: 'Morocco', currency: 'MAD' },
-    { code: 'TN', name: 'Tunisia', currency: 'TND' },
-    { code: 'DZ', name: 'Algeria', currency: 'DZD' },
-    { code: 'IQ', name: 'Iraq', currency: 'IQD' },
-    { code: 'US', name: 'United States', currency: 'USD' },
-    { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
-    { code: 'EU', name: 'European Union', currency: 'EUR' },
+    { code: 'EG', name: 'Egypt', currency: 'EGP', flag: '🇪🇬' },
+    { code: 'US', name: 'United States', currency: 'USD', flag: '🇺🇸' },
+    { code: 'GB', name: 'United Kingdom', currency: 'GBP', flag: '🇬🇧' },
+    { code: 'DE', name: 'Germany', currency: 'EUR', flag: '🇩🇪' },
+    { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
+    { code: 'SA', name: 'Saudi Arabia', currency: 'SAR', flag: '🇸🇦' },
+    { code: 'AE', name: 'United Arab Emirates', currency: 'AED', flag: '🇦🇪' },
+    { code: 'IN', name: 'India', currency: 'INR', flag: '🇮🇳' },
+    { code: 'CN', name: 'China', currency: 'CNY', flag: '🇨🇳' },
+    { code: 'QA', name: 'Qatar', currency: 'QAR', flag: '🇶🇦' },
+    { code: 'KW', name: 'Kuwait', currency: 'KWD', flag: '🇰🇼' },
+    { code: 'BH', name: 'Bahrain', currency: 'BHD', flag: '🇧🇭' },
+    { code: 'OM', name: 'Oman', currency: 'OMR', flag: '🇴🇲' },
+    { code: 'JO', name: 'Jordan', currency: 'JOD', flag: '🇯🇴' },
+    { code: 'LB', name: 'Lebanon', currency: 'LBP', flag: '🇱🇧' },
+    { code: 'MA', name: 'Morocco', currency: 'MAD', flag: '🇲🇦' },
+    { code: 'TN', name: 'Tunisia', currency: 'TND', flag: '🇹🇳' },
+    { code: 'DZ', name: 'Algeria', currency: 'DZD', flag: '🇩🇿' },
+    { code: 'IQ', name: 'Iraq', currency: 'IQD', flag: '🇮🇶' },
   ];
 
   useEffect(() => {
@@ -263,7 +266,7 @@ const Auth = () => {
                           <SelectContent>
                             {countries.map((country) => (
                               <SelectItem key={country.code} value={country.code}>
-                                {country.name} ({country.currency})
+                                {country.flag} {country.name} ({country.currency})
                               </SelectItem>
                             ))}
                           </SelectContent>

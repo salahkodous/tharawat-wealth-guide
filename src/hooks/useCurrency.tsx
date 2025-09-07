@@ -36,6 +36,8 @@ const currencySymbols: Record<string, string> = {
   USD: '$',
   GBP: '£',
   EUR: '€',
+  INR: '₹',
+  CNY: '¥',
 };
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

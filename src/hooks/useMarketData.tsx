@@ -138,6 +138,9 @@ export const useMarketData = () => {
   const [bankProducts, setBankProducts] = useState<BankProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // For backward compatibility, this hook still fetches from base tables (Egypt)
+  // Use useGlobalMarketData for country-specific data
+
   const fetchStocks = async () => {
     const { data, error } = await supabase
       .from('stocks')

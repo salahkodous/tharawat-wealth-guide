@@ -101,6 +101,8 @@ export const useCurrencyConversion = () => {
       USD: '$',
       GBP: '£',
       EUR: '€',
+      INR: '₹',
+      CNY: '¥',
     };
 
     const symbol = currencySymbols[targetCurrency] || targetCurrency;
