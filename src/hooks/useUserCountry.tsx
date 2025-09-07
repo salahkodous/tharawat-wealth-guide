@@ -15,20 +15,10 @@ const countryData: CountryInfo[] = [
   { code: 'GB', name: 'United Kingdom', currency: 'GBP', flag: '🇬🇧' },
   { code: 'DE', name: 'Germany', currency: 'EUR', flag: '🇩🇪' },
   { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
-  { code: 'SA', name: 'Saudi Arabia', currency: 'SAR', flag: '🇸🇦' },
-  { code: 'AE', name: 'United Arab Emirates', currency: 'AED', flag: '🇦🇪' },
   { code: 'IN', name: 'India', currency: 'INR', flag: '🇮🇳' },
   { code: 'CN', name: 'China', currency: 'CNY', flag: '🇨🇳' },
-  { code: 'QA', name: 'Qatar', currency: 'QAR', flag: '🇶🇦' },
-  { code: 'KW', name: 'Kuwait', currency: 'KWD', flag: '🇰🇼' },
-  { code: 'BH', name: 'Bahrain', currency: 'BHD', flag: '🇧🇭' },
-  { code: 'OM', name: 'Oman', currency: 'OMR', flag: '🇴🇲' },
-  { code: 'JO', name: 'Jordan', currency: 'JOD', flag: '🇯🇴' },
-  { code: 'LB', name: 'Lebanon', currency: 'LBP', flag: '🇱🇧' },
-  { code: 'MA', name: 'Morocco', currency: 'MAD', flag: '🇲🇦' },
-  { code: 'TN', name: 'Tunisia', currency: 'TND', flag: '🇹🇳' },
-  { code: 'DZ', name: 'Algeria', currency: 'DZD', flag: '🇩🇿' },
-  { code: 'IQ', name: 'Iraq', currency: 'IQD', flag: '🇮🇶' },
+  { code: 'SA', name: 'Saudi Arabia', currency: 'SAR', flag: '🇸🇦' },
+  { code: 'AE', name: 'United Arab Emirates', currency: 'AED', flag: '🇦🇪' },
 ];
 
 export const useUserCountry = () => {

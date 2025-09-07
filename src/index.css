@@ -73,20 +73,18 @@
     /* Spacing and sizing */
     --radius: 0.75rem;
 
+    /* Popover system - solid backgrounds for dropdowns */
+    --popover: 240 7% 10%;
+    --popover-foreground: 0 0% 95%;
+
+    /* Sidebar colors */
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
   }
 
   /* Force dark mode - light mode removed for focused experience */
