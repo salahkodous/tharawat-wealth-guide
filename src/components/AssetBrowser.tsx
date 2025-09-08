@@ -135,9 +135,9 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        {/* Mobile Tabs - Scrollable horizontal list */}
+        {/* Mobile Tabs - 2 rows grid */}
         <div className="block md:hidden">
-          <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide">
+          <div className="grid grid-cols-4 gap-2">
             {[
               { value: 'stocks', icon: TrendingUp, label: 'Stocks' },
               { value: 'crypto', icon: Coins, label: 'Crypto' },
@@ -153,10 +153,10 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
                 variant={activeTab === value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActiveTab(value)}
-                className="flex items-center gap-2 whitespace-nowrap min-w-fit px-3 shrink-0"
+                className="flex flex-col items-center gap-1 p-2 h-auto text-xs"
               >
                 <Icon className="w-4 h-4" />
-                <span className="text-xs">{label}</span>
+                <span className="text-[10px] leading-tight text-center">{label}</span>
               </Button>
             ))}
           </div>
