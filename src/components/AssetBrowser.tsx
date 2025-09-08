@@ -135,71 +135,69 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="space-y-4">
-          {/* Mobile Tabs - Scrollable */}
-          <div className="block md:hidden">
-            <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide">
-              {[
-                { value: 'stocks', icon: TrendingUp, label: 'Stocks' },
-                { value: 'crypto', icon: Coins, label: 'Crypto' },
-                { value: 'bonds', icon: Landmark, label: 'Bonds' },
-                { value: 'etfs', icon: Briefcase, label: 'ETFs' },
-                { value: 'real_estate', icon: Building2, label: 'Real Estate' },
-                { value: 'gold', icon: DollarSign, label: 'Gold' },
-                { value: 'currency', icon: Globe, label: 'Currency' },
-                { value: 'banking', icon: Banknote, label: 'Banking' }
-              ].map(({ value, icon: Icon, label }) => (
-                <Button
-                  key={value}
-                  variant={activeTab === value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setActiveTab(value)}
-                  className="flex items-center gap-2 whitespace-nowrap min-w-fit px-3"
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-xs">{label}</span>
-                </Button>
-              ))}
-            </div>
+        {/* Mobile Tabs - Scrollable horizontal list */}
+        <div className="block md:hidden">
+          <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide">
+            {[
+              { value: 'stocks', icon: TrendingUp, label: 'Stocks' },
+              { value: 'crypto', icon: Coins, label: 'Crypto' },
+              { value: 'bonds', icon: Landmark, label: 'Bonds' },
+              { value: 'etfs', icon: Briefcase, label: 'ETFs' },
+              { value: 'real_estate', icon: Building2, label: 'Real Estate' },
+              { value: 'gold', icon: DollarSign, label: 'Gold' },
+              { value: 'currency', icon: Globe, label: 'Currency' },
+              { value: 'banking', icon: Banknote, label: 'Banking' }
+            ].map(({ value, icon: Icon, label }) => (
+              <Button
+                key={value}
+                variant={activeTab === value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab(value)}
+                className="flex items-center gap-2 whitespace-nowrap min-w-fit px-3 shrink-0"
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-xs">{label}</span>
+              </Button>
+            ))}
           </div>
+        </div>
 
-          {/* Desktop Tabs - Grid */}
-          <div className="hidden md:block">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-              <TabsTrigger value="stocks" className="flex items-center gap-1">
-                <TrendingUp className="w-4 h-4" />
-                <span className="hidden sm:inline">Stocks</span>
-              </TabsTrigger>
-              <TabsTrigger value="crypto" className="flex items-center gap-1">
-                <Coins className="w-4 h-4" />
-                <span className="hidden sm:inline">Crypto</span>
-              </TabsTrigger>
-              <TabsTrigger value="bonds" className="flex items-center gap-1">
-                <Landmark className="w-4 h-4" />
-                <span className="hidden sm:inline">Bonds</span>
-              </TabsTrigger>
-              <TabsTrigger value="etfs" className="flex items-center gap-1">
-                <Briefcase className="w-4 h-4" />
-                <span className="hidden sm:inline">ETFs</span>
-              </TabsTrigger>
-              <TabsTrigger value="real_estate" className="flex items-center gap-1">
-                <Building2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Real Estate</span>
-              </TabsTrigger>
-              <TabsTrigger value="gold" className="flex items-center gap-1">
-                <DollarSign className="w-4 h-4" />
-                <span className="hidden sm:inline">Gold</span>
-              </TabsTrigger>
-              <TabsTrigger value="currency" className="flex items-center gap-1">
-                <Globe className="w-4 h-4" />
-                <span className="hidden sm:inline">Currency</span>
-              </TabsTrigger>
-              <TabsTrigger value="banking" className="flex items-center gap-1">
-                <Banknote className="w-4 h-4" />
-                <span className="hidden sm:inline">Banking</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        {/* Desktop Tabs - Grid layout */}
+        <div className="hidden md:block">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+            <TabsTrigger value="stocks" className="flex items-center gap-1">
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Stocks</span>
+            </TabsTrigger>
+            <TabsTrigger value="crypto" className="flex items-center gap-1">
+              <Coins className="w-4 h-4" />
+              <span className="hidden sm:inline">Crypto</span>
+            </TabsTrigger>
+            <TabsTrigger value="bonds" className="flex items-center gap-1">
+              <Landmark className="w-4 h-4" />
+              <span className="hidden sm:inline">Bonds</span>
+            </TabsTrigger>
+            <TabsTrigger value="etfs" className="flex items-center gap-1">
+              <Briefcase className="w-4 h-4" />
+              <span className="hidden sm:inline">ETFs</span>
+            </TabsTrigger>
+            <TabsTrigger value="real_estate" className="flex items-center gap-1">
+              <Building2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Real Estate</span>
+            </TabsTrigger>
+            <TabsTrigger value="gold" className="flex items-center gap-1">
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">Gold</span>
+            </TabsTrigger>
+            <TabsTrigger value="currency" className="flex items-center gap-1">
+              <Globe className="w-4 h-4" />
+              <span className="hidden sm:inline">Currency</span>
+            </TabsTrigger>
+            <TabsTrigger value="banking" className="flex items-center gap-1">
+              <Banknote className="w-4 h-4" />
+              <span className="hidden sm:inline">Banking</span>
+            </TabsTrigger>
+          </TabsList>
         </div>
 
         <TabsContent value="stocks" className="space-y-4">
