@@ -19,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 const PortfolioSummary = () => {
-  const { formatAmount, convertAmount } = useCurrency();
+  const { formatAmount, convertAmount, currency } = useCurrency();
   const { user } = useAuth();
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,18 +89,21 @@ const PortfolioSummary = () => {
     }
   };
 
-  const getAssetCurrency = (country: string) => {
+  const getAssetCurrency = (asset: any) => {
+    // For crypto and global assets, they're usually stored in USD
+    if (asset.asset_type === 'crypto' || asset.asset_type === 'cryptocurrencies') return 'USD';
+    
     const currencyMap: { [key: string]: string } = {
       'UAE': 'AED', 'Saudi Arabia': 'SAR', 'Egypt': 'EGP', 'Qatar': 'QAR',
       'Kuwait': 'KWD', 'Bahrain': 'BHD', 'Oman': 'OMR', 'Jordan': 'JOD',
       'Lebanon': 'LBP', 'Morocco': 'MAD', 'Tunisia': 'TND', 'Algeria': 'DZD',
       'Iraq': 'IQD', 'US': 'USD', 'UK': 'GBP', 'EU': 'EUR'
     };
-    return currencyMap[country] || 'USD';
+    return currencyMap[asset.country] || 'USD';
   };
 
   const calculateAssetMetrics = (asset: any) => {
-    const currency = getAssetCurrency(asset.country);
+    const currency = getAssetCurrency(asset);
     const value = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 1);
     const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 1);
     const change = value - purchaseValue;
@@ -123,10 +126,20 @@ const PortfolioSummary = () => {
     };
   });
 
-  const totalValue = holdings.reduce((sum, holding) => 
-    sum + convertAmount(holding.value, holding.currency), 0);
-  const totalChange = holdings.reduce((sum, holding) => 
-    sum + convertAmount(holding.change, holding.currency), 0);
+  const totalValue = holdings.reduce((sum, holding) => {
+    // Only convert if asset currency is different from user currency
+    if (holding.currency === currency) {
+      return sum + holding.value;
+    }
+    return sum + convertAmount(holding.value, holding.currency);
+  }, 0);
+  const totalChange = holdings.reduce((sum, holding) => {
+    // Only convert if asset currency is different from user currency
+    if (holding.currency === currency) {
+      return sum + holding.change;
+    }
+    return sum + convertAmount(holding.change, holding.currency);
+  }, 0);
   const totalChangePercent = totalValue > 0 ? ((totalChange / (totalValue - totalChange)) * 100) : 0;
 
   const portfolioStats = [
@@ -157,16 +170,23 @@ const PortfolioSummary = () => {
   ];
 
   const topHoldings = holdings
-    .sort((a, b) => convertAmount(b.value, b.currency) - convertAmount(a.value, a.currency))
+    .sort((a, b) => {
+      const aValue = a.currency === currency ? a.value : convertAmount(a.value, a.currency);
+      const bValue = b.currency === currency ? b.value : convertAmount(b.value, b.currency);
+      return bValue - aValue;
+    })
     .slice(0, 5)
     .map(holding => {
       const totalPortfolioValue = totalValue > 0 ? totalValue : 1;
-      const allocation = ((convertAmount(holding.value, holding.currency) / totalPortfolioValue) * 100).toFixed(1);
+      const holdingValue = holding.currency === currency ? 
+        holding.value : convertAmount(holding.value, holding.currency);
+      const allocation = ((holdingValue / totalPortfolioValue) * 100).toFixed(1);
       
       return {
         name: holding.name,
         symbol: holding.symbol,
-        value: formatAmount(holding.value, holding.currency),
+        value: holding.currency === currency ? 
+          formatAmount(holding.value) : formatAmount(holdingValue),
         allocation: `${allocation}%`,
         change: `${holding.changePercent >= 0 ? '+' : ''}${holding.changePercent.toFixed(1)}%`,
         positive: holding.changePercent >= 0,
@@ -177,7 +197,7 @@ const PortfolioSummary = () => {
 
   // Calculate asset allocation
   const assetTypeAllocation = holdings.reduce((acc, holding) => {
-    const value = convertAmount(holding.value, holding.currency);
+    const value = holding.currency === currency ? holding.value : convertAmount(holding.value, holding.currency);
     acc[holding.type] = (acc[holding.type] || 0) + value;
     return acc;
   }, {} as { [key: string]: number });
@@ -190,7 +210,7 @@ const PortfolioSummary = () => {
 
   // Calculate geographic allocation
   const countryAllocation = holdings.reduce((acc, holding) => {
-    const value = convertAmount(holding.value, holding.currency);
+    const value = holding.currency === currency ? holding.value : convertAmount(holding.value, holding.currency);
     acc[holding.country] = (acc[holding.country] || 0) + value;
     return acc;
   }, {} as { [key: string]: number });

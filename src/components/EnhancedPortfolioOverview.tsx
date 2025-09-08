@@ -53,25 +53,42 @@ const EnhancedPortfolioOverview = () => {
   };
 
   const getAssetCurrency = (asset: any) => {
-    // Return the currency based on the asset's country or type
+    // For crypto and global assets, they're usually stored in USD
+    if (asset.asset_type === 'crypto' || asset.asset_type === 'cryptocurrencies') return 'USD';
+    
+    // Return the currency based on the asset's country
     if (asset.country === 'Egypt') return 'EGP';
     if (asset.country === 'Saudi Arabia') return 'SAR';
     if (asset.country === 'UAE') return 'AED';
     if (asset.country === 'Qatar') return 'QAR';
     if (asset.country === 'Kuwait') return 'KWD';
-    return 'USD'; // Default fallback
+    if (asset.country === 'Bahrain') return 'BHD';
+    if (asset.country === 'Oman') return 'OMR';
+    if (asset.country === 'Jordan') return 'JOD';
+    
+    return 'USD'; // Default fallback for global assets
   };
 
   const portfolioMetrics = {
     totalValue: assets.reduce((sum, asset) => {
       const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
-      return sum + convertAmount(assetValue, getAssetCurrency(asset), currency);
+      const assetCurrency = getAssetCurrency(asset);
+      // Only convert if asset currency is different from user currency
+      if (assetCurrency === currency) {
+        return sum + assetValue;
+      }
+      return sum + convertAmount(assetValue, assetCurrency, currency);
     }, 0),
     dayChange: assets.reduce((sum, asset) => {
       const currentValue = (asset.current_price || 0) * (asset.quantity || 0);
       const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
       const change = currentValue - purchaseValue;
-      return sum + convertAmount(change, getAssetCurrency(asset), currency);
+      const assetCurrency = getAssetCurrency(asset);
+      // Only convert if asset currency is different from user currency
+      if (assetCurrency === currency) {
+        return sum + change;
+      }
+      return sum + convertAmount(change, assetCurrency, currency);
     }, 0),
     dayChangePercent: assets.length > 0 ? 
       (assets.reduce((sum, asset) => {
@@ -83,7 +100,12 @@ const EnhancedPortfolioOverview = () => {
       const currentValue = (asset.current_price || 0) * (asset.quantity || 0);
       const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
       const profit = currentValue - purchaseValue;
-      return sum + convertAmount(profit, getAssetCurrency(asset), currency);
+      const assetCurrency = getAssetCurrency(asset);
+      // Only convert if asset currency is different from user currency
+      if (assetCurrency === currency) {
+        return sum + profit;
+      }
+      return sum + convertAmount(profit, assetCurrency, currency);
     }, 0),
     totalReturnPercent: 0, // Will calculate
     riskScore: 7.2,
@@ -93,7 +115,12 @@ const EnhancedPortfolioOverview = () => {
   // Calculate total return percentage
   const totalInvested = assets.reduce((sum, asset) => {
     const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
-    return sum + convertAmount(purchaseValue, getAssetCurrency(asset), currency);
+    const assetCurrency = getAssetCurrency(asset);
+    // Only convert if asset currency is different from user currency
+    if (assetCurrency === currency) {
+      return sum + purchaseValue;
+    }
+    return sum + convertAmount(purchaseValue, assetCurrency, currency);
   }, 0);
   
   portfolioMetrics.totalReturnPercent = totalInvested > 0 
@@ -102,7 +129,8 @@ const EnhancedPortfolioOverview = () => {
 
   const assetBreakdown = assets.reduce((acc: any[], asset) => {
     const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
-    const convertedValue = convertAmount(assetValue, getAssetCurrency(asset), currency);
+    const assetCurrency = getAssetCurrency(asset);
+    const convertedValue = assetCurrency === currency ? assetValue : convertAmount(assetValue, assetCurrency, currency);
     
     const assetType = asset.asset_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Unknown';
     const existingType = acc.find(item => item.type === assetType);
@@ -130,7 +158,8 @@ const EnhancedPortfolioOverview = () => {
 
   const geographicBreakdown = assets.reduce((acc: any[], asset) => {
     const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
-    const convertedValue = convertAmount(assetValue, getAssetCurrency(asset), currency);
+    const assetCurrency = getAssetCurrency(asset);
+    const convertedValue = assetCurrency === currency ? assetValue : convertAmount(assetValue, assetCurrency, currency);
     
     const country = asset.country || 'Unknown';
     const existingCountry = acc.find(item => item.region === country);

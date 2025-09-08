@@ -52,11 +52,20 @@ const PortfolioTable = () => {
   };
 
   const getAssetCurrency = (asset: any) => {
+    // For crypto and global assets, they're usually stored in USD
+    if (asset.asset_type === 'crypto' || asset.asset_type === 'cryptocurrencies') return 'USD';
+    
+    // For local assets, use the country's currency
     if (asset.country === 'Egypt') return 'EGP';
     if (asset.country === 'Saudi Arabia') return 'SAR';
     if (asset.country === 'UAE') return 'AED';
     if (asset.country === 'Qatar') return 'QAR';
     if (asset.country === 'Kuwait') return 'KWD';
+    if (asset.country === 'Bahrain') return 'BHD';
+    if (asset.country === 'Oman') return 'OMR';
+    if (asset.country === 'Jordan') return 'JOD';
+    
+    // Global assets default to USD
     return 'USD';
   };
 
@@ -94,15 +103,27 @@ const PortfolioTable = () => {
   });
 
   const totalValue = holdings.reduce((sum, holding) => {
+    // Only convert if asset currency is different from user currency
+    if (holding.currency === currency) {
+      return sum + holding.value;
+    }
     return sum + convertAmount(holding.value, holding.currency, currency);
   }, 0);
   
   const totalChange = holdings.reduce((sum, holding) => {
+    // Only convert if asset currency is different from user currency
+    if (holding.currency === currency) {
+      return sum + holding.change;
+    }
     return sum + convertAmount(holding.change, holding.currency, currency);
   }, 0);
   
   const totalPurchaseValue = holdings.reduce((sum, holding) => {
     const purchaseValue = (holding.avgPrice || 0) * (holding.quantity || 0);
+    // Only convert if asset currency is different from user currency
+    if (holding.currency === currency) {
+      return sum + purchaseValue;
+    }
     return sum + convertAmount(purchaseValue, holding.currency, currency);
   }, 0);
   
@@ -277,20 +298,28 @@ const PortfolioTable = () => {
                      holding.quantity.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatAmount(holding.avgPrice, holding.currency)}
+                    {holding.currency === currency ? 
+                      formatAmount(holding.avgPrice) : 
+                      formatAmount(holding.avgPrice, holding.currency)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatAmount(holding.currentPrice, holding.currency)}
+                    {holding.currency === currency ? 
+                      formatAmount(holding.currentPrice) : 
+                      formatAmount(holding.currentPrice, holding.currency)}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatAmount(holding.value, holding.currency)}
+                    {holding.currency === currency ? 
+                      formatAmount(holding.value) : 
+                      formatAmount(convertAmount(holding.value, holding.currency, currency))}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className={`${
                       holding.change >= 0 ? 'text-success' : 'text-destructive'
                     }`}>
                       <div className="font-medium">
-                        {holding.change >= 0 ? '+' : ''}{formatAmount(holding.change, holding.currency)}
+                        {holding.change >= 0 ? '+' : ''}{holding.currency === currency ? 
+                          formatAmount(holding.change) : 
+                          formatAmount(convertAmount(holding.change, holding.currency, currency))}
                       </div>
                       <div className="text-sm">
                         ({holding.change >= 0 ? '+' : ''}{holding.changePercent.toFixed(2)}%)
