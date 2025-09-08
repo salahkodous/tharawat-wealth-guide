@@ -90,6 +90,11 @@ const PortfolioSummary = () => {
   };
 
   const getAssetCurrency = (asset: any) => {
+    // Check metadata for currency first
+    if (asset.metadata?.additional_data?.currency) {
+      return asset.metadata.additional_data.currency;
+    }
+    
     // For crypto and global assets, they're usually stored in USD
     if (asset.asset_type === 'crypto' || asset.asset_type === 'cryptocurrencies') return 'USD';
     
