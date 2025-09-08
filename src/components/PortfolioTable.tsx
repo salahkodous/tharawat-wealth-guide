@@ -52,6 +52,11 @@ const PortfolioTable = () => {
   };
 
   const getAssetCurrency = (asset: any) => {
+    // Check metadata for currency first
+    if (asset.metadata?.additional_data?.currency) {
+      return asset.metadata.additional_data.currency;
+    }
+    
     // Real estate always uses local currency
     if (asset.asset_type === 'real_estate' || asset.asset_type === 'Real Estate') {
       if (asset.country === 'Egypt') return 'EGP';
@@ -62,7 +67,7 @@ const PortfolioTable = () => {
       if (asset.country === 'Bahrain') return 'BHD';
       if (asset.country === 'Oman') return 'OMR';
       if (asset.country === 'Jordan') return 'JOD';
-      return 'USD'; // fallback for international real estate
+      return 'EGP'; // default to EGP for unknown real estate
     }
     
     // For crypto and global assets, they're usually stored in USD
