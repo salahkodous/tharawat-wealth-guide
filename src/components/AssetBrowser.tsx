@@ -135,43 +135,75 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-          <TabsTrigger value="stocks" className="flex items-center gap-1">
-            <TrendingUp className="w-4 h-4" />
-            <span className="hidden sm:inline">Stocks</span>
-          </TabsTrigger>
-          <TabsTrigger value="crypto" className="flex items-center gap-1">
-            <Coins className="w-4 h-4" />
-            <span className="hidden sm:inline">Crypto</span>
-          </TabsTrigger>
-          <TabsTrigger value="bonds" className="flex items-center gap-1">
-            <Landmark className="w-4 h-4" />
-            <span className="hidden sm:inline">Bonds</span>
-          </TabsTrigger>
-          <TabsTrigger value="etfs" className="flex items-center gap-1">
-            <Briefcase className="w-4 h-4" />
-            <span className="hidden sm:inline">ETFs</span>
-          </TabsTrigger>
-          <TabsTrigger value="real_estate" className="flex items-center gap-1">
-            <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Real Estate</span>
-          </TabsTrigger>
-          <TabsTrigger value="gold" className="flex items-center gap-1">
-            <DollarSign className="w-4 h-4" />
-            <span className="hidden sm:inline">Gold</span>
-          </TabsTrigger>
-          <TabsTrigger value="currency" className="flex items-center gap-1">
-            <Globe className="w-4 h-4" />
-            <span className="hidden sm:inline">Currency</span>
-          </TabsTrigger>
-          <TabsTrigger value="banking" className="flex items-center gap-1">
-            <Banknote className="w-4 h-4" />
-            <span className="hidden sm:inline">Banking</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="space-y-4">
+          {/* Mobile Tabs - Scrollable */}
+          <div className="block md:hidden">
+            <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide">
+              {[
+                { value: 'stocks', icon: TrendingUp, label: 'Stocks' },
+                { value: 'crypto', icon: Coins, label: 'Crypto' },
+                { value: 'bonds', icon: Landmark, label: 'Bonds' },
+                { value: 'etfs', icon: Briefcase, label: 'ETFs' },
+                { value: 'real_estate', icon: Building2, label: 'Real Estate' },
+                { value: 'gold', icon: DollarSign, label: 'Gold' },
+                { value: 'currency', icon: Globe, label: 'Currency' },
+                { value: 'banking', icon: Banknote, label: 'Banking' }
+              ].map(({ value, icon: Icon, label }) => (
+                <Button
+                  key={value}
+                  variant={activeTab === value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveTab(value)}
+                  className="flex items-center gap-2 whitespace-nowrap min-w-fit px-3"
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="text-xs">{label}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop Tabs - Grid */}
+          <div className="hidden md:block">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+              <TabsTrigger value="stocks" className="flex items-center gap-1">
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Stocks</span>
+              </TabsTrigger>
+              <TabsTrigger value="crypto" className="flex items-center gap-1">
+                <Coins className="w-4 h-4" />
+                <span className="hidden sm:inline">Crypto</span>
+              </TabsTrigger>
+              <TabsTrigger value="bonds" className="flex items-center gap-1">
+                <Landmark className="w-4 h-4" />
+                <span className="hidden sm:inline">Bonds</span>
+              </TabsTrigger>
+              <TabsTrigger value="etfs" className="flex items-center gap-1">
+                <Briefcase className="w-4 h-4" />
+                <span className="hidden sm:inline">ETFs</span>
+              </TabsTrigger>
+              <TabsTrigger value="real_estate" className="flex items-center gap-1">
+                <Building2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Real Estate</span>
+              </TabsTrigger>
+              <TabsTrigger value="gold" className="flex items-center gap-1">
+                <DollarSign className="w-4 h-4" />
+                <span className="hidden sm:inline">Gold</span>
+              </TabsTrigger>
+              <TabsTrigger value="currency" className="flex items-center gap-1">
+                <Globe className="w-4 h-4" />
+                <span className="hidden sm:inline">Currency</span>
+              </TabsTrigger>
+              <TabsTrigger value="banking" className="flex items-center gap-1">
+                <Banknote className="w-4 h-4" />
+                <span className="hidden sm:inline">Banking</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
 
         <TabsContent value="stocks" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredStocks.map((stock) => (
               <Card key={stock.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(stock, 'stocks')}>
@@ -203,7 +235,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
         </TabsContent>
 
         <TabsContent value="crypto" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredCryptos.map((crypto) => (
               <Card key={crypto.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(crypto, 'crypto')}>
@@ -235,7 +267,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
         </TabsContent>
 
         <TabsContent value="bonds" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredBonds.map((bond) => (
               <Card key={bond.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(bond, 'bonds')}>
@@ -262,7 +294,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
         </TabsContent>
 
         <TabsContent value="etfs" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredETFs.map((etf) => (
               <Card key={etf.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(etf, 'etfs')}>
@@ -294,7 +326,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
         </TabsContent>
 
         <TabsContent value="real_estate" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredRealEstate.map((property) => (
               <Card key={property.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(property, 'real_estate')}>
@@ -321,7 +353,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
         </TabsContent>
 
         <TabsContent value="gold" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredGold.map((gold) => (
               <Card key={gold.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(gold, 'gold')}>
@@ -360,7 +392,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
         </TabsContent>
 
         <TabsContent value="currency" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredCurrencies.map((rate) => (
               <Card key={rate.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(rate, 'currency')}>
@@ -391,7 +423,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
         </TabsContent>
 
         <TabsContent value="banking" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
             {filteredBankProducts.map((product) => (
               <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => onAssetSelect(product, 'banking')}>
