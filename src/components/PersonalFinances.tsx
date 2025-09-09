@@ -32,6 +32,14 @@ const PersonalFinances = () => {
   const [showIncomeManager, setShowIncomeManager] = React.useState(false);
   const [showExpenseManager, setShowExpenseManager] = React.useState(false);
 
+  // Auto-calculate net savings when income or expenses change
+  React.useEffect(() => {
+    const netSavings = finances.monthly_income - finances.monthly_expenses - finances.monthly_investing_amount;
+    if (finances.net_savings !== netSavings) {
+      updateFinances('net_savings', netSavings, { silent: true });
+    }
+  }, [finances.monthly_income, finances.monthly_expenses, finances.monthly_investing_amount, finances.net_savings, updateFinances]);
+
   if (loading) {
     return (
       <div className="space-y-6">
