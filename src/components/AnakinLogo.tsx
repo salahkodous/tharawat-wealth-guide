@@ -1,5 +1,5 @@
 import React from 'react';
-import anakinLogoElectric from '@/assets/anakin-logo-electric.png';
+import anakinLogoProfessional from '@/assets/anakin-logo-professional.png';
 
 interface AnakinLogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -23,7 +23,7 @@ const AnakinLogo: React.FC<AnakinLogoProps> = ({ size = 'md', className = '' }) 
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative">
         <img 
-          src={anakinLogoElectric}
+          src={anakinLogoProfessional}
           alt="Anakin Logo"
           className="electric-glow"
           style={{ width: logoSize[size], height: logoSize[size] }}
