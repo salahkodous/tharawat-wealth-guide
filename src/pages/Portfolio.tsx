@@ -419,9 +419,9 @@ const Portfolio = () => {
               </Card>
             </div>
 
-            <EnhancedPortfolioOverview />
-            
             <PortfolioTable />
+            
+            <EnhancedPortfolioOverview />
 
             <PortfolioGoals assets={assets} totalValue={totalValue} />
 
