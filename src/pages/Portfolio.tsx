@@ -24,6 +24,7 @@ import PortfolioTable from '@/components/PortfolioTable';
 import PortfolioManager from '@/components/PortfolioManager';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import EnhancedPortfolioOverview from '@/components/EnhancedPortfolioOverview';
+import PortfolioGoals from '@/components/PortfolioGoals';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAuth } from '@/hooks/useAuth';
@@ -415,6 +416,8 @@ const Portfolio = () => {
             <EnhancedPortfolioOverview />
             
             <PortfolioTable />
+
+            <PortfolioGoals assets={assets} totalValue={totalValue} />
 
             {assets.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
