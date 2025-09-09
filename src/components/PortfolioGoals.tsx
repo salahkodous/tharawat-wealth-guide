@@ -13,20 +13,21 @@ import {
   PieChart,
   Percent
 } from 'lucide-react';
-import GoalManager from '@/components/GoalManager';
+import PortfolioGoalManager from '@/components/PortfolioGoalManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 
-interface Goal {
+interface PortfolioGoal {
   id: string;
   title: string;
-  target_amount: number;
-  current_amount: number;
+  goal_type: string;
+  target_value: number;
+  current_value: number;
+  target_percentage?: number;
+  asset_type?: string;
   target_date?: string;
-  category: string;
   status: string;
-  monthly_saving_amount?: number;
 }
 
 interface Asset {
@@ -48,7 +49,7 @@ interface PortfolioGoalsProps {
 const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) => {
   const { user } = useAuth();
   const { formatAmount, convertAmount, currency } = useCurrency();
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goals, setGoals] = useState<PortfolioGoal[]>([]);
   const [isGoalManagerOpen, setIsGoalManagerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -63,7 +64,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
     
     try {
       const { data, error } = await supabase
-        .from('financial_goals')
+        .from('portfolio_goals')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
@@ -72,7 +73,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
       if (error) throw error;
       setGoals(data || []);
     } catch (error) {
-      console.error('Error fetching goals:', error);
+      console.error('Error fetching portfolio goals:', error);
     } finally {
       setLoading(false);
     }
@@ -91,19 +92,17 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
   };
 
   const calculatePortfolioTargetProgress = () => {
-    const portfolioTargetGoals = goals.filter(goal => 
-      goal.category === 'portfolio' || goal.title.toLowerCase().includes('portfolio')
-    );
+    const portfolioValueGoals = goals.filter(goal => goal.goal_type === 'portfolio_value');
     
-    if (portfolioTargetGoals.length === 0) return null;
+    if (portfolioValueGoals.length === 0) return null;
     
-    const mainGoal = portfolioTargetGoals[0];
-    const progress = Math.min((totalValue / mainGoal.target_amount) * 100, 100);
+    const mainGoal = portfolioValueGoals[0];
+    const progress = Math.min((totalValue / mainGoal.target_value) * 100, 100);
     
     return {
       goal: mainGoal,
       progress,
-      remaining: Math.max(mainGoal.target_amount - totalValue, 0)
+      remaining: Math.max(mainGoal.target_value - totalValue, 0)
     };
   };
 
@@ -122,19 +121,11 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
     });
 
     // Add target allocations from goals
-    const allocationGoals = goals.filter(goal => 
-      goal.category === 'allocation' || goal.title.toLowerCase().includes('allocation')
-    );
+    const allocationGoals = goals.filter(goal => goal.goal_type === 'sector_allocation');
     
     allocationGoals.forEach(goal => {
-      const assetType = goal.title.toLowerCase().includes('stocks') ? 'stocks' :
-                       goal.title.toLowerCase().includes('real estate') ? 'real_estate' :
-                       goal.title.toLowerCase().includes('crypto') ? 'crypto' :
-                       goal.title.toLowerCase().includes('gold') ? 'gold' :
-                       goal.title.toLowerCase().includes('bonds') ? 'bonds' : null;
-      
-      if (assetType && sectorBreakdown[assetType]) {
-        sectorBreakdown[assetType].target = goal.target_amount;
+      if (goal.asset_type && sectorBreakdown[goal.asset_type]) {
+        sectorBreakdown[goal.asset_type].target = goal.target_percentage;
       }
     });
 
@@ -173,7 +164,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <GoalManager />
+              <PortfolioGoalManager assets={assets} totalValue={totalValue} />
             </DialogContent>
           </Dialog>
         </div>
@@ -194,7 +185,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <GoalManager />
+                <PortfolioGoalManager assets={assets} totalValue={totalValue} />
               </DialogContent>
             </Dialog>
           </div>
@@ -215,7 +206,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Current: {formatAmount(totalValue)}</span>
-                    <span>Target: {formatAmount(portfolioProgress.goal.target_amount)}</span>
+                    <span>Target: {formatAmount(portfolioProgress.goal.target_value)}</span>
                   </div>
                   <Progress value={portfolioProgress.progress} className="h-2" />
                   {portfolioProgress.remaining > 0 && (
@@ -237,13 +228,14 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                 <div className="space-y-2">
                   {Object.entries(sectorAllocation).map(([sector, data]) => {
                     if (!data.target) return null;
-                    const progress = Math.min((data.value / data.target) * 100, 100);
+                    const currentPercentage = totalValue > 0 ? (data.value / totalValue) * 100 : 0;
+                    const progress = Math.min((currentPercentage / data.target) * 100, 100);
                     
                     return (
                       <div key={sector} className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span className="capitalize">{sector.replace('_', ' ')}</span>
-                          <span>{progress.toFixed(1)}%</span>
+                          <span>{currentPercentage.toFixed(1)}% / {data.target}%</span>
                         </div>
                         <Progress value={progress} className="h-1" />
                       </div>
@@ -261,7 +253,23 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {activeGoals.slice(0, 4).map((goal) => {
-                  const progress = Math.min((goal.current_amount / goal.target_amount) * 100, 100);
+                  let progress = 0;
+                  let currentDisplay = '';
+                  let targetDisplay = '';
+
+                  if (goal.goal_type === 'portfolio_value') {
+                    progress = Math.min((goal.current_value / goal.target_value) * 100, 100);
+                    currentDisplay = formatAmount(goal.current_value);
+                    targetDisplay = formatAmount(goal.target_value);
+                  } else if (goal.goal_type === 'sector_allocation' || goal.goal_type === 'return_target') {
+                    progress = Math.min((goal.current_value / (goal.target_percentage || 1)) * 100, 100);
+                    currentDisplay = `${goal.current_value.toFixed(1)}%`;
+                    targetDisplay = `${goal.target_percentage}%`;
+                  } else {
+                    progress = Math.min((goal.current_value / goal.target_value) * 100, 100);
+                    currentDisplay = goal.current_value.toString();
+                    targetDisplay = goal.target_value.toString();
+                  }
                   
                   return (
                     <div key={goal.id} className="p-3 rounded-lg bg-secondary/20 border">
@@ -274,8 +282,8 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                         </div>
                         <Progress value={progress} className="h-1" />
                         <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>{formatAmount(goal.current_amount)}</span>
-                          <span>{formatAmount(goal.target_amount)}</span>
+                          <span>{currentDisplay}</span>
+                          <span>{targetDisplay}</span>
                         </div>
                       </div>
                     </div>
@@ -290,7 +298,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <GoalManager />
+                    <PortfolioGoalManager assets={assets} totalValue={totalValue} />
                   </DialogContent>
                 </Dialog>
               )}
