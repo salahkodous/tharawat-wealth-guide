@@ -260,6 +260,60 @@ const EnhancedPortfolioOverview = () => {
 
   return (
     <div className="space-y-6">
+      {/* Holdings Overview */}
+      <Card className="glass-card border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PieChart className="h-5 w-5 text-primary" />
+            Portfolio Holdings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {assets.slice(0, 4).map((asset, index) => {
+              const totalValue = (asset.quantity || 0) * (asset.current_price || asset.purchase_price || 0);
+              const gains = ((asset.current_price || asset.purchase_price || 0) - (asset.purchase_price || 0)) * (asset.quantity || 0);
+              const gainsPercentage = asset.purchase_price ? (((asset.current_price || asset.purchase_price) - asset.purchase_price) / asset.purchase_price) * 100 : 0;
+              
+              return (
+                <div key={asset.id} className="p-3 rounded-lg bg-background/50 border border-border/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium truncate">{asset.asset_name}</div>
+                    <Badge variant="outline" className="text-xs">
+                      {asset.asset_type}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-lg font-bold">{formatAmount(totalValue)}</div>
+                    <div className="flex items-center gap-1">
+                      {gainsPercentage >= 0 ? (
+                        <TrendingUp className="h-3 w-3 text-success" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 text-destructive" />
+                      )}
+                      <span className={`text-xs ${gainsPercentage >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        {gainsPercentage >= 0 ? '+' : ''}{gainsPercentage.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {asset.quantity} shares
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {assets.length > 4 && (
+              <div className="p-3 rounded-lg bg-background/50 border border-border/50 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-lg font-bold">+{assets.length - 4}</div>
+                  <div className="text-xs text-muted-foreground">more holdings</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
