@@ -177,6 +177,11 @@ const Portfolio = () => {
   };
 
   const getAssetCurrency = (asset: Asset) => {
+    // Check metadata for currency first
+    if (asset.metadata?.additional_data?.currency) {
+      return asset.metadata.additional_data.currency;
+    }
+    
     if (asset.country === 'Egypt') return 'EGP';
     if (asset.country === 'Saudi Arabia') return 'SAR';
     if (asset.country === 'UAE') return 'AED';
