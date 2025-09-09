@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap } from 'lucide-react';
+import anakinLogoElectric from '@/assets/anakin-logo-electric.png';
 
 interface AnakinLogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -13,19 +13,20 @@ const AnakinLogo: React.FC<AnakinLogoProps> = ({ size = 'md', className = '' }) 
     lg: 'text-4xl'
   };
 
-  const iconSize = {
-    sm: 16,
-    md: 24,
-    lg: 32
+  const logoSize = {
+    sm: 20,
+    md: 28,
+    lg: 36
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative">
-        <Zap 
-          className="text-primary" 
-          size={iconSize[size]}
-          fill="currentColor"
+        <img 
+          src={anakinLogoElectric}
+          alt="Anakin Logo"
+          className="electric-glow"
+          style={{ width: logoSize[size], height: logoSize[size] }}
         />
       </div>
       <span className={`font-bold text-gradient-electric ${sizeClasses[size]}`}>
