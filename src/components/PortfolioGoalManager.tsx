@@ -536,7 +536,7 @@ const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = []
                     Create Your First Goal
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md z-50 bg-background/95 backdrop-blur-sm">
                   <DialogHeader>
                     <DialogTitle>Create Investment Goal</DialogTitle>
                   </DialogHeader>
