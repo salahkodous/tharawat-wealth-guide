@@ -57,6 +57,23 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
   useEffect(() => {
     if (user) {
       fetchGoals();
+      
+      // Set up real-time subscription for portfolio goals
+      const channel = supabase
+        .channel('portfolio-goals-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'portfolio_goals', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Portfolio goals updated via realtime in component:', payload);
+            fetchGoals();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

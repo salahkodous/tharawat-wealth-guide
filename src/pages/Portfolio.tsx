@@ -79,7 +79,8 @@ const Portfolio = () => {
   useEffect(() => {
     if (user) {
       fetchPortfolioData();
-      setupRealtimeSubscription();
+      const cleanup = setupRealtimeSubscription();
+      return cleanup;
     } else {
       setLoading(false);
     }
