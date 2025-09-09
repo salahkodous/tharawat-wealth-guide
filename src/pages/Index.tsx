@@ -23,7 +23,7 @@ import {
 
 // Components
 import AnimatedBackground from '@/components/AnimatedBackground';
-import TharawatLogo from '@/components/TharawatLogo';
+import AnakinLogo from '@/components/AnakinLogo';
 import VoiceSearchInput from '@/components/VoiceSearchInput';
 import PortfolioManager from '@/components/PortfolioManager';
 import AIRecommendations from '@/components/AIRecommendations';
@@ -82,7 +82,7 @@ const Index = () => {
     {
       name: 'Ahmed Hassan',
       role: 'Entrepreneur, Cairo',
-      quote: 'Tharawat helped me organize my finances and grow my investments by 40% in 6 months.',
+      quote: 'Anakin helped me organize my finances and grow my investments by 40% in 6 months.',
     },
     {
       name: 'Sarah Al-Rashid',
@@ -114,7 +114,7 @@ const Index = () => {
         <header className="border-b border-border/20 backdrop-blur-md bg-background/80">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <TharawatLogo size="lg" />
+              <AnakinLogo size="lg" />
               
               <nav className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" className="hover:text-primary" onClick={() => navigate('/about')}>
@@ -151,7 +151,7 @@ const Index = () => {
                 
                 <p className="text-xl text-muted-foreground max-w-3xl mx-auto" dir="auto">
                   Take control of your financial future with AI-powered insights, automated tracking, 
-                  and personalized recommendations. Join 50,000+ users who trust Tharawat to manage 
+                  and personalized recommendations. Join 50,000+ users who trust Anakin to manage 
                   their wealth across Arab markets.
                   <br />
                   <span className="text-lg mt-3 block text-primary/80">
@@ -261,10 +261,10 @@ const Index = () => {
                 <div className="space-y-4">
                   <h2 className="text-3xl md:text-4xl font-bold">
                     Why Choose{' '}
-                    <span className="text-gradient-electric">Tharawat</span>?
+                    <span className="text-gradient-electric">Anakin</span>?
                   </h2>
                   <p className="text-xl text-muted-foreground">
-                    Join thousands of successful investors who trust Tharawat 
+                    Join thousands of successful investors who trust Anakin 
                     as their personal financial manager
                   </p>
                 </div>
@@ -316,7 +316,7 @@ const Index = () => {
             <div className="text-center space-y-4 mb-12">
               <h2 className="text-3xl md:text-4xl font-bold">
                 Experience{' '}
-                <span className="text-gradient-electric">Tharawat</span>{' '}
+                <span className="text-gradient-electric">Anakin</span>{' '}
                 in Action
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -404,7 +404,7 @@ const Index = () => {
                 <span className="text-gradient-electric">Financial Future</span>?
               </h2>
               <p className="text-xl text-muted-foreground">
-                Join 50,000+ users who trust Tharawat as their personal financial manager. 
+                Join 50,000+ users who trust Anakin as their personal financial manager. 
                 Start your free trial today and experience the power of AI-driven financial management.
               </p>
               
@@ -432,7 +432,7 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div className="space-y-4">
-                <TharawatLogo size="md" />
+                <AnakinLogo size="md" />
                 <p className="text-muted-foreground text-sm">
                   Your super personal financial manager for Arab markets. 
                   AI-powered wealth management made simple.
@@ -472,7 +472,7 @@ const Index = () => {
             
             <div className="border-t border-border/20 mt-8 pt-8 text-center">
               <p className="text-sm text-muted-foreground">
-                © 2024 Tharawat. All rights reserved. | Licensed and regulated in Arab markets.
+                © 2024 Anakin. All rights reserved. | Licensed and regulated in Arab markets.
               </p>
             </div>
           </div>

@@ -14,7 +14,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Link, useLocation } from 'react-router-dom';
-import TharawatLogo from '@/components/TharawatLogo';
+import AnakinLogo from '@/components/AnakinLogo';
 import { useState } from 'react';
 
 const Navigation = () => {
@@ -39,7 +39,7 @@ const Navigation = () => {
     <header className={`border-b border-border/20 backdrop-blur-md bg-background/80 sticky top-0 z-50 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <TharawatLogo size="lg" />
+          <AnakinLogo size="lg" />
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">

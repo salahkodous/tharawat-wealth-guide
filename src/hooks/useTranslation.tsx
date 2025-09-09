@@ -11,7 +11,7 @@ const translations = {
     settings: 'Settings',
     
     // Dashboard
-    welcome: 'Welcome to Tharawat',
+    welcome: 'Welcome to Anakin',
     personalFinancialManager: 'Your Super Personal Financial Manager',
     
     // Settings
@@ -72,7 +72,7 @@ const translations = {
     settings: 'الإعدادات',
     
     // Dashboard
-    welcome: 'مرحباً بك في ثروات',
+    welcome: 'مرحباً بك في أناكين',
     personalFinancialManager: 'مديرك المالي الشخصي المتميز',
     
     // Settings

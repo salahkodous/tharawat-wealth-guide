@@ -1,12 +1,12 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
 
-interface TharawatLogoProps {
+interface AnakinLogoProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
-const TharawatLogo: React.FC<TharawatLogoProps> = ({ size = 'md', className = '' }) => {
+const AnakinLogo: React.FC<AnakinLogoProps> = ({ size = 'md', className = '' }) => {
   const sizeClasses = {
     sm: 'text-lg',
     md: 'text-2xl', 
@@ -29,10 +29,10 @@ const TharawatLogo: React.FC<TharawatLogoProps> = ({ size = 'md', className = ''
         />
       </div>
       <span className={`font-bold text-gradient-electric ${sizeClasses[size]}`}>
-        Tharawat
+        Anakin
       </span>
     </div>
   );
 };
 
-export default TharawatLogo;
+export default AnakinLogo;

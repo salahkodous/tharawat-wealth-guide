@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Mail, Lock, User, Chrome, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import AnimatedBackground from '@/components/AnimatedBackground';
-import TharawatLogo from '@/components/TharawatLogo';
+import AnakinLogo from '@/components/AnakinLogo';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -122,8 +122,8 @@ const Auth = () => {
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <TharawatLogo size="lg" />
-            <h1 className="mt-6 text-3xl font-bold text-foreground">Welcome to Tharawat</h1>
+            <AnakinLogo size="lg" />
+            <h1 className="mt-6 text-3xl font-bold text-foreground">Welcome to Anakin</h1>
             <p className="mt-2 text-muted-foreground">
               Your AI-powered investment guide for Arab markets
             </p>

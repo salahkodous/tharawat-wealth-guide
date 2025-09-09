@@ -18,7 +18,7 @@ import {
   PiggyBank,
   Briefcase
 } from 'lucide-react';
-import TharawatLogo from '@/components/TharawatLogo';
+import AnakinLogo from '@/components/AnakinLogo';
 import AnimatedBackground from '@/components/AnimatedBackground';
 
 const About = () => {
@@ -117,7 +117,7 @@ const About = () => {
         <header className="border-b border-border/20 backdrop-blur-md bg-background/80">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <TharawatLogo size="lg" />
+              <AnakinLogo size="lg" />
               <Button 
                 className="gradient-electric text-primary-foreground"
                 onClick={() => navigate('/auth')}
@@ -140,7 +140,7 @@ const About = () => {
                 
                 <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                   We are on a mission to democratize sophisticated financial management for the Arab world. 
-                  Tharawat combines cutting-edge AI technology with deep regional expertise to serve as your 
+                  Anakin combines cutting-edge AI technology with deep regional expertise to serve as your 
                   personal financial advisor.
                 </p>
 
@@ -212,7 +212,7 @@ const About = () => {
                     <h3 className="text-2xl font-bold">Our Solution</h3>
                     <div className="space-y-4 text-muted-foreground">
                       <p>
-                        Tharawat bridges this gap by providing institutional-grade financial 
+                        Anakin bridges this gap by providing institutional-grade financial 
                         management tools powered by AI, specifically designed for Arab markets. 
                         Our platform speaks your language—literally and culturally.
                       </p>
@@ -351,7 +351,7 @@ const About = () => {
                 <span className="text-gradient-electric">Financial Journey</span>?
               </h2>
               <p className="text-xl text-muted-foreground">
-                Join thousands of successful investors who trust Tharawat to manage and grow their wealth. 
+                Join thousands of successful investors who trust Anakin to manage and grow their wealth. 
                 Experience the future of personal finance today.
               </p>
               
@@ -387,9 +387,9 @@ const About = () => {
         <footer className="border-t border-border/20 py-8 bg-background/50">
           <div className="container mx-auto px-4">
             <div className="text-center">
-              <TharawatLogo size="md" />
+              <AnakinLogo size="md" />
               <p className="text-sm text-muted-foreground mt-4">
-                © 2024 Tharawat. Licensed and regulated across Arab markets.
+                © 2024 Anakin. Licensed and regulated across Arab markets.
               </p>
             </div>
           </div>
