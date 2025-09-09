@@ -10,13 +10,14 @@ import {
   Calendar, 
   Plus,
   DollarSign,
-  PieChart,
-  Percent
+  PieChart
 } from 'lucide-react';
-import PortfolioGoalManager from '@/components/PortfolioGoalManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
+
+// Import the investment-focused goal manager
+import PortfolioGoalManager from '@/components/PortfolioGoalManager';
 
 interface PortfolioGoal {
   id: string;
@@ -245,7 +246,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
               </div>
             )}
 
-            {/* Other Active Goals */}
+            {/* Active Goals Summary */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
