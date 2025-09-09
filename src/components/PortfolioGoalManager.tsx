@@ -338,7 +338,7 @@ const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = []
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background border z-50">
                       <SelectItem value="portfolio_value">Portfolio Value Target</SelectItem>
                       <SelectItem value="sector_allocation">Sector Allocation %</SelectItem>
                       <SelectItem value="return_target">Return Target %</SelectItem>
@@ -370,7 +370,7 @@ const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = []
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background border z-50">
                           <SelectItem value="stocks">Stocks</SelectItem>
                           <SelectItem value="crypto">Cryptocurrency</SelectItem>
                           <SelectItem value="real_estate">Real Estate</SelectItem>
@@ -536,11 +536,123 @@ const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = []
                     Create Your First Goal
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md z-50 bg-background/95 backdrop-blur-sm">
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Create Investment Goal</DialogTitle>
                   </DialogHeader>
-                  {/* Dialog content same as above */}
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="title">Goal Title</Label>
+                      <Input
+                        id="title"
+                        value={newGoal.title}
+                        onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
+                        placeholder="e.g., Reach $100K Portfolio"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="goal-type">Goal Type</Label>
+                      <Select
+                        value={newGoal.goal_type}
+                        onValueChange={(value: any) => setNewGoal({ ...newGoal, goal_type: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border z-50">
+                          <SelectItem value="portfolio_value">Portfolio Value Target</SelectItem>
+                          <SelectItem value="sector_allocation">Sector Allocation %</SelectItem>
+                          <SelectItem value="return_target">Return Target %</SelectItem>
+                          <SelectItem value="asset_target">Asset Count Target</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {newGoal.goal_type === 'portfolio_value' && (
+                      <div>
+                        <Label htmlFor="target-value">Target Value</Label>
+                        <Input
+                          id="target-value"
+                          type="number"
+                          value={newGoal.target_value}
+                          onChange={(e) => setNewGoal({ ...newGoal, target_value: Number(e.target.value) })}
+                        />
+                      </div>
+                    )}
+
+                    {newGoal.goal_type === 'sector_allocation' && (
+                      <>
+                        <div>
+                          <Label htmlFor="asset-type">Asset Type</Label>
+                          <Select
+                            value={newGoal.asset_type}
+                            onValueChange={(value) => setNewGoal({ ...newGoal, asset_type: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border z-50">
+                              <SelectItem value="stocks">Stocks</SelectItem>
+                              <SelectItem value="crypto">Cryptocurrency</SelectItem>
+                              <SelectItem value="real_estate">Real Estate</SelectItem>
+                              <SelectItem value="gold">Gold</SelectItem>
+                              <SelectItem value="bonds">Bonds</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="target-percentage">Target Allocation %</Label>
+                          <Input
+                            id="target-percentage"
+                            type="number"
+                            value={newGoal.target_percentage}
+                            onChange={(e) => setNewGoal({ ...newGoal, target_percentage: Number(e.target.value) })}
+                            max="100"
+                            min="0"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {newGoal.goal_type === 'return_target' && (
+                      <div>
+                        <Label htmlFor="return-percentage">Target Return %</Label>
+                        <Input
+                          id="return-percentage"
+                          type="number"
+                          value={newGoal.target_percentage}
+                          onChange={(e) => setNewGoal({ ...newGoal, target_percentage: Number(e.target.value) })}
+                        />
+                      </div>
+                    )}
+
+                    {newGoal.goal_type === 'asset_target' && (
+                      <div>
+                        <Label htmlFor="asset-count">Target Asset Count</Label>
+                        <Input
+                          id="asset-count"
+                          type="number"
+                          value={newGoal.target_value}
+                          onChange={(e) => setNewGoal({ ...newGoal, target_value: Number(e.target.value) })}
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <Label htmlFor="target-date">Target Date (Optional)</Label>
+                      <Input
+                        id="target-date"
+                        type="date"
+                        value={newGoal.target_date}
+                        onChange={(e) => setNewGoal({ ...newGoal, target_date: e.target.value })}
+                      />
+                    </div>
+                    
+                    <Button onClick={createGoal} disabled={loading} className="w-full">
+                      {loading ? 'Creating...' : 'Create Goal'}
+                    </Button>
+                  </div>
                 </DialogContent>
               </Dialog>
             </CardContent>
