@@ -54,12 +54,16 @@ interface Asset {
 interface Goal {
   id: string;
   title: string;
-  target_amount: number;
-  current_amount: number;
+  goal_type: string;
+  target_value: number;
+  current_value: number;
+  target_percentage?: number;
+  asset_type?: string;
   target_date?: string;
-  category: string;
   status: string;
-  ai_strategy?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 const Portfolio = () => {
@@ -96,11 +100,12 @@ const Portfolio = () => {
 
       if (assetsError) throw assetsError;
 
-      // Fetch financial goals
+      // Fetch portfolio goals
       const { data: goalsData, error: goalsError } = await supabase
-        .from('financial_goals')
+        .from('portfolio_goals')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('status', 'active');
 
       if (goalsError) throw goalsError;
 
@@ -134,9 +139,9 @@ const Portfolio = () => {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'financial_goals', filter: `user_id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'portfolio_goals', filter: `user_id=eq.${user.id}` },
         (payload) => {
-          console.log('Financial goals updated via realtime:', payload);
+          console.log('Portfolio goals updated via realtime:', payload);
           fetchPortfolioData();
         }
       )
@@ -407,7 +412,7 @@ const Portfolio = () => {
                 <CardContent>
                   <div className="text-2xl font-bold text-foreground">{goals.length}</div>
                   <p className="text-xs text-muted-foreground">
-                    {goals.filter(g => g.status === 'active').length} active
+                    {goals.length} active
                   </p>
                 </CardContent>
               </Card>
