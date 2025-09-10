@@ -182,50 +182,65 @@ const AIFinancialAgent = () => {
                     message.type === 'error' ? 'text-red-800' : ''
                   }`}>
                     {message.content.split('\n').map((line, index) => {
+                      // Clean up technical formatting
+                      let cleanLine = line
+                        .replace(/\[.*?\]/g, '') // Remove brackets
+                        .replace(/"/g, '') // Remove quotes
+                        .replace(/`/g, '') // Remove backticks
+                        .replace(/\{.*?\}/g, '') // Remove curly braces
+                        .trim();
+
                       // Handle main headers (starting with **)
                       if (line.startsWith('**') && line.endsWith('**')) {
-                        const title = line.replace(/\*\*/g, '');
+                        const title = cleanLine.replace(/\*\*/g, '');
                         return (
-                          <h3 key={index} className="text-lg font-bold mb-2 mt-3 first:mt-0">
+                          <h3 key={index} className="text-xl font-bold mb-3 mt-4 first:mt-0 text-primary">
                             {title}
                           </h3>
                         );
                       }
+                      
                       // Handle sub-headers (starting with single *)
                       if (line.startsWith('* **') && line.includes(':**')) {
-                        const title = line.replace(/\* \*\*/g, '').replace(/:\*\*/g, '');
+                        const title = cleanLine.replace(/\* \*\*/g, '').replace(/:\*\*/g, '');
                         return (
-                          <h4 key={index} className="text-base font-semibold mb-1 mt-2">
-                            {title}:
+                          <h4 key={index} className="text-lg font-semibold mb-2 mt-3 text-foreground">
+                            {title}
                           </h4>
                         );
                       }
-                      // Handle bullet points
+                      
+                      // Handle bullet points with better spacing
                       if (line.startsWith('• ') || line.startsWith('- ')) {
+                        const bulletText = cleanLine.replace(/^[•-]\s*/, '');
                         return (
-                          <p key={index} className="text-sm ml-2 mb-1">
-                            {line}
-                          </p>
+                          <div key={index} className="flex items-start gap-2 mb-2 ml-4">
+                            <span className="text-primary mt-1">•</span>
+                            <p className="text-base text-muted-foreground">{bulletText}</p>
+                          </div>
                         );
                       }
+                      
                       // Handle numbered lists
                       if (line.match(/^\d+\.\s/)) {
                         return (
-                          <p key={index} className="text-sm ml-2 mb-1 font-medium">
-                            {line}
+                          <p key={index} className="text-base ml-4 mb-2 font-medium text-foreground">
+                            {cleanLine}
                           </p>
                         );
                       }
-                      // Handle regular content
-                      if (line.trim()) {
+                      
+                      // Handle regular content with better typography
+                      if (cleanLine) {
                         return (
-                          <p key={index} className="text-sm mb-1">
-                            {line}
+                          <p key={index} className="text-base mb-2 text-foreground leading-relaxed">
+                            {cleanLine}
                           </p>
                         );
                       }
+                      
                       // Empty lines for spacing
-                      return <br key={index} />;
+                      return <div key={index} className="h-2" />;
                     })}
                   </div>
                   </div>
