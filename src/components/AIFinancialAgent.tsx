@@ -272,19 +272,17 @@ const AIFinancialAgent = () => {
                           return;
                         }
                         
-                        // Handle regular paragraphs with enhanced typography
-                        if (cleanLine && cleanLine.length > 10) {
-                          const isImportant = line.includes('recommend') || line.includes('important') || line.includes('significant');
-                          renderedElements.push(
-                            <p key={index} className={`mb-3 leading-relaxed ${
-                              isImportant 
-                                ? 'text-base font-medium text-foreground bg-accent/10 p-3 rounded-lg border-l-2 border-primary' 
-                                : 'text-sm text-muted-foreground'
-                            }`}>
-                              {cleanLine}
-                            </p>
-                          );
-                        }
+                         // Handle regular paragraphs with enhanced typography
+                         if (cleanLine && cleanLine.length > 10) {
+                           const isImportant = line.includes('recommend') || line.includes('important') || line.includes('significant');
+                           if (isImportant) {
+                             renderedElements.push(
+                               <p key={index} className="text-base font-medium text-foreground bg-accent/10 p-3 rounded-lg border-l-2 border-primary mb-3 leading-relaxed">
+                                 {cleanLine}
+                               </p>
+                             );
+                           }
+                         }
                       });
 
                       return renderedElements;
