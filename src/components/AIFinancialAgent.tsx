@@ -173,7 +173,7 @@ const AIFinancialAgent = () => {
               <div className={`max-w-[80%] ${message.type === 'user' ? 'order-1' : ''}`}>
                 <div className={`p-4 rounded-lg ${
                   message.type === 'user' 
-                    ? 'bg-primary text-primary-foreground ml-auto' 
+                    ? 'bg-primary text-black font-medium ml-auto' 
                     : message.type === 'error'
                     ? 'bg-red-50 border border-red-200'
                     : 'bg-muted'
@@ -181,95 +181,114 @@ const AIFinancialAgent = () => {
                   <div className={`leading-relaxed whitespace-pre-line ${
                     message.type === 'error' ? 'text-red-800' : ''
                   }`}>
-                    {message.content.split('\n').map((line, index) => {
-                      // Skip all technical sections completely
-                      if (line.includes('action:') || line.includes('Action:') || 
-                          line.includes('analysis:') || line.includes('Analysis:') ||
-                          line.includes('To proceed with this recommendation') ||
-                          line.includes('I suggest the following action') ||
-                          (line.includes('{') && (line.includes('type:') || line.includes('data:') || line.includes('description:'))) ||
-                          line.match(/^\s*\{.*\}\s*$/) ||
-                          line.includes('asset_type:') || line.includes('location:') || 
-                          line.includes('investment_amount:') || line.includes('expected_return:')) {
-                        return null;
-                      }
+                    {(() => {
+                      const lines = message.content.split('\n');
+                      const processedSections = new Set();
+                      const renderedElements = [];
 
-                      // Aggressive cleaning of all technical formatting
-                      let cleanLine = line
-                        .replace(/\*\*/g, '') // Remove all asterisks
-                        .replace(/\[.*?\]/g, '') // Remove brackets
-                        .replace(/"/g, '') // Remove quotes
-                        .replace(/`/g, '') // Remove backticks
-                        .replace(/\{[^}]*\}/g, '') // Remove curly braces and content
-                        .replace(/analysis:\s*/gi, '') // Remove analysis prefix
-                        .replace(/action:\s*/gi, '') // Remove action prefix
-                        .replace(/data:\s*/gi, '') // Remove data prefix
-                        .replace(/description:\s*/gi, '') // Remove description prefix
-                        .replace(/type:\s*/gi, '') // Remove type prefix
-                        .trim();
+                      lines.forEach((line, index) => {
+                        // Skip all technical sections completely
+                        if (line.includes('action:') || line.includes('Action:') || 
+                            line.includes('analysis:') || line.includes('Analysis:') ||
+                            line.includes('To proceed with this recommendation') ||
+                            line.includes('I suggest the following action') ||
+                            (line.includes('{') && (line.includes('type:') || line.includes('data:') || line.includes('description:'))) ||
+                            line.match(/^\s*\{.*\}\s*$/) ||
+                            line.includes('asset_type:') || line.includes('location:') || 
+                            line.includes('investment_amount:') || line.includes('expected_return:')) {
+                          return;
+                        }
 
-                      // Skip empty lines and technical remnants
-                      if (!cleanLine || cleanLine.match(/^[{},\s]*$/)) {
-                        return null;
-                      }
+                        // Aggressive cleaning of all technical formatting
+                        let cleanLine = line
+                          .replace(/\*\*/g, '') // Remove all asterisks
+                          .replace(/\[.*?\]/g, '') // Remove brackets
+                          .replace(/"/g, '') // Remove quotes
+                          .replace(/`/g, '') // Remove backticks
+                          .replace(/\{[^}]*\}/g, '') // Remove curly braces and content
+                          .replace(/analysis:\s*/gi, '') // Remove analysis prefix
+                          .replace(/action:\s*/gi, '') // Remove action prefix
+                          .replace(/data:\s*/gi, '') // Remove data prefix
+                          .replace(/description:\s*/gi, '') // Remove description prefix
+                          .replace(/type:\s*/gi, '') // Remove type prefix
+                          .trim();
 
-                      // Detect and style main section headers (originally with **)
-                      if (line.includes('**') && !line.startsWith('•') && !line.startsWith('*')) {
-                        return (
-                          <h2 key={index} className="text-2xl font-bold mb-4 mt-6 first:mt-0 text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                            {cleanLine}
-                          </h2>
-                        );
-                      }
-                      
-                      // Handle category headers (lines that end with :)
-                      if (cleanLine.endsWith(':') && !line.startsWith('•') && cleanLine.length < 50) {
-                        return (
-                          <h3 key={index} className="text-lg font-semibold mb-3 mt-4 text-foreground border-l-4 border-primary pl-3">
-                            {cleanLine.replace(':', '')}
-                          </h3>
-                        );
-                      }
-                      
-                      // Handle bullet points with enhanced styling
-                      if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
-                        const bulletText = cleanLine.replace(/^[•\-*]\s*/, '');
-                        return (
-                          <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-2 rounded-lg bg-muted/30">
-                            <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{bulletText}</p>
-                          </div>
-                        );
-                      }
-                      
-                      // Handle numbered lists with better styling
-                      if (line.match(/^\d+\.\s/)) {
-                        return (
-                          <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-3 rounded-lg bg-accent/20">
-                            <span className="text-primary font-bold text-sm mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
-                            <p className="text-sm font-medium text-foreground leading-relaxed">
-                              {cleanLine.replace(/^\d+\.\s*/, '')}
+                        // Skip empty lines and technical remnants
+                        if (!cleanLine || cleanLine.match(/^[{},\s]*$/)) {
+                          return;
+                        }
+
+                        // Check for duplicate content (same content with different formatting)
+                        const normalizedContent = cleanLine.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+                        if (normalizedContent.length > 10 && processedSections.has(normalizedContent)) {
+                          return; // Skip duplicate content
+                        }
+                        if (normalizedContent.length > 10) {
+                          processedSections.add(normalizedContent);
+                        }
+
+                        // Detect and style main section headers (originally with **)
+                        if (line.includes('**') && !line.startsWith('•') && !line.startsWith('*')) {
+                          renderedElements.push(
+                            <h2 key={index} className="text-2xl font-bold mb-4 mt-6 first:mt-0 text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                              {cleanLine}
+                            </h2>
+                          );
+                          return;
+                        }
+                        
+                        // Handle category headers (lines that end with :)
+                        if (cleanLine.endsWith(':') && !line.startsWith('•') && cleanLine.length < 50) {
+                          renderedElements.push(
+                            <h3 key={index} className="text-lg font-semibold mb-3 mt-4 text-foreground border-l-4 border-primary pl-3">
+                              {cleanLine.replace(':', '')}
+                            </h3>
+                          );
+                          return;
+                        }
+                        
+                        // Handle bullet points with enhanced styling
+                        if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
+                          const bulletText = cleanLine.replace(/^[•\-*]\s*/, '');
+                          renderedElements.push(
+                            <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-2 rounded-lg bg-muted/30">
+                              <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                              <p className="text-sm text-muted-foreground leading-relaxed">{bulletText}</p>
+                            </div>
+                          );
+                          return;
+                        }
+                        
+                        // Handle numbered lists with better styling
+                        if (line.match(/^\d+\.\s/)) {
+                          renderedElements.push(
+                            <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-3 rounded-lg bg-accent/20">
+                              <span className="text-primary font-bold text-sm mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
+                              <p className="text-sm font-medium text-foreground leading-relaxed">
+                                {cleanLine.replace(/^\d+\.\s*/, '')}
+                              </p>
+                            </div>
+                          );
+                          return;
+                        }
+                        
+                        // Handle regular paragraphs with enhanced typography
+                        if (cleanLine && cleanLine.length > 10) {
+                          const isImportant = line.includes('recommend') || line.includes('important') || line.includes('significant');
+                          renderedElements.push(
+                            <p key={index} className={`mb-3 leading-relaxed ${
+                              isImportant 
+                                ? 'text-base font-medium text-foreground bg-accent/10 p-3 rounded-lg border-l-2 border-primary' 
+                                : 'text-sm text-muted-foreground'
+                            }`}>
+                              {cleanLine}
                             </p>
-                          </div>
-                        );
-                      }
-                      
-                      // Handle regular paragraphs with enhanced typography
-                      if (cleanLine && cleanLine.length > 10) {
-                        const isImportant = line.includes('recommend') || line.includes('important') || line.includes('significant');
-                        return (
-                          <p key={index} className={`mb-3 leading-relaxed ${
-                            isImportant 
-                              ? 'text-base font-medium text-foreground bg-accent/10 p-3 rounded-lg border-l-2 border-primary' 
-                              : 'text-sm text-muted-foreground'
-                          }`}>
-                            {cleanLine}
-                          </p>
-                        );
-                      }
-                      
-                      return null;
-                    }).filter(Boolean)}
+                          );
+                        }
+                      });
+
+                      return renderedElements;
+                    })()}
                   </div>
                   </div>
               </div>
