@@ -10,8 +10,6 @@ import {
   Send,
   User,
   Brain,
-  CheckCircle,
-  XCircle,
   MessageSquare
 } from 'lucide-react';
 
@@ -20,7 +18,6 @@ interface Message {
   type: 'user' | 'agent' | 'error';
   content: string;
   timestamp: Date;
-  pendingAction?: any;
   errorDetails?: {
     name?: string;
     message?: string;
@@ -97,8 +94,7 @@ const AIFinancialAgent = () => {
         id: (Date.now() + 1).toString(),
         type: 'agent',
         content: data?.response || 'No response received',
-        timestamp: new Date(),
-        pendingAction: data?.pendingAction
+        timestamp: new Date()
       };
 
       setMessages(prev => [...prev, agentMessage]);
@@ -130,74 +126,6 @@ const AIFinancialAgent = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleActionResponse = async (messageId: string, accept: boolean) => {
-    const message = messages.find(m => m.id === messageId);
-    if (!message?.pendingAction || !user) return;
-
-    setIsLoading(true);
-
-      try {
-        if (accept) {
-          const { data, error } = await supabase.functions.invoke('ai-financial-agent', {
-            body: {
-              message: 'confirm',
-              userId: user.id,
-              action: {
-                type: 'confirm',
-                pendingAction: message.pendingAction
-              }
-            }
-          });
-
-          if (error) throw error;
-
-          const confirmMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            type: 'agent',
-            content: data?.response || 'Action completed',
-            timestamp: new Date()
-          };
-
-          setMessages(prev => [...prev, confirmMessage]);
-          // Notify other parts of the app to refresh finance data
-          window.dispatchEvent(new Event('finances-updated'));
-        } else {
-          const declineMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            type: 'agent',
-            content: '👍 No problem! The changes have been cancelled. Is there anything else I can help you with?',
-            timestamp: new Date()
-          };
-
-          setMessages(prev => [...prev, declineMessage]);
-        }
-
-        // Remove pending action from the original message
-        setMessages(prev => prev.map(m => 
-          m.id === messageId ? { ...m, pendingAction: undefined } : m
-        ));
-
-      } catch (error: any) {
-        console.error('Error handling action:', error);
-        
-        const errorMessage: Message = {
-          id: (Date.now() + 2).toString(),
-          type: 'error',
-          content: `Failed to execute action: ${error.message || 'Unknown error'}`,
-          timestamp: new Date(),
-          errorDetails: {
-            name: error.name,
-            message: error.message,
-            stack: error.stack?.split('\n')[0]
-          }
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
-      }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -300,36 +228,7 @@ const AIFinancialAgent = () => {
                       return <br key={index} />;
                     })}
                   </div>
-                </div>
-                
-                {message.pendingAction && (
-                  <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm text-amber-800 mb-2">
-                      <strong>Proposed Action:</strong> {message.pendingAction.description}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleActionResponse(message.id, true)}
-                        disabled={isLoading}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleActionResponse(message.id, false)}
-                        disabled={isLoading}
-                        className="border-red-300 text-red-600 hover:bg-red-50"
-                      >
-                        <XCircle className="w-4 h-4 mr-1" />
-                        Decline
-                      </Button>
-                    </div>
                   </div>
-                )}
               </div>
               
               {message.type === 'user' && (

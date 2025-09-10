@@ -233,40 +233,6 @@ serve(async (req) => {
       });
     }
 
-    // If this is a confirmation action, execute the pending action
-    if (action?.type === 'confirm' && action?.pendingAction) {
-      console.log('Executing pending action:', action.pendingAction);
-      const result = await executePendingAction(userId, action.pendingAction);
-      console.log('Action result:', result);
-      
-      // Update memory after successful action
-      if (result.success) {
-        await updateAgentMemory(userId, {
-          action_executed: {
-            type: action.pendingAction.type,
-            data: action.pendingAction.data,
-            timestamp: new Date().toISOString()
-          }
-        });
-      }
-      
-      if (result.success) {
-        return new Response(JSON.stringify({ 
-          response: `✅ Changes applied successfully! ${result.message}`,
-          actionExecuted: true
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } else {
-        return new Response(JSON.stringify({ 
-          response: `❌ Failed to apply changes: ${result.error}`,
-          actionExecuted: false
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
     // Load agent memory and get comprehensive user data including market analysis
     console.log('Loading agent memory and comprehensive user data...');
     const [agentMemory, userData, marketDataSummary] = await Promise.all([
@@ -289,28 +255,18 @@ serve(async (req) => {
       stocksAvailable: marketDataSummary.stocks.total,
       cryptoAvailable: marketDataSummary.crypto.total
     });
-    
-    // Analyze message for potential actions
-    console.log('Analyzing user message with full context...');
-    const { analysis, pendingAction } = await analyzeUserMessage(message, userData, agentMemory, marketDataSummary, messages, groqApiKey as string, model);
-    console.log('Analysis complete:', { 
-      analysisLength: analysis.length, 
-      hasPendingAction: !!pendingAction 
-    });
 
     // Update agent memory with new interaction
     await updateAgentMemory(userId, {
       last_interaction: {
         user_message: message,
         ai_response: analysis,
-        pending_action: pendingAction,
         timestamp: new Date().toISOString()
       }
     });
 
     return new Response(JSON.stringify({ 
-      response: analysis,
-      pendingAction: pendingAction
+      response: analysis
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -667,56 +623,18 @@ ${userData.assets.map(a => {
 ### Bank Products (${marketData.bank_products?.total || 0} available):
 - Best Rates: ${marketData.bank_products?.best_rates?.map(p => `${p.bank_name} ${p.product_name}: ${p.interest_rate}%`).slice(0,3).join(', ') || 'None'}
 
-## Agent Memory:
-${agentMemory ? JSON.stringify(agentMemory.memory, null, 2) : 'No previous memory'}
-
-## Recent Conversation:
-${conversationHistory}
-
-## Available Actions:
-You can propose the following actions when users request changes:
-
-**Financial Updates:**
-- update_income, update_expenses, update_savings, update_investing
-- add_income_stream, add_expense_stream
-- add_debt, update_debt, delete_debt
-- add_goal, update_goal, delete_goal, update_goal_progress
-- add_deposit, update_deposit, delete_deposit
-
-**Portfolio & Investment Actions:**
-- add_asset, update_asset, delete_asset
-- create_portfolio, rebalance_portfolio
-- add_portfolio_recommendation
-
-**Analysis Actions:**
-- market_analysis_request
-
-## Response Format:
-
-For data changes/actions:
-{
-  "analysis": "Your detailed analysis and conversational response explaining the recommendation and its impact",
-  "action": {
-    "type": "action_type_from_above_list",
-    "data": { relevant_fields_for_action },
-    "description": "Clear description of what will be changed"
-  }
-}
-
-For advice/analysis only:
-{
-  "analysis": "Your comprehensive financial analysis, investment advice, market insights, or portfolio recommendations"
-}
-
-## Guidelines:
-- Always provide specific, actionable financial advice based on their complete financial picture
-- Use real market data to make investment recommendations
-- Identify financial risks and opportunities
+## Response Guidelines:
+- Provide comprehensive financial analysis and advice only
+- No data modifications or actions will be performed
+- Focus on insights, recommendations, and market analysis
+- Use real market data to support your analysis
 - Calculate and explain financial ratios and metrics
-- Suggest portfolio diversification and rebalancing when appropriate
-- Warn about high debt-to-income ratios or poor savings rates
-- Recommend suitable bank products or investment opportunities based on their risk profile
-- Be proactive in suggesting financial improvements and optimizations`;
+- Suggest optimization strategies without implementing them
+- Identify opportunities and risks in the current financial situation
+- Provide educational content about financial concepts
+- Always format monetary values in the user's preferred currency: ${userData.userCurrency}
+
+Your response should be detailed, professional, and purely advisory without any executable actions.`;
 
   console.log('Calling GROQ Chat Completions with enhanced context...');
 
@@ -766,40 +684,7 @@ For advice/analysis only:
 
   console.log('AI response content (first 500 chars):', aiResponse.slice(0, 500));
 
-  try {
-    const parsed = JSON.parse(aiResponse);
-    console.log('Parsed AI response:', parsed);
-    
-    // Handle different response formats
-    let analysis = '';
-    let pendingAction = null;
-    
-    if (parsed.analysis && parsed.action) {
-      // Format: { "analysis": "...", "action": {...} }
-      analysis = parsed.analysis;
-      pendingAction = parsed.action;
-    } else if (typeof parsed === 'string') {
-      // Plain text response
-      analysis = parsed;
-    } else if (parsed.response && parsed.action) {
-      // Format: { "response": "...", "action": {...} }
-      analysis = parsed.response;
-      pendingAction = parsed.action;
-    } else {
-      // Fallback: treat as analysis
-      analysis = typeof parsed === 'object' ? JSON.stringify(parsed) : parsed;
-    }
-    
-    console.log('Extracted pendingAction:', pendingAction);
-    
-    return {
-      analysis: analysis,
-      pendingAction: pendingAction
-    };
-  } catch (parseError) {
-    console.log('Response is not JSON, treating as plain text');
-    
-    // Try to extract financial actions from text response
+  return aiResponse;
     const textLower = message.toLowerCase();
     
     // Income/Salary changes or additions
@@ -1089,11 +974,6 @@ For advice/analysis only:
     };
   }
 }
-
-async function executePendingAction(userId: string, action: PendingAction): Promise<{ success: boolean, message?: string, error?: string }> {
-  try {
-    switch (action.type) {
-        case 'update_income':
           // Accept flexible field names from the LLM and nested income_streams
           const streams = action?.data?.income_streams ?? action?.data?.incomeStreams ?? action?.data?.streams;
           const directRaw = action?.data?.monthly_income ?? action?.data?.income ?? action?.data?.amount ?? action?.data?.salary;
