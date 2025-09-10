@@ -250,9 +250,56 @@ const AIFinancialAgent = () => {
                     ? 'bg-red-50 border border-red-200'
                     : 'bg-muted'
                 }`}>
-                  <p className={`text-base leading-relaxed whitespace-pre-line font-medium ${
+                  <div className={`leading-relaxed whitespace-pre-line ${
                     message.type === 'error' ? 'text-red-800' : ''
-                  }`}>{message.content}</p>
+                  }`}>
+                    {message.content.split('\n').map((line, index) => {
+                      // Handle main headers (starting with **)
+                      if (line.startsWith('**') && line.endsWith('**')) {
+                        const title = line.replace(/\*\*/g, '');
+                        return (
+                          <h3 key={index} className="text-lg font-bold mb-2 mt-3 first:mt-0">
+                            {title}
+                          </h3>
+                        );
+                      }
+                      // Handle sub-headers (starting with single *)
+                      if (line.startsWith('* **') && line.includes(':**')) {
+                        const title = line.replace(/\* \*\*/g, '').replace(/:\*\*/g, '');
+                        return (
+                          <h4 key={index} className="text-base font-semibold mb-1 mt-2">
+                            {title}:
+                          </h4>
+                        );
+                      }
+                      // Handle bullet points
+                      if (line.startsWith('• ') || line.startsWith('- ')) {
+                        return (
+                          <p key={index} className="text-sm ml-2 mb-1">
+                            {line}
+                          </p>
+                        );
+                      }
+                      // Handle numbered lists
+                      if (line.match(/^\d+\.\s/)) {
+                        return (
+                          <p key={index} className="text-sm ml-2 mb-1 font-medium">
+                            {line}
+                          </p>
+                        );
+                      }
+                      // Handle regular content
+                      if (line.trim()) {
+                        return (
+                          <p key={index} className="text-sm mb-1">
+                            {line}
+                          </p>
+                        );
+                      }
+                      // Empty lines for spacing
+                      return <br key={index} />;
+                    })}
+                  </div>
                 </div>
                 
                 {message.pendingAction && (

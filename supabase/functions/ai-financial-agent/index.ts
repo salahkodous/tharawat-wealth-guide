@@ -348,7 +348,9 @@ async function getUserFinancialData(userId: string) {
       incomeStreamsResult,
       expenseStreamsResult,
       depositsResult,
-      portfoliosResult
+      portfoliosResult,
+      userProfileResult,
+      currencyRatesResult
     ] = await Promise.all([
       supabase.from('personal_finances').select('*').eq('user_id', userId).maybeSingle(),
       supabase.from('financial_goals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
@@ -357,8 +359,59 @@ async function getUserFinancialData(userId: string) {
       supabase.from('income_streams').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('expense_streams').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('deposits').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-      supabase.from('portfolios').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+      supabase.from('portfolios').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('profiles').select('*').eq('user_id', userId).single(),
+      supabase.from('currency_rates').select('*').order('last_updated', { ascending: false }).limit(100)
     ]);
+
+    // Get user's currency preference
+    const userCurrency = userProfileResult.data?.currency || financesResult.data?.currency || 'USD';
+    
+    // Create currency conversion helper
+    const currencyRatesMap = (currencyRatesResult.data || []).reduce((acc, rate) => {
+      const key = `${rate.base_currency}_${rate.target_currency}`;
+      acc[key] = rate.exchange_rate;
+      return acc;
+    }, {});
+
+    const convertCurrency = (amount: number, fromCurrency: string, toCurrency = userCurrency) => {
+      if (fromCurrency === toCurrency) return amount;
+      
+      // Direct conversion
+      const directKey = `${fromCurrency}_${toCurrency}`;
+      if (currencyRatesMap[directKey]) {
+        return amount * currencyRatesMap[directKey];
+      }
+      
+      // Indirect conversion via USD
+      const fromToUsd = currencyRatesMap[`${fromCurrency}_USD`];
+      const usdToTarget = currencyRatesMap[`USD_${toCurrency}`];
+      
+      if (fromToUsd && usdToTarget) {
+        return amount * fromToUsd * usdToTarget;
+      }
+      
+      // Reverse indirect conversion
+      const usdToFrom = currencyRatesMap[`USD_${fromCurrency}`];
+      const targetToUsd = currencyRatesMap[`${toCurrency}_USD`];
+      
+      if (usdToFrom && targetToUsd) {
+        return amount * targetToUsd / usdToFrom;
+      }
+      
+      return amount; // Fallback to original amount
+    };
+
+    const currencySymbols = {
+      AED: 'د.إ', SAR: 'ر.س', QAR: 'ر.ق', KWD: 'د.ك', BHD: 'د.ب', OMR: 'ر.ع',
+      JOD: 'د.أ', LBP: 'ل.ل', EGP: 'ج.م', MAD: 'د.م', TND: 'د.ت', DZD: 'د.ج',
+      IQD: 'د.ع', USD: '$', GBP: '£', EUR: '€', INR: '₹', CNY: '¥'
+    };
+
+    const formatCurrency = (amount: number, currency = userCurrency) => {
+      const symbol = currencySymbols[currency] || currency;
+      return `${symbol}${amount.toLocaleString()}`;
+    };
 
     // Calculate portfolio metrics
     const totalPortfolioValue = assetsResult.data?.reduce((sum, asset) => {
@@ -390,6 +443,11 @@ async function getUserFinancialData(userId: string) {
       expenseStreams: expenseStreamsResult.data || [],
       deposits: depositsResult.data || [],
       portfolios: portfoliosResult.data || [],
+      // Currency data
+      userCurrency,
+      currencyRates: currencyRatesResult.data || [],
+      convertCurrency,
+      formatCurrency,
       // Calculated metrics
       metrics: {
         totalPortfolioValue,
@@ -415,6 +473,10 @@ async function getUserFinancialData(userId: string) {
       expenseStreams: [],
       deposits: [],
       portfolios: [],
+      userCurrency: 'USD',
+      currencyRates: [],
+      convertCurrency: (amount: number) => amount,
+      formatCurrency: (amount: number) => `$${amount.toLocaleString()}`,
       metrics: {
         totalPortfolioValue: 0,
         totalInvestment: 0,
@@ -518,39 +580,46 @@ async function analyzeUserMessage(
 9. **Behavioral Finance**: Psychological factors, market sentiment analysis
 10. **Regulatory Compliance**: Tax implications, legal considerations, fiduciary standards
 
+## Currency & International Finance:
+- **User's Preferred Currency**: ${userData.userCurrency}
+- **Available Exchange Rates**: ${userData.currencyRates?.length || 0} currency pairs
+- **Currency Conversion**: All amounts are displayed in user's preferred currency unless specified
+- **Multi-Currency Support**: Can analyze investments across different currencies with real-time conversion
+- **Exchange Rate Analysis**: Monitor currency fluctuations and their impact on international investments
+
 ## Current User Financial Overview:
 
 ### Personal Finances Summary:
-- Monthly Income: $${userData.finances.monthly_income}
-- Monthly Expenses: $${userData.finances.monthly_expenses}
-- Net Savings: $${userData.finances.net_savings}
-- Monthly Investing: $${userData.finances.monthly_investing_amount}
+- Monthly Income: ${userData.formatCurrency(userData.finances.monthly_income)}
+- Monthly Expenses: ${userData.formatCurrency(userData.finances.monthly_expenses)}
+- Net Savings: ${userData.formatCurrency(userData.finances.net_savings)}
+- Monthly Investing: ${userData.formatCurrency(userData.finances.monthly_investing_amount)}
 
 ### Calculated Financial Metrics:
-- Net Worth: $${userData.metrics?.netWorth || 0}
-- Total Portfolio Value: $${userData.metrics?.totalPortfolioValue || 0}
+- Net Worth: ${userData.formatCurrency(userData.metrics?.netWorth || 0)}
+- Total Portfolio Value: ${userData.formatCurrency(userData.metrics?.totalPortfolioValue || 0)}
 - Portfolio Return: ${userData.metrics?.portfolioReturn?.toFixed(2) || 0}%
-- Total Debt: $${userData.metrics?.totalDebt || 0}
-- Total Savings: $${userData.metrics?.totalSavings || 0}
+- Total Debt: ${userData.formatCurrency(userData.metrics?.totalDebt || 0)}
+- Total Savings: ${userData.formatCurrency(userData.metrics?.totalSavings || 0)}
 - Debt-to-Income Ratio: ${userData.metrics?.debtToIncomeRatio?.toFixed(1) || 0}%
 - Savings Rate: ${userData.metrics?.savingsRate?.toFixed(1) || 0}%
 
 ### Detailed Financial Data:
 
 **Income Streams (${userData.incomeStreams.length}):**
-${userData.incomeStreams.map(s => `- ${s.name}: $${s.amount} (${s.income_type})`).join('\n') || '- No income streams set up'}
+${userData.incomeStreams.map(s => `- ${s.name}: ${userData.formatCurrency(s.amount)} (${s.income_type})`).join('\n') || '- No income streams set up'}
 
 **Expense Streams (${userData.expenseStreams.length}):**
-${userData.expenseStreams.map(s => `- ${s.name}: $${s.amount} (${s.expense_type})`).join('\n') || '- No expense streams set up'}
+${userData.expenseStreams.map(s => `- ${s.name}: ${userData.formatCurrency(s.amount)} (${s.expense_type})`).join('\n') || '- No expense streams set up'}
 
 **Debts (${userData.debts.length}):**
-${userData.debts.map(d => `- ${d.name}: $${d.total_amount - d.paid_amount} remaining (Monthly: $${d.monthly_payment}, Rate: ${d.interest_rate}%)`).join('\n') || '- No active debts'}
+${userData.debts.map(d => `- ${d.name}: ${userData.formatCurrency(d.total_amount - d.paid_amount)} remaining (Monthly: ${userData.formatCurrency(d.monthly_payment)}, Rate: ${d.interest_rate}%)`).join('\n') || '- No active debts'}
 
 **Financial Goals (${userData.goals.length}):**
-${userData.goals.map(g => `- ${g.title}: $${g.current_amount}/$${g.target_amount} (${Math.round((g.current_amount/(g.target_amount || 1))*100)}%) - Target: ${g.target_date || 'No date'}`).join('\n') || '- No financial goals set'}
+${userData.goals.map(g => `- ${g.title}: ${userData.formatCurrency(g.current_amount)}/${userData.formatCurrency(g.target_amount)} (${Math.round((g.current_amount/(g.target_amount || 1))*100)}%) - Target: ${g.target_date || 'No date'}`).join('\n') || '- No financial goals set'}
 
 **Deposits/Savings Accounts (${userData.deposits.length}):**
-${userData.deposits.map(d => `- ${d.deposit_type}: $${d.principal} at ${d.rate}% (Interest: $${d.accrued_interest || 0})`).join('\n') || '- No deposits/savings accounts'}
+${userData.deposits.map(d => `- ${d.deposit_type}: ${userData.formatCurrency(d.principal)} at ${d.rate}% (Interest: ${userData.formatCurrency(d.accrued_interest || 0)})`).join('\n') || '- No deposits/savings accounts'}
 
 **Investment Portfolios (${userData.portfolios.length}):**
 ${userData.portfolios.map(p => `- ${p.name} (Created: ${p.created_at?.slice(0,10)})`).join('\n') || '- No portfolios created'}
@@ -560,7 +629,7 @@ ${userData.assets.map(a => {
   const currentValue = (a.current_price || a.purchase_price || 0) * (a.quantity || 1);
   const purchaseValue = (a.purchase_price || 0) * (a.quantity || 1);
   const returnPct = purchaseValue > 0 ? (((currentValue - purchaseValue) / purchaseValue) * 100).toFixed(1) : '0';
-  return `- ${a.asset_name} (${a.asset_type}): ${a.quantity || 'N/A'} units, Value: $${currentValue.toFixed(2)}, Return: ${returnPct}%`;
+  return `- ${a.asset_name} (${a.asset_type}): ${a.quantity || 'N/A'} units, Value: ${userData.formatCurrency(currentValue)}, Return: ${returnPct}%`;
 }).join('\n') || '- No portfolio assets'}
 
 ## Live Market Data Available:
