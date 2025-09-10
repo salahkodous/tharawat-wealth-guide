@@ -178,7 +178,7 @@ const AIFinancialAgent = () => {
               <div className={`max-w-[80%] ${message.type === 'user' ? 'order-1' : ''}`}>
                 <div className={`p-4 rounded-lg ${
                   message.type === 'user' 
-                    ? 'bg-primary text-black font-medium ml-auto' 
+                    ? 'bg-white text-black font-semibold border-2 border-primary/30 shadow-sm ml-auto' 
                     : message.type === 'error'
                     ? 'bg-red-50 border border-red-200'
                     : 'bg-muted'
