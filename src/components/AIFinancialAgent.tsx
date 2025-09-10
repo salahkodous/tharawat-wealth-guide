@@ -243,14 +243,14 @@ const AIFinancialAgent = () => {
               )}
               
               <div className={`max-w-[80%] ${message.type === 'user' ? 'order-1' : ''}`}>
-                <div className={`p-3 rounded-lg ${
+                <div className={`p-4 rounded-lg ${
                   message.type === 'user' 
                     ? 'bg-primary text-primary-foreground ml-auto' 
                     : message.type === 'error'
                     ? 'bg-red-50 border border-red-200'
                     : 'bg-muted'
                 }`}>
-                  <p className={`text-sm whitespace-pre-line ${
+                  <p className={`text-base leading-relaxed whitespace-pre-line font-medium ${
                     message.type === 'error' ? 'text-red-800' : ''
                   }`}>{message.content}</p>
                 </div>
