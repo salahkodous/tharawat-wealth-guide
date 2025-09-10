@@ -49,8 +49,12 @@ const AIFinancialAgent = () => {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading || !user) return;
+    if (!input.trim() || isLoading || !user) {
+      console.log('Send message blocked:', { input: input.trim(), isLoading, user: !!user });
+      return;
+    }
 
+    console.log('Sending message:', input);
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -60,6 +64,7 @@ const AIFinancialAgent = () => {
 
     setMessages(prev => [...prev, userMessage]);
     const messageToSend = input;
+    // Clear input only after successfully adding to messages
     setInput('');
     setIsLoading(true);
 
