@@ -121,7 +121,7 @@ const AIFinancialAgent = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'error',
-        content: `🚨 **Error Details** (Debug Mode)\n\n**Type:** ${mergedDetails.name}\n**Message:** ${mergedDetails.message}\n**Status:** ${mergedDetails.statusCode || 'N/A'}\n**Stack:** ${mergedDetails.stack}\n\n*This detailed error info will be removed once the issue is fixed.*`,
+        content: `I apologize, but I'm experiencing technical difficulties at the moment. Please try rephrasing your request or try again in a few moments. If the issue persists, our technical team has been notified.`,
         timestamp: new Date(),
         errorDetails: mergedDetails
       };
@@ -328,18 +328,11 @@ const AIFinancialAgent = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
-          <div className="flex items-center gap-1">
-            <MessageSquare className="w-3 h-3 text-primary" />
-            Powered by Hugging Face
-          </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <Brain className="w-3 h-3 text-primary" />
-            DeepSeek R1 Distill
+            AI Financial Advisor
           </div>
-          <Badge variant="outline" className="text-xs">
-            Debug Mode
-          </Badge>
         </div>
       </CardContent>
     </Card>
