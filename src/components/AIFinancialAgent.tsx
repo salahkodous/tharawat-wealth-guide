@@ -186,134 +186,139 @@ const AIFinancialAgent = () => {
                   <div className={`leading-relaxed whitespace-pre-line ${
                     message.type === 'error' ? 'text-red-800' : ''
                   }`}>
-                    {(() => {
-                      const lines = message.content.split('\n');
-                      const processedSections = new Set<string>();
-                      const renderedElements = [];
+                    {message.type === 'user' ? (
+                      // Display user messages as-is without any filtering
+                      <p className="text-black font-semibold">{message.content}</p>
+                    ) : (
+                      // Apply filtering only to AI/agent responses
+                      (() => {
+                        const lines = message.content.split('\n');
+                        const processedSections = new Set<string>();
+                        const renderedElements = [];
 
-                      lines.forEach((line, index) => {
-                        // Skip all technical sections completely
-                        if (line.includes('action:') || line.includes('Action:') || 
-                            line.includes('analysis:') || line.includes('Analysis:') ||
-                            line.includes('To proceed with this recommendation') ||
-                            line.includes('I suggest the following action') ||
-                            (line.includes('{') && (line.includes('type:') || line.includes('data:') || line.includes('description:'))) ||
-                            line.match(/^\s*\{.*\}\s*$/) ||
-                            line.includes('asset_type:') || line.includes('location:') || 
-                            line.includes('investment_amount:') || line.includes('expected_return:')) {
-                          return;
-                        }
+                        lines.forEach((line, index) => {
+                          // Skip all technical sections completely
+                          if (line.includes('action:') || line.includes('Action:') || 
+                              line.includes('analysis:') || line.includes('Analysis:') ||
+                              line.includes('To proceed with this recommendation') ||
+                              line.includes('I suggest the following action') ||
+                              (line.includes('{') && (line.includes('type:') || line.includes('data:') || line.includes('description:'))) ||
+                              line.match(/^\s*\{.*\}\s*$/) ||
+                              line.includes('asset_type:') || line.includes('location:') || 
+                              line.includes('investment_amount:') || line.includes('expected_return:')) {
+                            return;
+                          }
 
-                        // Aggressive cleaning of all technical formatting
-                        let cleanLine = line
-                          .replace(/\*\*/g, '') // Remove all asterisks
-                          .replace(/\[.*?\]/g, '') // Remove brackets
-                          .replace(/"/g, '') // Remove quotes
-                          .replace(/`/g, '') // Remove backticks
-                          .replace(/\{[^}]*\}/g, '') // Remove curly braces and content
-                          .replace(/analysis:\s*/gi, '') // Remove analysis prefix
-                          .replace(/action:\s*/gi, '') // Remove action prefix
-                          .replace(/data:\s*/gi, '') // Remove data prefix
-                          .replace(/description:\s*/gi, '') // Remove description prefix
-                          .replace(/type:\s*/gi, '') // Remove type prefix
-                          .trim();
+                          // Aggressive cleaning of all technical formatting
+                          let cleanLine = line
+                            .replace(/\*\*/g, '') // Remove all asterisks
+                            .replace(/\[.*?\]/g, '') // Remove brackets
+                            .replace(/"/g, '') // Remove quotes
+                            .replace(/`/g, '') // Remove backticks
+                            .replace(/\{[^}]*\}/g, '') // Remove curly braces and content
+                            .replace(/analysis:\s*/gi, '') // Remove analysis prefix
+                            .replace(/action:\s*/gi, '') // Remove action prefix
+                            .replace(/data:\s*/gi, '') // Remove data prefix
+                            .replace(/description:\s*/gi, '') // Remove description prefix
+                            .replace(/type:\s*/gi, '') // Remove type prefix
+                            .trim();
 
-                        // Skip empty lines and technical remnants
-                        if (!cleanLine || cleanLine.match(/^[{},\s]*$/)) {
-                          return;
-                        }
+                          // Skip empty lines and technical remnants
+                          if (!cleanLine || cleanLine.match(/^[{},\s]*$/)) {
+                            return;
+                          }
 
-                        // Enhanced duplicate detection - check for similar content
-                        const normalizedContent = cleanLine.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-                        const contentWords = normalizedContent.split(' ').filter(word => word.length > 3);
-                        
-                        // Check if this content is too similar to already processed content
-                        let isDuplicate = false;
-                        if (normalizedContent.length > 15) {
-                          for (const existingContent of processedSections) {
-                            const existingWords = existingContent.split(' ').filter(word => word.length > 3);
-                            const commonWords = contentWords.filter(word => existingWords.includes(word));
-                            const similarity = commonWords.length / Math.max(contentWords.length, existingWords.length);
+                          // Enhanced duplicate detection - check for similar content
+                          const normalizedContent = cleanLine.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+                          const contentWords = normalizedContent.split(' ').filter(word => word.length > 3);
+                          
+                          // Check if this content is too similar to already processed content
+                          let isDuplicate = false;
+                          if (normalizedContent.length > 15) {
+                            for (const existingContent of processedSections) {
+                              const existingWords = existingContent.split(' ').filter(word => word.length > 3);
+                              const commonWords = contentWords.filter(word => existingWords.includes(word));
+                              const similarity = commonWords.length / Math.max(contentWords.length, existingWords.length);
+                              
+                              if (similarity > 0.7) { // 70% similarity threshold
+                                isDuplicate = true;
+                                break;
+                              }
+                            }
                             
-                            if (similarity > 0.7) { // 70% similarity threshold
-                              isDuplicate = true;
-                              break;
+                            if (!isDuplicate) {
+                              processedSections.add(normalizedContent);
                             }
                           }
                           
-                          if (!isDuplicate) {
-                            processedSections.add(normalizedContent);
+                          if (isDuplicate) {
+                            return; // Skip duplicate content
                           }
-                        }
-                        
-                        if (isDuplicate) {
-                          return; // Skip duplicate content
-                        }
 
-                        // Detect and style main section headers (originally with **)
-                        if (line.includes('**') && !line.startsWith('•') && !line.startsWith('*')) {
-                          renderedElements.push(
-                            <h2 key={index} className="text-2xl font-bold mb-4 mt-6 first:mt-0 text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                              {cleanLine}
-                            </h2>
-                          );
-                          return;
-                        }
-                        
-                        // Handle category headers (lines that end with :)
-                        if (cleanLine.endsWith(':') && !line.startsWith('•') && cleanLine.length < 50) {
-                          renderedElements.push(
-                            <h3 key={index} className="text-lg font-semibold mb-3 mt-4 text-foreground border-l-4 border-primary pl-3">
-                              {cleanLine.replace(':', '')}
-                            </h3>
-                          );
-                          return;
-                        }
-                        
-                        // Handle bullet points with enhanced styling
-                        if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
-                          const bulletText = cleanLine.replace(/^[•\-*]\s*/, '');
-                          renderedElements.push(
-                            <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-2 rounded-lg bg-muted/30">
-                              <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                              <p className="text-sm text-muted-foreground leading-relaxed">{bulletText}</p>
-                            </div>
-                          );
-                          return;
-                        }
-                        
-                        // Handle numbered lists with better styling
-                        if (line.match(/^\d+\.\s/)) {
-                          renderedElements.push(
-                            <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-3 rounded-lg bg-accent/20">
-                              <span className="text-primary font-bold text-sm mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
-                              <p className="text-sm font-medium text-foreground leading-relaxed">
-                                {cleanLine.replace(/^\d+\.\s*/, '')}
-                              </p>
-                            </div>
-                          );
-                          return;
-                        }
-                        
-                         // Handle regular paragraphs with enhanced typography
-                         if (cleanLine && cleanLine.length > 10) {
-                           const isImportant = line.includes('recommend') || line.includes('important') || line.includes('significant');
-                           if (isImportant) {
-                             renderedElements.push(
-                               <p key={index} className="text-base font-medium text-foreground bg-accent/10 p-3 rounded-lg border-l-2 border-primary mb-3 leading-relaxed">
-                                 {cleanLine}
-                               </p>
-                             );
-                           }
-                         }
-                      });
+                          // Detect and style main section headers (originally with **)
+                          if (line.includes('**') && !line.startsWith('•') && !line.startsWith('*')) {
+                            renderedElements.push(
+                              <h2 key={index} className="text-2xl font-bold mb-4 mt-6 first:mt-0 text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                                {cleanLine}
+                              </h2>
+                            );
+                            return;
+                          }
+                          
+                          // Handle category headers (lines that end with :)
+                          if (cleanLine.endsWith(':') && !line.startsWith('•') && cleanLine.length < 50) {
+                            renderedElements.push(
+                              <h3 key={index} className="text-lg font-semibold mb-3 mt-4 text-foreground border-l-4 border-primary pl-3">
+                                {cleanLine.replace(':', '')}
+                              </h3>
+                            );
+                            return;
+                          }
+                          
+                          // Handle bullet points with enhanced styling
+                          if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
+                            const bulletText = cleanLine.replace(/^[•\-*]\s*/, '');
+                            renderedElements.push(
+                              <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-2 rounded-lg bg-muted/30">
+                                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                                <p className="text-sm text-muted-foreground leading-relaxed">{bulletText}</p>
+                              </div>
+                            );
+                            return;
+                          }
+                          
+                          // Handle numbered lists with better styling
+                          if (line.match(/^\d+\.\s/)) {
+                            renderedElements.push(
+                              <div key={index} className="flex items-start gap-3 mb-3 ml-4 p-3 rounded-lg bg-accent/20">
+                                <span className="text-primary font-bold text-sm mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
+                                <p className="text-sm font-medium text-foreground leading-relaxed">
+                                  {cleanLine.replace(/^\d+\.\s*/, '')}
+                                </p>
+                              </div>
+                            );
+                            return;
+                          }
+                          
+                          // Handle regular paragraphs with enhanced typography
+                          if (cleanLine && cleanLine.length > 10) {
+                            const isImportant = line.includes('recommend') || line.includes('important') || line.includes('significant');
+                            if (isImportant) {
+                              renderedElements.push(
+                                <p key={index} className="text-base font-medium text-foreground bg-accent/10 p-3 rounded-lg border-l-2 border-primary mb-3 leading-relaxed">
+                                  {cleanLine}
+                                </p>
+                              );
+                            }
+                          }
+                        });
 
-                      return renderedElements;
-                    })()}
+                        return renderedElements;
+                      })()
+                    )}
                   </div>
-                  </div>
+                </div>
               </div>
-              
               {message.type === 'user' && (
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4" />
