@@ -182,13 +182,29 @@ const AIFinancialAgent = () => {
                     message.type === 'error' ? 'text-red-800' : ''
                   }`}>
                     {message.content.split('\n').map((line, index) => {
+                      // Skip technical action sections entirely
+                      if (line.includes('action:') || line.includes('Action:') || 
+                          (line.includes('{') && line.includes('type:')) ||
+                          (line.includes('analysis:') && line.includes('{'))) {
+                        return null;
+                      }
+
                       // Clean up technical formatting
                       let cleanLine = line
                         .replace(/\[.*?\]/g, '') // Remove brackets
                         .replace(/"/g, '') // Remove quotes
                         .replace(/`/g, '') // Remove backticks
-                        .replace(/\{.*?\}/g, '') // Remove curly braces
+                        .replace(/\{[^}]*\}/g, '') // Remove curly braces and content
+                        .replace(/analysis:\s*/gi, '') // Remove analysis: prefix
+                        .replace(/action:\s*/gi, '') // Remove action: prefix
+                        .replace(/data:\s*/gi, '') // Remove data: prefix
+                        .replace(/description:\s*/gi, '') // Remove description: prefix
                         .trim();
+
+                      // Skip empty lines after cleaning
+                      if (!cleanLine) {
+                        return null;
+                      }
 
                       // Handle main headers (starting with **)
                       if (line.startsWith('**') && line.endsWith('**')) {
@@ -239,9 +255,8 @@ const AIFinancialAgent = () => {
                         );
                       }
                       
-                      // Empty lines for spacing
-                      return <div key={index} className="h-2" />;
-                    })}
+                      return null;
+                    }).filter(Boolean)}
                   </div>
                   </div>
               </div>
