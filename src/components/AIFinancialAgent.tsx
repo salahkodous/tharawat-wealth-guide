@@ -183,7 +183,7 @@ const AIFinancialAgent = () => {
                   }`}>
                     {(() => {
                       const lines = message.content.split('\n');
-                      const processedSections = new Set();
+                      const processedSections = new Set<string>();
                       const renderedElements = [];
 
                       lines.forEach((line, index) => {
@@ -218,13 +218,31 @@ const AIFinancialAgent = () => {
                           return;
                         }
 
-                        // Check for duplicate content (same content with different formatting)
+                        // Enhanced duplicate detection - check for similar content
                         const normalizedContent = cleanLine.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-                        if (normalizedContent.length > 10 && processedSections.has(normalizedContent)) {
-                          return; // Skip duplicate content
+                        const contentWords = normalizedContent.split(' ').filter(word => word.length > 3);
+                        
+                        // Check if this content is too similar to already processed content
+                        let isDuplicate = false;
+                        if (normalizedContent.length > 15) {
+                          for (const existingContent of processedSections) {
+                            const existingWords = existingContent.split(' ').filter(word => word.length > 3);
+                            const commonWords = contentWords.filter(word => existingWords.includes(word));
+                            const similarity = commonWords.length / Math.max(contentWords.length, existingWords.length);
+                            
+                            if (similarity > 0.7) { // 70% similarity threshold
+                              isDuplicate = true;
+                              break;
+                            }
+                          }
+                          
+                          if (!isDuplicate) {
+                            processedSections.add(normalizedContent);
+                          }
                         }
-                        if (normalizedContent.length > 10) {
-                          processedSections.add(normalizedContent);
+                        
+                        if (isDuplicate) {
+                          return; // Skip duplicate content
                         }
 
                         // Detect and style main section headers (originally with **)
