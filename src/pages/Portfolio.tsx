@@ -25,7 +25,6 @@ import PortfolioManager from '@/components/PortfolioManager';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import EnhancedPortfolioOverview from '@/components/EnhancedPortfolioOverview';
 import PortfolioGoals from '@/components/PortfolioGoals';
-import { MubasherScraper } from '@/components/MubasherScraper';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAuth } from '@/hooks/useAuth';
@@ -351,29 +350,26 @@ const Portfolio = () => {
         
         <section className="py-8">
           <div className="container mx-auto px-4 space-y-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">Portfolio Management</h1>
                 <p className="text-muted-foreground">Manage your investments and track performance</p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-2">
-                <MubasherScraper />
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
-                      Add Investment
-                    </Button>
-                  </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <PortfolioManager onAssetAdded={() => {
-                        setIsModalOpen(false);
-                        fetchPortfolioData();
-                      }} />
-                    </DialogContent>
-                </Dialog>
-              </div>
+              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Investment
+                  </Button>
+                </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <PortfolioManager onAssetAdded={() => {
+                      setIsModalOpen(false);
+                      fetchPortfolioData();
+                    }} />
+                  </DialogContent>
+              </Dialog>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
