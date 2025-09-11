@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     
     // Crawl the Mubasher page
     const crawlResponse = await app.crawlUrl('https://www.mubasher.info/countries/eg/companies', {
-      limit: 5,
+      limit: 200,
       scrapeOptions: {
         formats: ['markdown', 'html'],
         waitFor: 2000
