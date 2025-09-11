@@ -1,5 +1,4 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import FirecrawlApp from 'https://esm.sh/@mendable/firecrawl-js@latest'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +6,7 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  console.log('Mubasher scraper function called')
+  console.log('Mubasher scraper function called (API mode)')
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,128 +24,82 @@ Deno.serve(async (req) => {
       }
     )
 
-    // Initialize Firecrawl
-    const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY')
-    if (!firecrawlApiKey) {
-      throw new Error('FIRECRAWL_API_KEY not configured')
+    // Fetch listed companies directly from Mubasher API
+    const apiUrl = 'https://www.mubasher.info/api/1/listed-companies?country=eg'
+    console.log('Fetching:', apiUrl)
+
+    const response = await fetch(apiUrl, { headers: { 'accept': 'application/json' } })
+    if (!response.ok) {
+      throw new Error(`Mubasher API error: ${response.status} ${response.statusText}`)
     }
 
-    const app = new FirecrawlApp({ apiKey: firecrawlApiKey })
-    
-    console.log('Starting crawl of Mubasher Egypt companies page...')
-    
-    // Crawl the Mubasher page
-    const crawlResponse = await app.crawlUrl('https://www.mubasher.info/countries/eg/companies', {
-      limit: 200,
-      scrapeOptions: {
-        formats: ['markdown', 'html'],
-        waitFor: 2000
+    const payload = await response.json()
+    const rows: any[] = Array.isArray(payload?.rows) ? payload.rows : []
+
+    console.log(`Fetched ${rows.length} companies from Mubasher API`)
+
+    const baseUrl = 'https://www.mubasher.info'
+    const stocksData = rows.map((row) => {
+      const symbol = String(row.symbol || '').trim()
+      const name = String(row.name || '').trim()
+      const price = typeof row.price === 'number' ? row.price : null
+      const change_percentage = typeof row.changePercentage === 'number' ? row.changePercentage : (typeof row.change_percentage === 'number' ? row.change_percentage : null)
+      const relativeUrl = String(row.url || row.profileUrl || '')
+
+      return {
+        symbol,
+        name,
+        price,
+        change_percentage,
+        url: relativeUrl ? `${baseUrl}${relativeUrl}` : baseUrl,
+        currency: row.currency || 'EGP',
+        country: 'Egypt',
+        exchange: 'EGX',
+        metadata: {
+          sector: row.sector || null,
+          market: row.market || 'EGX',
+          last_update_text: row.lastUpdate || null,
+          source: 'mubasher_api_v1',
+        },
+        last_updated: new Date().toISOString(),
       }
-    })
+    }).filter((s: any) => s.symbol && s.name)
 
-    if (!crawlResponse.success) {
-      throw new Error(`Crawl failed: ${crawlResponse.error || 'Unknown error'}`)
-    }
-
-    console.log(`Crawl completed. Processing ${crawlResponse.data?.length || 0} pages...`)
-
-    const stocksData: any[] = []
-    
-    // Process crawled data
-    for (const pageData of crawlResponse.data || []) {
-      if (pageData.markdown) {
-        // Extract stock information from markdown
-        const lines = pageData.markdown.split('\n')
-        
-        for (const line of lines) {
-          // Look for patterns that might contain stock data
-          // This is a simplified parser - you may need to adjust based on actual page structure
-          if (line.includes('|') && (line.includes('EGP') || line.includes('%'))) {
-            const parts = line.split('|').map(p => p.trim()).filter(p => p)
-            
-            if (parts.length >= 4) {
-              try {
-                const stockData = {
-                  name: parts[0] || '',
-                  symbol: parts[1] || '',
-                  price: parts[2] ? parseFloat(parts[2].replace(/[^0-9.-]/g, '')) : null,
-                  change_percentage: parts[3] ? parseFloat(parts[3].replace(/[^0-9.-]/g, '')) : null,
-                  url: pageData.sourceURL || '',
-                  metadata: {
-                    scraped_at: new Date().toISOString(),
-                    source_page: pageData.sourceURL
-                  }
-                }
-
-                if (stockData.name && stockData.symbol) {
-                  stocksData.push(stockData)
-                }
-              } catch (error) {
-                console.warn('Error parsing stock data from line:', line, error)
-              }
-            }
-          }
-        }
-      }
-    }
-
-    console.log(`Extracted ${stocksData.length} stock records`)
-
-    if (stocksData.length > 0) {
-      // Upsert data to Supabase
-      const { data, error } = await supabaseClient
-        .from('mupashir_egypt_stocks')
-        .upsert(stocksData, { 
-          onConflict: 'symbol',
-          ignoreDuplicates: false 
-        })
-        .select()
-
-      if (error) {
-        console.error('Database upsert error:', error)
-        throw error
-      }
-
-      console.log(`Successfully upserted ${data?.length || 0} stock records`)
-
+    if (stocksData.length === 0) {
+      console.warn('No stocks parsed from Mubasher API response')
       return new Response(
-        JSON.stringify({
-          success: true,
-          message: `Successfully scraped and stored ${data?.length || 0} stocks`,
-          crawled_pages: crawlResponse.data?.length || 0,
-          extracted_stocks: stocksData.length,
-          stored_stocks: data?.length || 0
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      )
-    } else {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'No stock data could be extracted from the crawled pages',
-          crawled_pages: crawlResponse.data?.length || 0
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
+        JSON.stringify({ success: false, message: 'No companies found from Mubasher API' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       )
     }
 
+    // Upsert into Supabase
+    const { data, error } = await supabaseClient
+      .from('mupashir_egypt_stocks')
+      .upsert(stocksData, { onConflict: 'symbol', ignoreDuplicates: false })
+      .select()
+
+    if (error) {
+      console.error('Database upsert error:', error)
+      throw error
+    }
+
+    console.log(`Successfully upserted ${data?.length || 0} stock records`)
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Upserted ${data?.length || 0} Egypt companies from Mubasher API`,
+        fetched: rows.length,
+        stored: data?.length || 0,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    )
   } catch (error) {
     console.error('Function error:', error)
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      JSON.stringify({ success: false, error: (error as Error).message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })

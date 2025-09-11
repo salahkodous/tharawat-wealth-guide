@@ -142,7 +142,13 @@ export const useMarketData = () => {
   // Use useGlobalMarketData for country-specific data
 
   const fetchStocks = async () => {
-    // Use the new mupashir_egypt_stocks table for Egyptian stocks
+    try {
+      // Try to refresh data from Mubasher API via Edge Function (non-blocking)
+      await supabase.functions.invoke('mubasher-scraper').catch(() => {});
+    } catch (_) {
+      // Ignore refresh errors, we'll still read whatever is in the DB
+    }
+
     const { data, error } = await supabase
       .from('mupashir_egypt_stocks')
       .select('*')
