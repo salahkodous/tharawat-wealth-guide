@@ -142,13 +142,29 @@ export const useMarketData = () => {
   // Use useGlobalMarketData for country-specific data
 
   const fetchStocks = async () => {
+    // Use the new mupashir_egypt_stocks table for Egyptian stocks
     const { data, error } = await supabase
-      .from('stocks')
+      .from('mupashir_egypt_stocks')
       .select('*')
       .order('market_cap', { ascending: false });
     
     if (!error && data) {
-      setStocks(data as Stock[]);
+      // Map the data to match the Stock interface
+      const mappedData: Stock[] = data.map(stock => ({
+        id: stock.id,
+        symbol: stock.symbol,
+        name: stock.name,
+        price: stock.price,
+        change: stock.change,
+        change_percent: stock.change_percentage,
+        volume: stock.volume,
+        market_cap: stock.market_cap,
+        currency: stock.currency || 'EGP',
+        country: stock.country || 'Egypt',
+        exchange: stock.exchange || 'EGX',
+        last_updated: stock.last_updated || new Date().toISOString()
+      }));
+      setStocks(mappedData);
     }
   };
 

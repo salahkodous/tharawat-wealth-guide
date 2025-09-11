@@ -2075,18 +2075,75 @@ export type Database = {
         }
         Relationships: []
       }
-      kv_store_c952a926: {
+      mupashir_egypt_stocks: {
         Row: {
-          key: string
-          value: Json
+          change: number | null
+          change_percentage: number | null
+          country: string
+          created_at: string
+          currency: string
+          exchange: string
+          high: number | null
+          id: number
+          last_updated: string | null
+          low: number | null
+          market_cap: number | null
+          metadata: Json | null
+          name: string
+          open: number | null
+          previous_close: number | null
+          price: number | null
+          sector: string | null
+          symbol: string
+          updated_at: string
+          url: string | null
+          volume: number | null
         }
         Insert: {
-          key: string
-          value: Json
+          change?: number | null
+          change_percentage?: number | null
+          country?: string
+          created_at?: string
+          currency?: string
+          exchange?: string
+          high?: number | null
+          id?: number
+          last_updated?: string | null
+          low?: number | null
+          market_cap?: number | null
+          metadata?: Json | null
+          name: string
+          open?: number | null
+          previous_close?: number | null
+          price?: number | null
+          sector?: string | null
+          symbol: string
+          updated_at?: string
+          url?: string | null
+          volume?: number | null
         }
         Update: {
-          key?: string
-          value?: Json
+          change?: number | null
+          change_percentage?: number | null
+          country?: string
+          created_at?: string
+          currency?: string
+          exchange?: string
+          high?: number | null
+          id?: number
+          last_updated?: string | null
+          low?: number | null
+          market_cap?: number | null
+          metadata?: Json | null
+          name?: string
+          open?: number | null
+          previous_close?: number | null
+          price?: number | null
+          sector?: string | null
+          symbol?: string
+          updated_at?: string
+          url?: string | null
+          volume?: number | null
         }
         Relationships: []
       }
@@ -2749,144 +2806,6 @@ export type Database = {
         }
         Relationships: []
       }
-      saudi_stocks: {
-        Row: {
-          avg_volume: number | null
-          change_amount: number | null
-          change_percent: number | null
-          country: string
-          created_at: string | null
-          currency: string
-          description: string | null
-          description_ar: string | null
-          dividend_yield: number | null
-          employees: number | null
-          exchange: string
-          founded_year: number | null
-          headquarters: string | null
-          id: number
-          industry: string | null
-          market_cap: number | null
-          name: string
-          name_ar: string | null
-          pe_ratio: number | null
-          price: number
-          sector: string | null
-          symbol: string
-          updated_at: string | null
-          volume: number | null
-          website: string | null
-          week_52_high: number | null
-          week_52_low: number | null
-        }
-        Insert: {
-          avg_volume?: number | null
-          change_amount?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          employees?: number | null
-          exchange?: string
-          founded_year?: number | null
-          headquarters?: string | null
-          id?: number
-          industry?: string | null
-          market_cap?: number | null
-          name: string
-          name_ar?: string | null
-          pe_ratio?: number | null
-          price: number
-          sector?: string | null
-          symbol: string
-          updated_at?: string | null
-          volume?: number | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-        }
-        Update: {
-          avg_volume?: number | null
-          change_amount?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          employees?: number | null
-          exchange?: string
-          founded_year?: number | null
-          headquarters?: string | null
-          id?: number
-          industry?: string | null
-          market_cap?: number | null
-          name?: string
-          name_ar?: string | null
-          pe_ratio?: number | null
-          price?: number
-          sector?: string | null
-          symbol?: string
-          updated_at?: string | null
-          volume?: number | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-        }
-        Relationships: []
-      }
-      stocks: {
-        Row: {
-          change: number | null
-          change_percent: number | null
-          country: string
-          created_at: string | null
-          currency: string
-          exchange: string
-          id: number
-          last_updated: string | null
-          market_cap: number | null
-          name: string
-          price: number | null
-          symbol: string
-          volume: number | null
-        }
-        Insert: {
-          change?: number | null
-          change_percent?: number | null
-          country: string
-          created_at?: string | null
-          currency: string
-          exchange: string
-          id?: number
-          last_updated?: string | null
-          market_cap?: number | null
-          name: string
-          price?: number | null
-          symbol: string
-          volume?: number | null
-        }
-        Update: {
-          change?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          exchange?: string
-          id?: number
-          last_updated?: string | null
-          market_cap?: number | null
-          name?: string
-          price?: number | null
-          symbol?: string
-          volume?: number | null
-        }
-        Relationships: []
-      }
       uae_bank_products: {
         Row: {
           bank_name: string
@@ -3322,96 +3241,6 @@ export type Database = {
         }
         Relationships: []
       }
-      uae_stocks: {
-        Row: {
-          avg_volume: number | null
-          change_amount: number | null
-          change_percent: number | null
-          country: string
-          created_at: string | null
-          currency: string
-          description: string | null
-          description_ar: string | null
-          dividend_yield: number | null
-          employees: number | null
-          exchange: string
-          founded_year: number | null
-          headquarters: string | null
-          id: number
-          industry: string | null
-          market_cap: number | null
-          name: string
-          name_ar: string | null
-          pe_ratio: number | null
-          price: number
-          sector: string | null
-          symbol: string
-          updated_at: string | null
-          volume: number | null
-          website: string | null
-          week_52_high: number | null
-          week_52_low: number | null
-        }
-        Insert: {
-          avg_volume?: number | null
-          change_amount?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          employees?: number | null
-          exchange: string
-          founded_year?: number | null
-          headquarters?: string | null
-          id?: number
-          industry?: string | null
-          market_cap?: number | null
-          name: string
-          name_ar?: string | null
-          pe_ratio?: number | null
-          price: number
-          sector?: string | null
-          symbol: string
-          updated_at?: string | null
-          volume?: number | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-        }
-        Update: {
-          avg_volume?: number | null
-          change_amount?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          employees?: number | null
-          exchange?: string
-          founded_year?: number | null
-          headquarters?: string | null
-          id?: number
-          industry?: string | null
-          market_cap?: number | null
-          name?: string
-          name_ar?: string | null
-          pe_ratio?: number | null
-          price?: number
-          sector?: string | null
-          symbol?: string
-          updated_at?: string | null
-          volume?: number | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-        }
-        Relationships: []
-      }
       us_bank_products: {
         Row: {
           bank_full_name: string
@@ -3691,75 +3520,6 @@ export type Database = {
           region?: string | null
           state?: string
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      us_stocks: {
-        Row: {
-          change: number | null
-          change_percentage: number | null
-          created_at: string | null
-          currency: string
-          eps: number | null
-          exchange: string
-          high: number | null
-          id: number
-          last_updated: string | null
-          low: number | null
-          market_cap: number | null
-          name: string
-          open: number | null
-          pe_ratio: number | null
-          previous_close: number | null
-          price: number | null
-          sector: string | null
-          symbol: string
-          updated_at: string | null
-          volume: number | null
-        }
-        Insert: {
-          change?: number | null
-          change_percentage?: number | null
-          created_at?: string | null
-          currency?: string
-          eps?: number | null
-          exchange: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name: string
-          open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol: string
-          updated_at?: string | null
-          volume?: number | null
-        }
-        Update: {
-          change?: number | null
-          change_percentage?: number | null
-          created_at?: string | null
-          currency?: string
-          eps?: number | null
-          exchange?: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name?: string
-          open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol?: string
-          updated_at?: string | null
-          volume?: number | null
         }
         Relationships: []
       }
