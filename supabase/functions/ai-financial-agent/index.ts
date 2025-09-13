@@ -66,9 +66,9 @@ const getMarketDataSummary = async (supabase: any): Promise<MarketDataSummary> =
   try {
     // Enhanced stocks data with performance analysis
     const { data: stocks } = await supabase
-      .from('stocks')
-      .select('name, symbol, price, change_percent, country, market_cap, volume, exchange')
-      .order('market_cap', { ascending: false });
+      .from('egypt_stocks')
+      .select('name, symbol, price, change, change_percent, country, market_cap, volume, exchange, high, low, open, sector, last_updated')
+      .order('change_percent', { ascending: false });
 
     // Enhanced crypto data
     const { data: crypto } = await supabase

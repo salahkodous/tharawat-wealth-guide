@@ -215,14 +215,21 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
                     <div className="text-right">
                       <p className="font-semibold">{formatPrice(stock.price, stock.currency)}</p>
                       {stock.change_percent && (
-                        <p className={`text-sm flex items-center gap-1 ${getChangeColor(stock.change_percent)}`}>
-                          {stock.change_percent >= 0 ? (
-                            <TrendingUp className="w-3 h-3" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3" />
+                        <div className="text-sm space-y-1">
+                          <p className={`flex items-center gap-1 ${getChangeColor(stock.change_percent)}`}>
+                            {stock.change_percent >= 0 ? (
+                              <TrendingUp className="w-3 h-3" />
+                            ) : (
+                              <TrendingDown className="w-3 h-3" />
+                            )}
+                            {stock.change_percent.toFixed(2)}%
+                          </p>
+                          {stock.change && (
+                            <p className={`text-xs ${getChangeColor(stock.change)}`}>
+                              {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} EGP
+                            </p>
                           )}
-                          {stock.change_percent.toFixed(2)}%
-                        </p>
+                        </div>
                       )}
                     </div>
                   </div>

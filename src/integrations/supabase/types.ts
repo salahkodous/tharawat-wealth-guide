@@ -1040,6 +1040,96 @@ export type Database = {
           },
         ]
       }
+      egypt_stocks: {
+        Row: {
+          change: number | null
+          change_amount: number | null
+          change_percent: number | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          exchange: string | null
+          high: number | null
+          high_price: number | null
+          id: number
+          last_updated: string | null
+          low: number | null
+          low_price: number | null
+          market_cap: number | null
+          name: string
+          open: number | null
+          open_price: number | null
+          previous_close: number | null
+          price: number | null
+          sector: string | null
+          source: string | null
+          status: string | null
+          symbol: string
+          turnover: number | null
+          updated_at: string | null
+          url: string | null
+          volume: number | null
+        }
+        Insert: {
+          change?: number | null
+          change_amount?: number | null
+          change_percent?: number | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          exchange?: string | null
+          high?: number | null
+          high_price?: number | null
+          id?: number
+          last_updated?: string | null
+          low?: number | null
+          low_price?: number | null
+          market_cap?: number | null
+          name: string
+          open?: number | null
+          open_price?: number | null
+          previous_close?: number | null
+          price?: number | null
+          sector?: string | null
+          source?: string | null
+          status?: string | null
+          symbol: string
+          turnover?: number | null
+          updated_at?: string | null
+          url?: string | null
+          volume?: number | null
+        }
+        Update: {
+          change?: number | null
+          change_amount?: number | null
+          change_percent?: number | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          exchange?: string | null
+          high?: number | null
+          high_price?: number | null
+          id?: number
+          last_updated?: string | null
+          low?: number | null
+          low_price?: number | null
+          market_cap?: number | null
+          name?: string
+          open?: number | null
+          open_price?: number | null
+          previous_close?: number | null
+          price?: number | null
+          sector?: string | null
+          source?: string | null
+          status?: string | null
+          symbol?: string
+          turnover?: number | null
+          updated_at?: string | null
+          url?: string | null
+          volume?: number | null
+        }
+        Relationships: []
+      }
       etfs: {
         Row: {
           benchmark: string | null
@@ -2071,78 +2161,6 @@ export type Database = {
           sector?: string | null
           symbol?: string
           updated_at?: string | null
-          volume?: number | null
-        }
-        Relationships: []
-      }
-      mupashir_egypt_stocks: {
-        Row: {
-          change: number | null
-          change_percentage: number | null
-          country: string
-          created_at: string
-          currency: string
-          exchange: string
-          high: number | null
-          id: number
-          last_updated: string | null
-          low: number | null
-          market_cap: number | null
-          metadata: Json | null
-          name: string
-          open: number | null
-          previous_close: number | null
-          price: number | null
-          sector: string | null
-          symbol: string
-          updated_at: string
-          url: string | null
-          volume: number | null
-        }
-        Insert: {
-          change?: number | null
-          change_percentage?: number | null
-          country?: string
-          created_at?: string
-          currency?: string
-          exchange?: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          metadata?: Json | null
-          name: string
-          open?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol: string
-          updated_at?: string
-          url?: string | null
-          volume?: number | null
-        }
-        Update: {
-          change?: number | null
-          change_percentage?: number | null
-          country?: string
-          created_at?: string
-          currency?: string
-          exchange?: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          metadata?: Json | null
-          name?: string
-          open?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol?: string
-          updated_at?: string
-          url?: string | null
           volume?: number | null
         }
         Relationships: []

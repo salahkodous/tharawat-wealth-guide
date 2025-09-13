@@ -10,10 +10,15 @@ export interface Stock {
   change_percent: number | null;
   volume: number | null;
   market_cap: number | null;
-  currency: string;
   country: string;
+  currency: string;
   exchange: string;
+  sector: string | null;
   last_updated?: string;
+  high?: number | null;
+  low?: number | null;
+  open?: number | null;
+  turnover?: number | null;
 }
 
 export interface Cryptocurrency {
@@ -143,34 +148,44 @@ export const useMarketData = () => {
 
   const fetchStocks = async () => {
     try {
-      // Try to refresh data from Mubasher API via Edge Function (non-blocking)
-      await supabase.functions.invoke('mubasher-scraper').catch(() => {});
-    } catch (_) {
-      // Ignore refresh errors, we'll still read whatever is in the DB
-    }
+      console.log('Fetching stocks from Egypt stocks table...');
 
-    const { data, error } = await supabase
-      .from('mupashir_egypt_stocks')
-      .select('*')
-      .order('market_cap', { ascending: false });
-    
-    if (!error && data) {
-      // Map the data to match the Stock interface
-      const mappedData: Stock[] = data.map(stock => ({
+      // Fetch data from the Egypt stocks table with 24h changes
+      const { data, error } = await supabase
+        .from('egypt_stocks')
+        .select('*')
+        .order('change_percent', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching stocks:', error);
+        return;
+      }
+      
+      console.log('Fetched stocks:', data?.length || 0);
+      
+      const formattedStocks: Stock[] = (data || []).map((stock: any) => ({
         id: stock.id,
-        symbol: stock.symbol,
-        name: stock.name,
+        symbol: stock.symbol || 'N/A',
+        name: stock.name || 'Unknown',
         price: stock.price,
         change: stock.change,
-        change_percent: stock.change_percentage,
+        change_percent: stock.change_percent,
         volume: stock.volume,
-        market_cap: stock.market_cap,
-        currency: stock.currency || 'EGP',
+        market_cap: stock.market_cap || null,
         country: stock.country || 'Egypt',
+        currency: stock.currency || 'EGP',
         exchange: stock.exchange || 'EGX',
-        last_updated: stock.last_updated || new Date().toISOString()
+        sector: stock.sector || null,
+        last_updated: stock.last_updated,
+        high: stock.high,
+        low: stock.low,
+        open: stock.open,
+        turnover: stock.turnover
       }));
-      setStocks(mappedData);
+      
+      setStocks(formattedStocks);
+    } catch (error) {
+      console.error('Error in fetchStocks:', error);
     }
   };
 
