@@ -696,18 +696,18 @@ Your response should be detailed, professional, and purely advisory without any 
 
   console.log('AI response content (first 500 chars):', aiResponse.slice(0, 500));
 
-  return aiResponse;
-    const textLower = message.toLowerCase();
+  // Check for actionable patterns in the user message BEFORE returning the AI response
+  const textLower = message.toLowerCase();
+  
+  // Income/Salary changes or additions
+  if ((textLower.includes('salary') || textLower.includes('income')) && 
+      (textLower.includes('change') || textLower.includes('update') || textLower.includes('add') || textLower.includes('create'))) {
+    const salaryMatch = message.match(/(\d+)/);
     
-    // Income/Salary changes or additions
-    if ((textLower.includes('salary') || textLower.includes('income')) && 
-        (textLower.includes('change') || textLower.includes('update') || textLower.includes('add') || textLower.includes('create'))) {
-      const salaryMatch = message.match(/(\d+)/);
+    if (salaryMatch) {
+      const incomeAmount = parseInt(salaryMatch[0]);
       
-      if (salaryMatch) {
-        const incomeAmount = parseInt(salaryMatch[0]);
-        
-        // Check if it's adding a new income stream vs updating salary
+      // Check if it's adding a new income stream vs updating salary
         if ((textLower.includes('add') || textLower.includes('create')) && !textLower.includes('salary')) {
           // Extract income name
           const incomeNameMatch = message.match(/(?:add|create)\s+([^,.\n]+?)\s+income/i) || 
@@ -985,4 +985,3 @@ Your response should be detailed, professional, and purely advisory without any 
       pendingAction: null
     };
   }
-}
