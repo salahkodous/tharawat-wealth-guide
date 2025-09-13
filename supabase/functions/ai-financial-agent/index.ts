@@ -256,6 +256,18 @@ serve(async (req) => {
       cryptoAvailable: marketDataSummary.crypto.total
     });
 
+    // Analyze the user message and get the response
+    console.log('Analyzing user message...');
+    const { analysis } = await analyzeUserMessage(
+      message, 
+      userData, 
+      agentMemory, 
+      marketDataSummary, 
+      messages || [], 
+      groqApiKey,
+      model
+    );
+
     // Update agent memory with new interaction
     await updateAgentMemory(userId, {
       last_interaction: {
