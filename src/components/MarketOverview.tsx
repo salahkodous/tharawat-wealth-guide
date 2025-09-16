@@ -1,17 +1,18 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
+import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
 
 const MarketOverview = () => {
   const markets = [
-    { name: 'TASI', value: '12,450.8', change: '+2.3%', positive: true, category: 'Stocks', country: 'Saudi Arabia' },
-    { name: 'DFM', value: '4,125.6', change: '-0.8%', positive: false, category: 'Stocks', country: 'UAE' },
-    { name: 'Dubai Real Estate', value: '98.2', change: '+3.1%', positive: true, category: 'Real Estate', country: 'UAE' },
-    { name: 'Bitcoin (MENA)', value: '67,432', change: '-2.4%', positive: false, category: 'Crypto', country: 'Regional' },
-    { name: 'Saudi Banks', value: '8,945', change: '+1.8%', positive: true, category: 'Banking', country: 'Saudi Arabia' },
-    { name: 'UAE Property', value: '156.7', change: '+2.2%', positive: true, category: 'Real Estate', country: 'UAE' },
-    { name: 'QE Index', value: '10,234', change: '+0.9%', positive: true, category: 'Stocks', country: 'Qatar' },
-    { name: 'Ethereum Gulf', value: '3,821', change: '+1.5%', positive: true, category: 'Crypto', country: 'Regional' }
+    { name: 'TASI', value: 12450.8, change: '+2.3%', positive: true, category: 'Stocks', country: 'Saudi Arabia', currency: 'SAR' },
+    { name: 'DFM', value: 4125.6, change: '-0.8%', positive: false, category: 'Stocks', country: 'UAE', currency: 'AED' },
+    { name: 'Dubai Real Estate', value: 98.2, change: '+3.1%', positive: true, category: 'Real Estate', country: 'UAE', currency: 'AED' },
+    { name: 'Bitcoin (MENA)', value: 67432, change: '-2.4%', positive: false, category: 'Crypto', country: 'Regional', currency: 'USD' },
+    { name: 'Saudi Banks', value: 8945, change: '+1.8%', positive: true, category: 'Banking', country: 'Saudi Arabia', currency: 'SAR' },
+    { name: 'UAE Property', value: 156.7, change: '+2.2%', positive: true, category: 'Real Estate', country: 'UAE', currency: 'AED' },
+    { name: 'QE Index', value: 10234, change: '+0.9%', positive: true, category: 'Stocks', country: 'Qatar', currency: 'QAR' },
+    { name: 'Ethereum Gulf', value: 3821, change: '+1.5%', positive: true, category: 'Crypto', country: 'Regional', currency: 'USD' }
   ];
 
   const currencies = [
@@ -59,7 +60,12 @@ const MarketOverview = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-sm mb-1">{market.name}</h3>
-                <p className="text-xl font-bold">{market.value}</p>
+                <p className="text-xl font-bold">
+                  <OptimizedCurrencyValue 
+                    amount={market.value} 
+                    fromCurrency={market.currency}
+                  />
+                </p>
                 <p className="text-xs text-muted-foreground">{market.country}</p>
               </div>
             </CardContent>

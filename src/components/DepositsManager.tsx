@@ -9,13 +9,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { useDeposits } from '@/hooks/useDeposits';
 import type { CreateDepositData } from '@/hooks/useDeposits';
-import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
+import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
 import { Plus, PiggyBank, TrendingUp, Building, Wallet, Trash2 } from 'lucide-react';
 
 export const DepositsManager: React.FC = () => {
   const { deposits, loading, createDeposit, getTotalDepositsValue, getTotalMonthlySavings, deleteDeposit } = useDeposits();
-  const { formatAmount } = useCurrency();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<CreateDepositData>({
@@ -203,13 +202,13 @@ export const DepositsManager: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="text-2xl font-bold text-primary">
-                {formatAmount(getTotalDepositsValue())}
+                <OptimizedCurrencyValue amount={getTotalDepositsValue()} />
               </div>
               <div className="text-sm text-muted-foreground">Total Savings Value</div>
             </div>
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="text-2xl font-bold text-primary">
-                {formatAmount(getTotalMonthlySavings())}
+                <OptimizedCurrencyValue amount={getTotalMonthlySavings()} />
               </div>
               <div className="text-sm text-muted-foreground">Monthly Savings</div>
             </div>
@@ -241,7 +240,7 @@ export const DepositsManager: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <div className="text-right">
                       <div className="font-medium">
-                        {formatAmount(deposit.computed?.total_value || (deposit.principal + deposit.accrued_interest))}
+                        <OptimizedCurrencyValue amount={deposit.computed?.total_value || (deposit.principal + deposit.accrued_interest)} />
                       </div>
                       <Badge variant={deposit.status === 'active' ? 'default' : 'secondary'}>
                         {deposit.status}

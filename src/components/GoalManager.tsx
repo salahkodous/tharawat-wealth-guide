@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useCurrency } from '@/hooks/useCurrency';
+import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
 import { Plus, Edit3, Save, X, Trash2 } from 'lucide-react';
 
 interface Goal {
@@ -37,7 +37,6 @@ const GoalManager = () => {
   
   const { user } = useAuth();
   const { toast } = useToast();
-  const { formatAmount } = useCurrency();
 
   useEffect(() => {
     if (user) {
@@ -249,7 +248,7 @@ const GoalManager = () => {
                     <div>
                       <h4 className="font-medium">{goal.title}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Monthly saving: {formatAmount(goal.monthly_saving_amount)}
+                        Monthly saving: <OptimizedCurrencyValue amount={goal.monthly_saving_amount} />
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -288,8 +287,8 @@ const GoalManager = () => {
                   {editMode ? (
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span>Progress: {formatAmount(goal.current_amount)}</span>
-                        <span>Target: {formatAmount(goal.target_amount)}</span>
+                        <span>Progress: <OptimizedCurrencyValue amount={goal.current_amount} /></span>
+                        <span>Target: <OptimizedCurrencyValue amount={goal.target_amount} /></span>
                       </div>
                       <Slider
                         value={[goal.current_amount]}
@@ -312,8 +311,8 @@ const GoalManager = () => {
                   ) : (
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>{formatAmount(goal.current_amount)}</span>
-                        <span>{formatAmount(goal.target_amount)}</span>
+                        <span><OptimizedCurrencyValue amount={goal.current_amount} /></span>
+                        <span><OptimizedCurrencyValue amount={goal.target_amount} /></span>
                       </div>
                       <div className="w-full bg-secondary rounded-full h-3">
                         <div 

@@ -5,7 +5,7 @@ import { CreditCard, Plus, Edit, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCurrency } from '@/hooks/useCurrency';
+import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
 
 interface Debt {
   id?: string;
@@ -42,7 +42,6 @@ const DebtManager: React.FC<DebtManagerProps> = ({
     duration_months: 0,
     start_date: new Date().toISOString().split('T')[0],
   });
-  const { formatAmount } = useCurrency();
 
   const resetForm = () => {
     setFormData({
@@ -215,19 +214,19 @@ const DebtManager: React.FC<DebtManagerProps> = ({
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total:</span>
-                  <span className="font-semibold">{formatAmount(debt.total_amount)}</span>
+                  <span className="font-semibold"><OptimizedCurrencyValue amount={debt.total_amount} /></span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Paid:</span>
-                  <span className="font-semibold text-green-600">{formatAmount(debt.paid_amount)}</span>
+                  <span className="font-semibold text-green-600"><OptimizedCurrencyValue amount={debt.paid_amount} /></span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Remaining:</span>
-                  <span className="font-semibold text-red-500">{formatAmount(debt.total_amount - debt.paid_amount)}</span>
+                  <span className="font-semibold text-red-500"><OptimizedCurrencyValue amount={debt.total_amount - debt.paid_amount} /></span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Monthly Payment:</span>
-                  <span>{formatAmount(debt.monthly_payment)}</span>
+                  <span><OptimizedCurrencyValue amount={debt.monthly_payment} /></span>
                 </div>
                 
                 <div className="mt-3">

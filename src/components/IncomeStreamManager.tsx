@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, DollarSign } from 'lucide-react';
 import { useIncomeStreams, IncomeStream } from '@/hooks/useIncomeStreams';
-import { useCurrency } from '@/hooks/useCurrency';
+import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
 
 interface IncomeStreamManagerProps {
   onIncomeChange: (totalIncome: number) => void;
@@ -16,7 +16,6 @@ interface IncomeStreamManagerProps {
 
 const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChange }) => {
   const { incomeStreams, addIncomeStream, updateIncomeStream, deleteIncomeStream, calculateTotalMonthlyIncome } = useIncomeStreams();
-  const { formatAmount } = useCurrency();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStream, setEditingStream] = useState<IncomeStream | null>(null);
   const [formData, setFormData] = useState({
@@ -203,7 +202,7 @@ const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChang
                   </Badge>
                 </div>
                 <div className="text-lg font-bold text-primary">
-                  {formatAmount(stream.amount)}
+                  <OptimizedCurrencyValue amount={stream.amount} />
                 </div>
                 {stream.received_date && (
                   <div className="text-sm text-muted-foreground">
@@ -243,7 +242,9 @@ const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChang
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-medium text-muted-foreground">Total Monthly Income</div>
-              <div className="text-2xl font-bold text-primary">{formatAmount(calculateTotalMonthlyIncome())}</div>
+              <div className="text-2xl font-bold text-primary">
+                <OptimizedCurrencyValue amount={calculateTotalMonthlyIncome()} />
+              </div>
             </div>
             <DollarSign className="w-8 h-8 text-green-500" />
           </div>

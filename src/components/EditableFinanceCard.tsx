@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useCurrency } from '@/hooks/useCurrency';
+import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
 
 interface EditableFinanceCardProps {
   label: string;
@@ -23,7 +23,6 @@ const EditableFinanceCard: React.FC<EditableFinanceCardProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value.toString());
-  const { formatAmount } = useCurrency();
 
   const handleSave = () => {
     const numValue = parseFloat(inputValue) || 0;
@@ -46,7 +45,9 @@ const EditableFinanceCard: React.FC<EditableFinanceCardProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-medium text-muted-foreground">{label}</div>
-              <div className="text-2xl font-bold">{formatAmount(value)}</div>
+              <div className="text-2xl font-bold">
+                <OptimizedCurrencyValue amount={value} />
+              </div>
             </div>
             <Icon className={`w-8 h-8 ${color}`} />
           </div>

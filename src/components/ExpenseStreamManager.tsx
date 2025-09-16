@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, CreditCard } from 'lucide-react';
 import { useExpenseStreams, ExpenseStream } from '@/hooks/useExpenseStreams';
-import { useCurrency } from '@/hooks/useCurrency';
+import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
 
 interface ExpenseStreamManagerProps {
   onExpenseChange: (totalExpense: number) => void;
@@ -16,7 +16,6 @@ interface ExpenseStreamManagerProps {
 
 const ExpenseStreamManager: React.FC<ExpenseStreamManagerProps> = ({ onExpenseChange }) => {
   const { expenseStreams, addExpenseStream, updateExpenseStream, deleteExpenseStream, calculateTotalMonthlyExpenses } = useExpenseStreams();
-  const { formatAmount } = useCurrency();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStream, setEditingStream] = useState<ExpenseStream | null>(null);
   const [formData, setFormData] = useState({
@@ -124,7 +123,7 @@ const ExpenseStreamManager: React.FC<ExpenseStreamManagerProps> = ({ onExpenseCh
         <div>
           <h3 className="text-lg font-semibold">Expense Streams</h3>
           <p className="text-sm text-muted-foreground">
-            Total Monthly Expenses: {formatAmount(calculateTotalMonthlyExpenses())}
+            Total Monthly Expenses: <OptimizedCurrencyValue amount={calculateTotalMonthlyExpenses()} />
           </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
@@ -159,7 +158,7 @@ const ExpenseStreamManager: React.FC<ExpenseStreamManagerProps> = ({ onExpenseCh
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="font-medium text-foreground">
-                        {formatAmount(stream.amount)}
+                        <OptimizedCurrencyValue amount={stream.amount} />
                       </span>
                       {stream.expense_date && (
                         <span>Date: {new Date(stream.expense_date).toLocaleDateString()}</span>
