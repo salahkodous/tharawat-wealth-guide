@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { useSettings } from './useSettings';
 import { useCurrencyConversion } from './useCurrencyConversion';
@@ -55,23 +55,23 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [user, settings.currency]);
 
-  const formatAmount = (amount: number, fromCurrency?: string): string => {
+  const formatAmount = useCallback((amount: number, fromCurrency?: string): string => {
     if (fromCurrency && fromCurrency !== currency) {
       const convertedAmount = convertCurrency(amount, fromCurrency, currency);
       return formatCurrency(convertedAmount, currency);
     }
     return formatCurrency(amount, currency);
-  };
+  }, [currency, convertCurrency, formatCurrency]);
 
-  const convertAmount = (amount: number, fromCurrency: string, toCurrency?: string): number => {
+  const convertAmount = useCallback((amount: number, fromCurrency: string, toCurrency?: string): number => {
     return convertCurrency(amount, fromCurrency, toCurrency);
-  };
+  }, [convertCurrency]);
 
-  const value = {
+  const value = useMemo(() => ({
     currency,
     formatAmount,
     convertAmount,
-  };
+  }), [currency, formatAmount, convertAmount]);
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 };

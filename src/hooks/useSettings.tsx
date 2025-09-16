@@ -71,8 +71,23 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const updateSettings = (newSettings: Partial<UserSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+  const updateSettings = async (newSettings: Partial<UserSettings>) => {
+    const updatedSettings = { ...settings, ...newSettings };
+    setSettings(updatedSettings);
+    
+    // Immediately update database for fast sync
+    if (user) {
+      try {
+        await supabase
+          .from('user_settings')
+          .upsert({ 
+            user_id: user.id, 
+            ...updatedSettings 
+          });
+      } catch (error) {
+        console.error('Error updating settings:', error);
+      }
+    }
   };
 
   useEffect(() => {

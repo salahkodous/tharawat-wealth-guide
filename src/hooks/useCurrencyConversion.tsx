@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettings } from './useSettings';
 
@@ -13,6 +13,16 @@ export const useCurrencyConversion = () => {
   const { settings } = useSettings();
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Memoized rate lookup map for O(1) access
+  const rateMap = useMemo(() => {
+    const map = new Map<string, number>();
+    rates.forEach(rate => {
+      const key = `${rate.base_currency}-${rate.target_currency}`;
+      map.set(key, rate.exchange_rate);
+    });
+    return map;
+  }, [rates]);
 
   const fetchRates = async () => {
     try {
@@ -35,51 +45,46 @@ export const useCurrencyConversion = () => {
     fetchRates();
   }, []);
 
-  const convertCurrency = (amount: number, fromCurrency: string, toCurrency?: string): number => {
+  const convertCurrency = useCallback((amount: number, fromCurrency: string, toCurrency?: string): number => {
     const targetCurrency = toCurrency || settings.currency;
     
     if (fromCurrency === targetCurrency) {
       return amount;
     }
 
-    // Find conversion rate
+    // O(1) lookup using memoized rate map
     let rate = 1;
     
     // Direct conversion
-    const directRate = rates.find(r => 
-      r.base_currency === fromCurrency && r.target_currency === targetCurrency
-    );
+    const directKey = `${fromCurrency}-${targetCurrency}`;
+    const directRate = rateMap.get(directKey);
     
     if (directRate) {
-      rate = directRate.exchange_rate;
+      rate = directRate;
     } else {
       // Indirect conversion via USD
-      const fromToUsd = rates.find(r => 
-        r.base_currency === fromCurrency && r.target_currency === 'USD'
-      );
-      const usdToTarget = rates.find(r => 
-        r.base_currency === 'USD' && r.target_currency === targetCurrency
-      );
+      const fromToUsdKey = `${fromCurrency}-USD`;
+      const usdToTargetKey = `USD-${targetCurrency}`;
+      const fromToUsd = rateMap.get(fromToUsdKey);
+      const usdToTarget = rateMap.get(usdToTargetKey);
       
       if (fromToUsd && usdToTarget) {
-        rate = fromToUsd.exchange_rate * usdToTarget.exchange_rate;
+        rate = fromToUsd * usdToTarget;
       } else {
         // Reverse indirect conversion
-        const usdToFrom = rates.find(r => 
-          r.base_currency === 'USD' && r.target_currency === fromCurrency
-        );
-        const targetToUsd = rates.find(r => 
-          r.base_currency === targetCurrency && r.target_currency === 'USD'
-        );
+        const usdToFromKey = `USD-${fromCurrency}`;
+        const targetToUsdKey = `${targetCurrency}-USD`;
+        const usdToFrom = rateMap.get(usdToFromKey);
+        const targetToUsd = rateMap.get(targetToUsdKey);
         
         if (usdToFrom && targetToUsd) {
-          rate = targetToUsd.exchange_rate / usdToFrom.exchange_rate;
+          rate = targetToUsd / usdToFrom;
         }
       }
     }
 
     return amount * rate;
-  };
+  }, [rateMap, settings.currency]);
 
   const formatCurrency = (amount: number, currency?: string): string => {
     const targetCurrency = currency || settings.currency;
@@ -109,14 +114,14 @@ export const useCurrencyConversion = () => {
     return `${symbol}${amount.toLocaleString()}`;
   };
 
-  const getAvailableCurrencies = (): string[] => {
+  const getAvailableCurrencies = useMemo((): string[] => {
     const currencies = new Set<string>();
     rates.forEach(rate => {
       currencies.add(rate.base_currency);
       currencies.add(rate.target_currency);
     });
     return Array.from(currencies).sort();
-  };
+  }, [rates]);
 
   return {
     convertCurrency,
