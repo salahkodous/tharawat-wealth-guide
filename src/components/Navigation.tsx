@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Link, useLocation } from 'react-router-dom';
 import AnakinLogo from '@/components/AnakinLogo';
+import CurrencySymbol from '@/components/CurrencySymbol';
 import { useState } from 'react';
 
 const Navigation = () => {
@@ -58,6 +59,7 @@ const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
+            <CurrencySymbol variant="ghost" />
             <Link to="/settings">
               <Button variant="ghost" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
@@ -99,6 +101,9 @@ const Navigation = () => {
                   </Button>
                 </Link>
               ))}
+              <div className="px-3 py-2">
+                <CurrencySymbol variant="ghost" className="w-full" />
+              </div>
               <Link to="/settings" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
                   <Settings className="w-4 h-4" />
