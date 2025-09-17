@@ -9,7 +9,8 @@ import {
   LogOut,
   Settings,
   Menu,
-  X
+  X,
+  Globe
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -33,7 +34,7 @@ const Navigation = () => {
     { path: '/portfolio', icon: Briefcase, label: t('portfolio') },
     { path: '/finances', icon: Calculator, label: t('finances') },
     { path: '/assistant', icon: Bot, label: t('assistant') },
-    { path: '/analytics', icon: TrendingUp, label: t('analytics') },
+    { path: '/analytics', icon: Globe, label: 'News' },
   ];
 
   return (
