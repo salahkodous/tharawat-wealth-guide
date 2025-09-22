@@ -1,140 +1,170 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Clock, ExternalLink, TrendingUp, Globe, Filter, Search, AlertCircle } from 'lucide-react';
+import { useNewsArticles } from '@/hooks/useNewsArticles';
+import { useUserCountry } from '@/hooks/useUserCountry';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Clock, ExternalLink, Star, Globe } from 'lucide-react';
 
 const Analytics = () => {
-  // Mock news data with user interests
-  const mockNews = [
-    {
-      id: 1,
-      title: "Saudi Arabia's PIF Announces $50B Investment in Green Energy",
-      summary: "The Public Investment Fund continues its commitment to Vision 2030 with massive renewable energy initiatives.",
-      source: "Al Arabiya Business",
-      time: "2 hours ago",
-      category: "Investment",
-      interest: "Saudi Markets",
-      trending: true,
-      url: "#"
-    },
-    {
-      id: 2,
-      title: "UAE Central Bank Raises Interest Rates Following Fed Decision",
-      summary: "The CBUAE adjusts monetary policy in line with global economic conditions affecting regional markets.",
-      source: "Gulf News",
-      time: "4 hours ago",
-      category: "Monetary Policy",
-      interest: "UAE Banking",
-      trending: false,
-      url: "#"
-    },
-    {
-      id: 3,
-      title: "Egyptian Stock Exchange Hits New Highs Amid Economic Reforms",
-      summary: "EGX30 index reaches record levels as investor confidence grows in government economic policies.",
-      source: "Reuters",
-      time: "6 hours ago",
-      category: "Markets",
-      interest: "Egyptian Stocks",
-      trending: true,
-      url: "#"
-    },
-    {
-      id: 4,
-      title: "Qatar's LNG Exports Surge 15% in Q3 2024",
-      summary: "Strong global demand for liquefied natural gas boosts Qatar's energy sector revenues significantly.",
-      source: "Bloomberg",
-      time: "8 hours ago",
-      category: "Energy",
-      interest: "Qatar Energy",
-      trending: false,
-      url: "#"
-    },
-    {
-      id: 5,
-      title: "Bahrain Fintech Sector Attracts $200M in New Investments",
-      summary: "The kingdom's regulatory sandbox continues to attract international fintech companies and investors.",
-      source: "Trade Arabia",
-      time: "10 hours ago",
-      category: "Fintech",
-      interest: "GCC Fintech",
-      trending: false,
-      url: "#"
-    },
-    {
-      id: 6,
-      title: "Aramco Announces Partnership with Global Tech Giants",
-      summary: "Strategic alliances aimed at digital transformation and AI integration across operations.",
-      source: "Arab News",
-      time: "12 hours ago",
-      category: "Technology",
-      interest: "Saudi Tech",
-      trending: true,
-      url: "#"
-    },
-    {
-      id: 7,
-      title: "Morocco's Economic Growth Exceeds Expectations",
-      summary: "GDP growth reaches 3.2% driven by agricultural recovery and increased tourism revenues.",
-      source: "Morocco World News",
-      time: "14 hours ago",
-      category: "Economy",
-      interest: "North Africa",
-      trending: false,
-      url: "#"
-    },
-    {
-      id: 8,
-      title: "Jordan's Banking Sector Shows Resilience Amid Regional Challenges",
-      summary: "Local banks report strong performance despite regional economic headwinds.",
-      source: "Jordan Times",
-      time: "16 hours ago",
-      category: "Banking",
-      interest: "Jordan Finance",
-      trending: false,
-      url: "#"
-    },
-    {
-      id: 9,
-      title: "Kuwait Investment Authority Diversifies Into European Markets",
-      summary: "The sovereign wealth fund expands portfolio with significant European real estate acquisitions.",
-      source: "KUNA",
-      time: "18 hours ago",
-      category: "Investment",
-      interest: "Kuwait SWF",
-      trending: false,
-      url: "#"
-    },
-    {
-      id: 10,
-      title: "Oman's Tourism Sector Recovery Accelerates",
-      summary: "Visitor arrivals increase 25% year-over-year as the sultanate promotes sustainable tourism.",
-      source: "Times of Oman",
-      time: "20 hours ago",
-      category: "Tourism",
-      interest: "Oman Economy",
-      trending: false,
-      url: "#"
-    }
-  ];
+  const { articles, loading, error, getCategories } = useNewsArticles();
+  const { userCountry } = useUserCountry();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSentiment, setSelectedSentiment] = useState<string>('all');
 
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'Investment': 'bg-blue-100 text-blue-800',
-      'Monetary Policy': 'bg-purple-100 text-purple-800',
-      'Markets': 'bg-green-100 text-green-800',
-      'Energy': 'bg-orange-100 text-orange-800',
-      'Fintech': 'bg-cyan-100 text-cyan-800',
-      'Technology': 'bg-indigo-100 text-indigo-800',
-      'Economy': 'bg-yellow-100 text-yellow-800',
-      'Banking': 'bg-red-100 text-red-800',
-      'Tourism': 'bg-pink-100 text-pink-800'
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+  const categories = getCategories();
+
+  const filteredArticles = useMemo(() => {
+    let filtered = articles;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(article =>
+        article.title.toLowerCase().includes(query) ||
+        article.summary.toLowerCase().includes(query) ||
+        article.keywords?.some(keyword => 
+          keyword.toLowerCase().includes(query)
+        )
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(article => 
+        article.category?.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    // Filter by sentiment
+    if (selectedSentiment !== 'all') {
+      filtered = filtered.filter(article => 
+        article.sentiment.toLowerCase() === selectedSentiment.toLowerCase()
+      );
+    }
+
+    return filtered.slice(0, 20); // Limit to top 20 articles
+  }, [articles, searchQuery, selectedCategory, selectedSentiment]);
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment.toLowerCase()) {
+      case 'positive':
+        return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
+      case 'negative':
+        return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800';
+      default:
+        return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800';
+    }
   };
 
+  const getPriorityIcon = (priority: number | null) => {
+    if (!priority) return <Filter className="w-4 h-4 text-muted-foreground" />;
+    
+    if (priority >= 8) {
+      return <TrendingUp className="w-4 h-4 text-red-500" />;
+    } else if (priority >= 5) {
+      return <Globe className="w-4 h-4 text-yellow-500" />;
+    } else {
+      return <Filter className="w-4 h-4 text-muted-foreground" />;
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        <AnimatedBackground />
+        
+        <div className="relative z-10">
+          <Navigation />
+          
+          <section className="py-8">
+            <div className="container mx-auto px-4 space-y-8">
+              <div className="text-center space-y-4">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Financial News Hub
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Loading the latest financial news for {userCountry?.name || 'your region'}...
+                </p>
+              </div>
+
+              <div className="grid gap-6">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Card key={index}>
+                    <CardHeader className="space-y-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Skeleton className="h-5 w-16" />
+                            <Skeleton className="h-5 w-20" />
+                            <Skeleton className="h-5 w-14" />
+                          </div>
+                          <Skeleton className="h-6 w-full" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-16 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        <AnimatedBackground />
+        
+        <div className="relative z-10">
+          <Navigation />
+          
+          <section className="py-8">
+            <div className="container mx-auto px-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Failed to load news articles: {error}
+                </AlertDescription>
+              </Alert>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <AnimatedBackground />
@@ -144,62 +174,137 @@ const Analytics = () => {
         
         <section className="py-8">
           <div className="container mx-auto px-4 space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-                  <Globe className="h-8 w-8 text-primary" />
-                  Personalized News
-                </h1>
-                <p className="text-muted-foreground">Top 10 news tailored to your interests</p>
-              </div>
-              <Badge variant="secondary" className="flex items-center gap-2">
-                <Star className="h-4 w-4" />
-                Based on your interests
-              </Badge>
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Financial News Hub
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Stay updated with the latest financial news and market insights for {userCountry?.name || 'your region'}
+              </p>
             </div>
-            
-            <div className="grid gap-4">
-              {mockNews.map((news, index) => (
-                <Card key={news.id} className="hover:shadow-lg transition-shadow duration-200">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg font-semibold text-muted-foreground">#{index + 1}</span>
-                          {news.trending && (
-                            <Badge variant="destructive" className="flex items-center gap-1">
-                              <TrendingUp className="h-3 w-3" />
-                              Trending
-                            </Badge>
-                          )}
-                          <Badge className={getCategoryColor(news.category)}>
-                            {news.category}
-                          </Badge>
-                          <Badge variant="outline">
-                            {news.interest}
-                          </Badge>
-                        </div>
-                        <CardTitle className="text-xl leading-tight hover:text-primary cursor-pointer">
-                          {news.title}
-                        </CardTitle>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 cursor-pointer hover:text-primary" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4 leading-relaxed">
-                      {news.summary}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span className="font-medium">{news.source}</span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {news.time}
-                      </div>
-                    </div>
-                  </CardContent>
+
+            {/* Filters */}
+            <Card className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search articles..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedSentiment} onValueChange={setSelectedSentiment}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Sentiments" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sentiments</SelectItem>
+                    <SelectItem value="positive">Positive</SelectItem>
+                    <SelectItem value="neutral">Neutral</SelectItem>
+                    <SelectItem value="negative">Negative</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Globe className="w-4 h-4 mr-2" />
+                  {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            </Card>
+
+            {/* Articles */}
+            <div className="grid gap-6">
+              {filteredArticles.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <p className="text-muted-foreground">No articles found matching your criteria.</p>
                 </Card>
-              ))}
+              ) : (
+                filteredArticles.map((article) => (
+                  <Card key={article.id} className="hover:shadow-lg transition-shadow duration-300">
+                    <CardHeader className="space-y-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {getPriorityIcon(article.priority_score)}
+                            {article.category && (
+                              <Badge variant="secondary" className="text-xs">
+                                {article.category}
+                              </Badge>
+                            )}
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${getSentimentColor(article.sentiment)}`}
+                            >
+                              {article.sentiment}
+                            </Badge>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Globe className="w-3 h-3" />
+                              {article.country}
+                            </div>
+                          </div>
+                          <CardTitle className="text-xl leading-tight hover:text-primary transition-colors">
+                            {article.title}
+                          </CardTitle>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          {formatTimeAgo(article.created_at)}
+                        </div>
+                        {article.source_website && (
+                          <span className="font-medium">{article.source_website}</span>
+                        )}
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-4">
+                      <CardDescription className="text-base leading-relaxed">
+                        {article.summary}
+                      </CardDescription>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-2 flex-wrap">
+                          {article.keywords?.slice(0, 4).map((keyword, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
+                        {article.url && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="gap-2"
+                            onClick={() => window.open(article.url!, '_blank')}
+                          >
+                            <span>Read More</span>
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
         </section>
