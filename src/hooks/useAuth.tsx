@@ -9,7 +9,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName?: string, country?: string, currency?: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
+  signInWithGoogle: (country?: string, currency?: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,10 +30,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Handle Google OAuth country metadata update
+        if (event === 'SIGNED_IN' && session?.user) {
+          const pendingCountry = localStorage.getItem('pending_country');
+          const pendingCurrency = localStorage.getItem('pending_currency');
+          
+          if (pendingCountry && pendingCurrency) {
+            // Update user metadata with country information
+            await supabase.auth.updateUser({
+              data: {
+                country: pendingCountry,
+                currency: pendingCurrency,
+              }
+            });
+            
+            // Clear the pending data
+            localStorage.removeItem('pending_country');
+            localStorage.removeItem('pending_currency');
+          }
+        }
       }
     );
 
@@ -78,8 +98,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (country?: string, currency?: string) => {
     const redirectUrl = `${window.location.origin}/`;
+    
+    // Store country and currency in localStorage for after OAuth redirect
+    if (country && currency) {
+      localStorage.setItem('pending_country', country);
+      localStorage.setItem('pending_currency', currency);
+    }
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

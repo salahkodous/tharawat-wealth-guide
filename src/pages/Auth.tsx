@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Mail, Lock, User, Chrome, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import AnimatedBackground from '@/components/AnimatedBackground';
@@ -23,15 +24,11 @@ const Auth = () => {
     fullName: '',
     country: '',
   });
+  const [showCountryDialog, setShowCountryDialog] = useState(false);
+  const [pendingGoogleAuth, setPendingGoogleAuth] = useState(false);
 
   const countries = [
     { code: 'EG', name: 'Egypt', currency: 'EGP', flag: '🇪🇬' },
-    { code: 'US', name: 'United States', currency: 'USD', flag: '🇺🇸' },
-    { code: 'GB', name: 'United Kingdom', currency: 'GBP', flag: '🇬🇧' },
-    { code: 'DE', name: 'Germany', currency: 'EUR', flag: '🇩🇪' },
-    { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
-    { code: 'IN', name: 'India', currency: 'INR', flag: '🇮🇳' },
-    { code: 'CN', name: 'China', currency: 'CNY', flag: '🇨🇳' },
     { code: 'SA', name: 'Saudi Arabia', currency: 'SAR', flag: '🇸🇦' },
     { code: 'AE', name: 'United Arab Emirates', currency: 'AED', flag: '🇦🇪' },
   ];
@@ -98,12 +95,37 @@ const Auth = () => {
     setAuthLoading(true);
     setError(null);
     
-    const { error } = await signInWithGoogle();
+    // Show country selection dialog first
+    setShowCountryDialog(true);
+    setPendingGoogleAuth(true);
+    setAuthLoading(false);
+  };
+
+  const handleCountrySelection = async () => {
+    if (!formData.country) {
+      setError('Please select your country');
+      return;
+    }
+
+    setAuthLoading(true);
+    setError(null);
+    
+    const selectedCountry = countries.find(c => c.code === formData.country);
+    const { error } = await signInWithGoogle(formData.country, selectedCountry?.currency);
     
     if (error) {
       setError(error.message);
     }
+    
     setAuthLoading(false);
+    setShowCountryDialog(false);
+    setPendingGoogleAuth(false);
+  };
+
+  const handleCancelGoogleAuth = () => {
+    setShowCountryDialog(false);
+    setPendingGoogleAuth(false);
+    setFormData(prev => ({ ...prev, country: '' }));
   };
 
   if (loading) {
@@ -307,6 +329,62 @@ const Auth = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Country Selection Dialog for Google Sign-in */}
+          <Dialog open={showCountryDialog} onOpenChange={setShowCountryDialog}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Select Your Country</DialogTitle>
+                <DialogDescription>
+                  Please select your country to personalize your experience with regional assets and data.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="google-country">Country</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+                    <Select value={formData.country} onValueChange={handleCountryChange}>
+                      <SelectTrigger className="pl-10">
+                        <SelectValue placeholder="Select your country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            {country.flag} {country.name} ({country.currency})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleCancelGoogleAuth}
+                    disabled={authLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 gradient-electric"
+                    onClick={handleCountrySelection}
+                    disabled={authLoading || !formData.country}
+                  >
+                    {authLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      'Continue with Google'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

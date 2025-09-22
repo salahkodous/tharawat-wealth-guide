@@ -11,12 +11,6 @@ interface CountryInfo {
 
 const countryData: CountryInfo[] = [
   { code: 'EG', name: 'Egypt', currency: 'EGP', flag: '🇪🇬' },
-  { code: 'US', name: 'United States', currency: 'USD', flag: '🇺🇸' },
-  { code: 'GB', name: 'United Kingdom', currency: 'GBP', flag: '🇬🇧' },
-  { code: 'DE', name: 'Germany', currency: 'EUR', flag: '🇩🇪' },
-  { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
-  { code: 'IN', name: 'India', currency: 'INR', flag: '🇮🇳' },
-  { code: 'CN', name: 'China', currency: 'CNY', flag: '🇨🇳' },
   { code: 'SA', name: 'Saudi Arabia', currency: 'SAR', flag: '🇸🇦' },
   { code: 'AE', name: 'United Arab Emirates', currency: 'AED', flag: '🇦🇪' },
 ];
