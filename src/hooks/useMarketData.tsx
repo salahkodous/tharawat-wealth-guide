@@ -201,14 +201,16 @@ export const useMarketData = () => {
   };
 
   const fetchBonds = async () => {
-    const { data, error } = await supabase
-      .from('bonds')
-      .select('*')
-      .order('yield_to_maturity', { ascending: false });
+    // Note: bonds table does not exist in current schema
+    // const { data, error } = await supabase
+    //   .from('bonds')
+    //   .select('*')
+    //   .order('yield_to_maturity', { ascending: false });
     
-    if (!error && data) {
-      setBonds(data as Bond[]);
-    }
+    // if (!error && data) {
+    //   setBonds(data as Bond[]);
+    // }
+    console.log('Bonds table not available in current schema');
   };
 
   const fetchETFs = async () => {
@@ -234,15 +236,17 @@ export const useMarketData = () => {
   };
 
   const fetchGoldPrices = async () => {
-    const { data, error } = await supabase
-      .from('gold_prices')
-      .select('*')
-      .order('last_updated', { ascending: false })
-      .limit(10);
+    // Note: gold_prices table does not exist in current schema
+    // const { data, error } = await supabase
+    //   .from('gold_prices')
+    //   .select('*')
+    //   .order('last_updated', { ascending: false })
+    //   .limit(10);
     
-    if (!error && data) {
-      setGoldPrices(data as GoldPrice[]);
-    }
+    // if (!error && data) {
+    //   setGoldPrices(data as GoldPrice[]);
+    // }
+    console.log('Gold prices table not available in current schema');
   };
 
   const fetchCurrencyRates = async () => {
