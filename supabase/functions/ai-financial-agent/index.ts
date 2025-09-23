@@ -320,18 +320,28 @@ serve(async (req) => {
 
     // Read Groq API key at request time to pick up latest secret
     const groqApiKey = Deno.env.get('groq anakin');
-    console.log('Groq key exists:', !!groqApiKey);
-    console.log('Groq key length:', groqApiKey?.length || 0);
+    console.log('Groq API key exists:', !!groqApiKey);
+    console.log('Groq API key length:', groqApiKey?.length || 0);
+    console.log('All available env vars:', Object.keys(Deno.env.toObject()).filter(k => k.toLowerCase().includes('groq')));
 
     if (!groqApiKey) {
-      console.error('Groq API key is not configured');
-      return new Response(JSON.stringify({ 
-        error: 'Groq API key not configured',
-        response: 'I need the Groq API key configured in Supabase Edge Function secrets.'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error('Groq API key not configured - checking all variants...');
+      // Try alternative secret names
+      const altKey1 = Deno.env.get('GROQ');
+      const altKey2 = Deno.env.get('GROQ_API_KEY');
+      console.log('Alternative key 1 (GROQ):', !!altKey1);
+      console.log('Alternative key 2 (GROQ_API_KEY):', !!altKey2);
+      
+      const finalKey = groqApiKey || altKey1 || altKey2;
+      if (!finalKey) {
+        return new Response(JSON.stringify({ 
+          error: 'Groq API key not configured in any format',
+          response: 'I need the Groq API key configured in Supabase Edge Function secrets. Please add it as "groq anakin", "GROQ", or "GROQ_API_KEY".'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // Load agent memory and get comprehensive user data including market analysis
@@ -368,6 +378,9 @@ serve(async (req) => {
       cryptoAvailable: marketDataSummary.crypto.total
     });
 
+    // Get the working API key
+    const workingGroqKey = groqApiKey || Deno.env.get('GROQ') || Deno.env.get('GROQ_API_KEY');
+    
     // Analyze the user message and get the response
     console.log('Analyzing user message...');
     const { analysis } = await analyzeUserMessage(
@@ -376,7 +389,7 @@ serve(async (req) => {
       agentMemory, 
       marketDataSummary, 
       messages || [], 
-      groqApiKey,
+      workingGroqKey,
       model
     );
 
