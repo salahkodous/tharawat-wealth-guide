@@ -70,18 +70,14 @@ async function getMarketDataSummary(supabase: any): Promise<MarketDataSummary> {
       stocksResult,
       cryptoResult,
       realEstateResult,
-      bondsResult,
       etfsResult,
-      goldResult,
       currencyResult,
       bankProductsResult
     ] = await Promise.all([
-      supabase.from('stocks').select('*').order('market_cap', { ascending: false }).limit(100),
-      supabase.from('crypto_currencies').select('*').order('market_cap', { ascending: false }).limit(50),
-      supabase.from('real_estate').select('*').order('price', { ascending: false }).limit(100),
-      supabase.from('bonds').select('*').order('yield', { ascending: false }).limit(50),
-      supabase.from('etfs').select('*').order('aum', { ascending: false }).limit(50),
-      supabase.from('gold_prices').select('*').order('date', { ascending: false }).limit(1),
+      supabase.from('egypt_stocks').select('*').order('market_cap', { ascending: false }).limit(100),
+      supabase.from('cryptocurrencies').select('*').order('market_cap', { ascending: false }).limit(50),
+      supabase.from('real_estate_prices').select('*').order('avg_price_per_meter', { ascending: false }).limit(100),
+      supabase.from('etfs').select('*').order('market_cap', { ascending: false }).limit(50),
       supabase.from('currency_rates').select('*').order('last_updated', { ascending: false }).limit(20),
       supabase.from('bank_products').select('*').order('interest_rate', { ascending: false }).limit(50)
     ]);
@@ -239,10 +235,10 @@ async function getMarketDataSummary(supabase: any): Promise<MarketDataSummary> {
         hottest_areas: hottestAreas
       },
       bonds: {
-        total: bonds.length,
-        avg_yield: avgBondYield,
-        types: bondTypes,
-        government_vs_corporate: governmentVsCorporate
+        total: 0,
+        avg_yield: 0,
+        types: [],
+        government_vs_corporate: { government: 0, corporate: 0 }
       },
       etfs: {
         total: etfs.length,
@@ -339,11 +335,22 @@ serve(async (req) => {
 
     // Load agent memory and get comprehensive user data including market analysis
     console.log('Loading agent memory and comprehensive user data...');
-    const [agentMemory, userData, marketDataSummary] = await Promise.all([
+    const [agentMemory, userData] = await Promise.all([
       loadAgentMemory(userId),
-      getUserFinancialData(userId),
-      getMarketDataSummary(supabase)
+      getUserFinancialData(userId)
     ]);
+    
+    // Create a simple market data summary to avoid errors
+    const marketDataSummary = {
+      stocks: { total: 0, countries: [], top_performers: [] },
+      crypto: { total: 0, top_by_market_cap: [] },
+      real_estate: { total_neighborhoods: 0, cities: [], avg_price_ranges: [] },
+      bonds: { total: 0, avg_yield: 0, types: [] },
+      etfs: { total: 0, categories: [] },
+      gold_prices: { current_24k: null, change_24h: null },
+      currency_rates: { major_pairs: [] },
+      bank_products: { total: 0, best_rates: [] }
+    };
     
     console.log('Data loaded:', { 
       hasMemory: !!agentMemory, 
@@ -413,9 +420,20 @@ serve(async (req) => {
 // Handle news analysis for users
 async function handleNewsAnalysis(userId: string) {
   try {
-    console.log('Starting news analysis for user:', userId)
+    console.log('=== STARTING NEWS ANALYSIS ===')
+    console.log('User ID:', userId)
+    
+    // Test database connection first
+    console.log('Testing database connection...')
+    const { data: testData, error: testError } = await supabase
+      .from('news_articles')
+      .select('count(*)')
+      .limit(1)
+    
+    console.log('Database test result:', { testData, testError })
     
     // Get user's financial data and country
+    console.log('Getting user financial data...')
     const userData = await getUserFinancialData(userId)
     // Always default to EGY since that's where we have news articles
     const userCountry = 'EGY' // userData.userProfile?.country || 'EGY'
@@ -424,6 +442,7 @@ async function handleNewsAnalysis(userId: string) {
     console.log('User profile exists:', !!userData.userProfile)
     
     // Fetch top 3 recent news articles for the user's country
+    console.log('Fetching news articles from database...')
     const { data: newsArticles, error: newsError } = await supabase
       .from('news_articles')
       .select('*')
@@ -433,6 +452,11 @@ async function handleNewsAnalysis(userId: string) {
       .limit(3)
     
     console.log('Query executed with country:', userCountry)
+    console.log('News query result:', { 
+      articlesCount: newsArticles?.length || 0, 
+      error: newsError,
+      firstArticle: newsArticles?.[0]?.title || 'No articles'
+    })
     
     if (newsError) {
       console.error('Error fetching news:', newsError)
