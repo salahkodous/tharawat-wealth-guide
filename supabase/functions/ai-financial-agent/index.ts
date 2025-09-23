@@ -992,35 +992,41 @@ Please analyze this message in the context of the user's complete financial situ
       
       clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('GROQ API error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: errorText
-      });
-      
-      // Handle specific error codes
-      if (response.status === 429) {
-        throw new Error('API rate limit exceeded. Please try again in a moment.');
-      } else if (response.status === 401) {
-        throw new Error('API authentication failed. Please check configuration.');
-      } else if (response.status === 402) {
-        throw new Error('API quota exceeded. Please check your billing status.');
-      } else if (response.status >= 500) {
-        throw new Error('API service temporarily unavailable. Please try again later.');
-      } else {
-        throw new Error(`API error (${response.status}): ${errorText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('GROQ API error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          body: errorText
+        });
+        
+        // Handle specific error codes
+        if (response.status === 429) {
+          throw new Error('API rate limit exceeded. Please try again in a moment.');
+        } else if (response.status === 401) {
+          throw new Error('API authentication failed. Please check configuration.');
+        } else if (response.status === 402) {
+          throw new Error('API quota exceeded. Please check your billing status.');
+        } else if (response.status >= 500) {
+          throw new Error('API service temporarily unavailable. Please try again later.');
+        } else {
+          throw new Error(`API error (${response.status}): ${errorText}`);
+        }
       }
+
+      const data = await response.json();
+      console.log('GROQ API response received');
+
+      const analysis = data.choices[0]?.message?.content || 'I apologize, but I could not generate a response at this time.';
+
+      return { analysis };
+      
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('Error during GROQ API call:', fetchError);
+      throw fetchError;
     }
-
-    const data = await response.json();
-    console.log('GROQ API response received');
-
-    const analysis = data.choices[0]?.message?.content || 'I apologize, but I could not generate a response at this time.';
-
-    return { analysis };
 
   } catch (error) {
     console.error('Error in analyzeUserMessage:', error);
