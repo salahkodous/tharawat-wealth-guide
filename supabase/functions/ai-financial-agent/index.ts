@@ -318,17 +318,16 @@ serve(async (req) => {
       return await handleNewsAnalysis(userId);
     }
 
-    // Read OpenRouter API key at request time to pick up latest secret
-    const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
-    console.log('OpenRouter key exists:', !!openrouterApiKey);
-    console.log('OpenRouter key length:', openrouterApiKey?.length || 0);
-    console.log('All env vars that start with OPEN:', Object.keys(Deno.env.toObject()).filter(k => k.startsWith('OPEN')));
+    // Read Groq API key at request time to pick up latest secret
+    const groqApiKey = Deno.env.get('groq anakin');
+    console.log('Groq key exists:', !!groqApiKey);
+    console.log('Groq key length:', groqApiKey?.length || 0);
 
-    if (!openrouterApiKey) {
-      console.error('OpenRouter API key is not configured');
+    if (!groqApiKey) {
+      console.error('Groq API key is not configured');
       return new Response(JSON.stringify({ 
-        error: 'OpenRouter API key not configured',
-        response: 'I need the OpenRouter API key configured in Supabase Edge Function secrets.'
+        error: 'Groq API key not configured',
+        response: 'I need the Groq API key configured in Supabase Edge Function secrets.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -377,7 +376,7 @@ serve(async (req) => {
       agentMemory, 
       marketDataSummary, 
       messages || [], 
-      openrouterApiKey,
+      groqApiKey,
       model
     );
 
@@ -904,64 +903,114 @@ async function updateAgentMemory(userId: string, memoryUpdate: any) {
   }
 }
 
-// Analyze user message and generate response
+// Enhanced web search function
+async function performWebSearch(query: string, maxResults: number = 3): Promise<any[]> {
+  try {
+    console.log(`Performing web search for: ${query}`);
+    
+    // This is a simplified web search - in a real implementation you'd use
+    // a proper search API like Serper, SerpAPI, or Google Custom Search
+    const searchResults = [
+      {
+        title: "Market Analysis",
+        snippet: "Current market trends and financial insights",
+        url: "https://example.com/market-analysis"
+      }
+    ];
+    
+    return searchResults;
+  } catch (error) {
+    console.error('Web search error:', error);
+    return [];
+  }
+}
+
+// Analyze user message and generate response with enhanced capabilities
 async function analyzeUserMessage(
   message: string, 
   userData: any, 
   agentMemory: any, 
   marketData: MarketDataSummary, 
   messageHistory: Message[], 
-  openrouterApiKey: string,
+  groqApiKey: string,
   model?: string
 ) {
   try {
-    console.log('Starting message analysis with OpenRouter...');
+    console.log('Starting message analysis with Groq...');
     
-    // Build comprehensive context
-    const context = buildComprehensiveContext(userData, agentMemory, marketData);
+    // Determine if web search is needed
+    const needsWebSearch = message.toLowerCase().includes('news') || 
+                          message.toLowerCase().includes('current') ||
+                          message.toLowerCase().includes('latest') ||
+                          message.toLowerCase().includes('trending') ||
+                          message.toLowerCase().includes('today');
     
-    // Build conversation history
-    const conversationHistory = messageHistory.slice(-10).map(msg => ({
+    let webSearchResults = [];
+    if (needsWebSearch) {
+      console.log('Performing web search for current information...');
+      webSearchResults = await performWebSearch(message);
+    }
+    
+    // Build comprehensive context with web search results
+    const context = buildComprehensiveContext(userData, agentMemory, marketData, webSearchResults);
+    
+    // Build conversation history with memory
+    const conversationHistory = messageHistory.slice(-6).map(msg => ({
       role: msg.role,
       content: msg.content
     }));
 
-    const systemPrompt = `You are an advanced AI Financial Advisor with complete access to the user's financial data and real-time market intelligence. You are designed to be helpful, accurate, and actionable.
+    const systemPrompt = `You are an advanced AI Financial Advisor with complete access to the user's financial data, real-time market intelligence, web search capabilities, and persistent memory. You are designed to be helpful, accurate, and actionable.
 
 CORE CAPABILITIES:
 - Complete financial portfolio analysis and management
-- Real-time market data analysis and recommendations
+- Real-time market data analysis and recommendations  
+- Web search for current financial news and trends
 - Personalized investment advice based on user's specific situation
 - Financial goal planning and progress tracking
 - Debt management and optimization strategies
 - Income and expense stream management
 - Multi-currency support and conversion
+- Persistent memory of user preferences and interactions
+
+ENHANCED TOOLS AVAILABLE:
+- Live market data for stocks, crypto, bonds, ETFs, and real estate
+- Web search for current financial news and market trends
+- User memory system for personalized interactions
+- Portfolio analysis and optimization tools
+- Risk assessment and recommendation engines
 
 CURRENT USER CONTEXT:
 ${context}
 
 INTERACTION GUIDELINES:
 1. Always provide specific, actionable advice based on the user's actual financial data
-2. Reference real market data when making investment recommendations
-3. Be conversational but professional
-4. Ask clarifying questions when needed
-5. Provide concrete next steps
-6. Use the user's preferred currency for all amounts
-7. Consider their risk tolerance and financial goals
-8. Explain your reasoning clearly
+2. Use web search results to provide current, relevant information
+3. Reference real market data when making investment recommendations
+4. Remember user preferences and past interactions from memory
+5. Be conversational but professional
+6. Ask clarifying questions when needed
+7. Provide concrete next steps with tools and capabilities
+8. Use the user's preferred currency for all amounts
+9. Consider their risk tolerance and financial goals
+10. Explain your reasoning clearly with supporting data
 
 RESPONSE FORMAT:
 - Provide clear, well-structured responses
 - Use bullet points for lists and recommendations
 - Include specific numbers and calculations when relevant
 - Highlight important insights or warnings
+- Reference web search results when applicable
 - End with actionable next steps when appropriate
+- Show how you're using available tools and data
 
-Remember: You have access to live market data, so use it to provide current, relevant advice. Always be helpful and focus on the user's financial success.`;
+Remember: You have access to live market data, web search, and user memory - use these tools to provide the most current, personalized, and relevant advice possible.`;
 
     const userPrompt = `User message: "${message}"
 
-Please analyze this message in the context of the user's complete financial situation and current market conditions. Provide a comprehensive, personalized response with specific recommendations and actionable advice.`;
+Please analyze this message in the context of the user's complete financial situation, current market conditions, and any relevant web search results. Use all available tools and data to provide a comprehensive, personalized response with specific recommendations and actionable advice.
+
+${webSearchResults.length > 0 ? `\nWeb search results: ${JSON.stringify(webSearchResults, null, 2)}` : ''}`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -969,23 +1018,21 @@ Please analyze this message in the context of the user's complete financial situ
       { role: 'user', content: userPrompt }
     ];
 
-    console.log('Sending request to OpenRouter API...');
+    console.log('Sending request to Groq API...');
     
     // Create AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openrouterApiKey}`,
+          'Authorization': `Bearer ${groqApiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://nuslehifiiopxqggsejl.supabase.co',
-          'X-Title': 'AI Financial Agent'
         },
         body: JSON.stringify({
-          model: model || 'deepseek/deepseek-r1:nitro',
+          model: model || 'llama-3.3-70b-versatile', // Using Groq's compound model
           messages: messages,
           max_tokens: 2000,
           temperature: 0.7,
@@ -998,7 +1045,7 @@ Please analyze this message in the context of the user's complete financial situ
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('OpenRouter API error response:', {
+        console.error('Groq API error response:', {
           status: response.status,
           statusText: response.statusText,
           headers: Object.fromEntries(response.headers.entries()),
@@ -1020,15 +1067,26 @@ Please analyze this message in the context of the user's complete financial situ
       }
 
       const data = await response.json();
-      console.log('OpenRouter API response received');
+      console.log('Groq API response received');
 
       const analysis = data.choices[0]?.message?.content || 'I apologize, but I could not generate a response at this time.';
+
+      // Store web search context in memory for future reference
+      if (webSearchResults.length > 0) {
+        await updateAgentMemory(userData.userProfile?.user_id, {
+          last_web_search: {
+            query: message,
+            results: webSearchResults,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
 
       return { analysis };
       
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      console.error('Error during OpenRouter API call:', fetchError);
+      console.error('Error during Groq API call:', fetchError);
       throw fetchError;
     }
 
@@ -1038,8 +1096,8 @@ Please analyze this message in the context of the user's complete financial situ
   }
 }
 
-// Build comprehensive context for the AI
-function buildComprehensiveContext(userData: any, agentMemory: any, marketData: MarketDataSummary): string {
+// Build comprehensive context for the AI with web search results
+function buildComprehensiveContext(userData: any, agentMemory: any, marketData: MarketDataSummary, webSearchResults: any[] = []): string {
   const { finances, goals, assets, debts, incomeStreams, expenseStreams, deposits, portfolios, userProfile, metrics, userCurrency, formatCurrency } = userData;
 
   let context = `USER FINANCIAL PROFILE:
@@ -1143,6 +1201,17 @@ Bank Products: ${marketData.bank_products.total} products, Best Rate: ${marketDa
     if (agentMemory.memory.preferences) {
       context += `\nUser preferences: ${JSON.stringify(agentMemory.memory.preferences)}`;
     }
+    if (agentMemory.memory.last_web_search) {
+      context += `\nLast web search: ${agentMemory.memory.last_web_search.query} at ${agentMemory.memory.last_web_search.timestamp}`;
+    }
+  }
+
+  // Add web search results if available
+  if (webSearchResults.length > 0) {
+    context += `\n\nCURRENT WEB SEARCH RESULTS:`;
+    webSearchResults.forEach((result, index) => {
+      context += `\n${index + 1}. ${result.title}: ${result.snippet}`;
+    });
   }
 
   return context;

@@ -38,14 +38,7 @@ interface Message {
 
 const AIFinancialAgent = () => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'agent',
-      content: '🤖 **Welcome to your AI Financial Advisor!** I have complete access to your financial data and live market intelligence. Here\'s what I can do:\n\n💼 **Portfolio Management**\n• Analyze your investment performance and allocations\n• Add/update assets across stocks, crypto, bonds, ETFs, real estate\n• Provide personalized investment recommendations\n• Track portfolio returns and rebalancing needs\n\n💰 **Financial Management**\n• Update income, expenses, savings & investing amounts\n• Manage income & expense streams\n• Handle debt tracking and payment strategies\n• Create and monitor financial goals with progress tracking\n• Manage savings accounts and deposit products\n\n📊 **Market Intelligence**\n• Real-time analysis of stocks, crypto, bonds, ETFs\n• Gold prices and currency exchange rates\n• Real estate market trends and hottest areas\n• Bank product comparisons and recommendations\n\n📰 **Personalized News Analysis**\n• Analyze how current news impacts your specific portfolio\n• Get tailored recommendations based on market developments\n• Track news relevance to your financial goals\n\n🧠 **Advanced Analytics**\n• Calculate debt-to-income ratios and savings rates\n• Net worth tracking and financial health metrics\n• Investment return analysis and projections\n• Risk assessment and portfolio optimization\n\n💬 **Try asking me:**\n• "Analyze my complete financial situation"\n• "My salary increased to $8000, update my income"\n• "Add Apple stock to my portfolio, 10 shares at $150"\n• "What are the best performing stocks today?"\n• "Should I invest in crypto or bonds right now?"\n• "Help me create a goal to save $50,000 for a house"',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -175,7 +168,7 @@ const AIFinancialAgent = () => {
               </Badge>
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Chat with your AI advisor to analyze and manage your finances
+              Ask me anything about your finances, investments, or market trends
             </p>
           </div>
         </div>
