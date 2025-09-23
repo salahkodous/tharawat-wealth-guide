@@ -321,6 +321,8 @@ serve(async (req) => {
     // Read OpenRouter API key at request time to pick up latest secret
     const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
     console.log('OpenRouter key exists:', !!openrouterApiKey);
+    console.log('OpenRouter key length:', openrouterApiKey?.length || 0);
+    console.log('All env vars that start with OPEN:', Object.keys(Deno.env.toObject()).filter(k => k.startsWith('OPEN')));
 
     if (!openrouterApiKey) {
       console.error('OpenRouter API key is not configured');
