@@ -318,15 +318,15 @@ serve(async (req) => {
       return await handleNewsAnalysis(userId);
     }
 
-    // Read GROQ API key at request time to pick up latest secret
-    const groqApiKey = Deno.env.get('GROQ');
-    console.log('GROQ key exists:', !!groqApiKey);
+    // Read OpenRouter API key at request time to pick up latest secret
+    const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
+    console.log('OpenRouter key exists:', !!openrouterApiKey);
 
-    if (!groqApiKey) {
-      console.error('GROQ API key is not configured');
+    if (!openrouterApiKey) {
+      console.error('OpenRouter API key is not configured');
       return new Response(JSON.stringify({ 
-        error: 'GROQ API key not configured',
-        response: 'I need the GROQ API key configured in Supabase Edge Function secrets.'
+        error: 'OpenRouter API key not configured',
+        response: 'I need the OpenRouter API key configured in Supabase Edge Function secrets.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -375,7 +375,7 @@ serve(async (req) => {
       agentMemory, 
       marketDataSummary, 
       messages || [], 
-      groqApiKey,
+      openrouterApiKey,
       model
     );
 
@@ -909,11 +909,11 @@ async function analyzeUserMessage(
   agentMemory: any, 
   marketData: MarketDataSummary, 
   messageHistory: Message[], 
-  groqApiKey: string,
+  openrouterApiKey: string,
   model?: string
 ) {
   try {
-    console.log('Starting message analysis with GROQ...');
+    console.log('Starting message analysis with OpenRouter...');
     
     // Build comprehensive context
     const context = buildComprehensiveContext(userData, agentMemory, marketData);
@@ -967,21 +967,23 @@ Please analyze this message in the context of the user's complete financial situ
       { role: 'user', content: userPrompt }
     ];
 
-    console.log('Sending request to GROQ API...');
+    console.log('Sending request to OpenRouter API...');
     
     // Create AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${groqApiKey}`,
+          'Authorization': `Bearer ${openrouterApiKey}`,
           'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://nuslehifiiopxqggsejl.supabase.co',
+          'X-Title': 'AI Financial Agent'
         },
         body: JSON.stringify({
-          model: model || 'llama-3.1-70b-versatile',
+          model: model || 'anthropic/claude-3.5-sonnet',
           messages: messages,
           max_tokens: 2000,
           temperature: 0.7,
@@ -994,7 +996,7 @@ Please analyze this message in the context of the user's complete financial situ
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('GROQ API error response:', {
+        console.error('OpenRouter API error response:', {
           status: response.status,
           statusText: response.statusText,
           headers: Object.fromEntries(response.headers.entries()),
@@ -1016,7 +1018,7 @@ Please analyze this message in the context of the user's complete financial situ
       }
 
       const data = await response.json();
-      console.log('GROQ API response received');
+      console.log('OpenRouter API response received');
 
       const analysis = data.choices[0]?.message?.content || 'I apologize, but I could not generate a response at this time.';
 
@@ -1024,7 +1026,7 @@ Please analyze this message in the context of the user's complete financial situ
       
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      console.error('Error during GROQ API call:', fetchError);
+      console.error('Error during OpenRouter API call:', fetchError);
       throw fetchError;
     }
 
