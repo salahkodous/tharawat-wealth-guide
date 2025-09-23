@@ -7,18 +7,25 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Clock, ExternalLink, TrendingUp, Globe, Filter, Search, AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Clock, ExternalLink, TrendingUp, Globe, Filter, Search, AlertCircle, Brain, Loader2, Target, PieChart, DollarSign } from 'lucide-react';
 import { useNewsArticles } from '@/hooks/useNewsArticles';
 import { useUserCountry } from '@/hooks/useUserCountry';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 
 const Analytics = () => {
   const { articles, loading, error, getCategories } = useNewsArticles();
   const { userCountry } = useUserCountry();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSentiment, setSelectedSentiment] = useState<string>('all');
+  const [personalizedAnalysis, setPersonalizedAnalysis] = useState<any>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<any>(null);
 
   const categories = getCategories();
 
@@ -89,6 +96,29 @@ const Analytics = () => {
     } else {
       const diffInDays = Math.floor(diffInHours / 24);
       return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    }
+  };
+
+  const getPersonalizedAnalysis = async (article: any) => {
+    if (!user) return;
+    
+    setAnalysisLoading(true);
+    setSelectedArticle(article);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('personalized-news-agent', {
+        body: {
+          articleId: article.id,
+          userId: user.id
+        }
+      });
+
+      if (error) throw error;
+      setPersonalizedAnalysis(data);
+    } catch (error) {
+      console.error('Error getting personalized analysis:', error);
+    } finally {
+      setAnalysisLoading(false);
     }
   };
 
@@ -289,17 +319,144 @@ const Analytics = () => {
                             </Badge>
                           ))}
                         </div>
-                        {article.url && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="gap-2"
-                            onClick={() => window.open(article.url!, '_blank')}
-                          >
-                            <span>Read More</span>
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        )}
+                        
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2"
+                                onClick={() => getPersonalizedAnalysis(article)}
+                              >
+                                <Brain className="w-4 h-4" />
+                                Personal Impact
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  <Brain className="w-5 h-5" />
+                                  How This News Affects You
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Personalized analysis based on your portfolio, goals, and financial situation
+                                </DialogDescription>
+                              </DialogHeader>
+                              
+                              {analysisLoading ? (
+                                <div className="space-y-4 p-6">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                    <span>Analyzing how this affects your portfolio...</span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <Skeleton className="h-4 w-5/6" />
+                                  </div>
+                                </div>
+                              ) : personalizedAnalysis ? (
+                                <div className="space-y-6">
+                                  {/* Article Summary */}
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="text-lg">{selectedArticle?.title}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <p className="text-sm text-muted-foreground mb-4">{selectedArticle?.summary}</p>
+                                      <div className="flex gap-2">
+                                        <Badge variant="outline" className={getSentimentColor(selectedArticle?.sentiment)}>
+                                          {selectedArticle?.sentiment}
+                                        </Badge>
+                                        <Badge variant="secondary">{selectedArticle?.category}</Badge>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+
+                                  {/* Portfolio Summary */}
+                                  {personalizedAnalysis.userPortfolioSummary && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                      <Card>
+                                        <CardContent className="p-4">
+                                          <div className="flex items-center gap-2">
+                                            <PieChart className="w-5 h-5 text-primary" />
+                                            <span className="font-medium">Portfolio Value</span>
+                                          </div>
+                                          <p className="text-2xl font-bold mt-2">
+                                            ${personalizedAnalysis.userPortfolioSummary.totalValue.toFixed(2)}
+                                          </p>
+                                        </CardContent>
+                                      </Card>
+                                      
+                                      <Card>
+                                        <CardContent className="p-4">
+                                          <div className="flex items-center gap-2">
+                                            <Target className="w-5 h-5 text-primary" />
+                                            <span className="font-medium">Goals Progress</span>
+                                          </div>
+                                          <p className="text-2xl font-bold mt-2">
+                                            {personalizedAnalysis.userPortfolioSummary.goalsProgress.percentage.toFixed(1)}%
+                                          </p>
+                                        </CardContent>
+                                      </Card>
+                                      
+                                      <Card>
+                                        <CardContent className="p-4">
+                                          <div className="flex items-center gap-2">
+                                            <DollarSign className="w-5 h-5 text-primary" />
+                                            <span className="font-medium">Asset Types</span>
+                                          </div>
+                                          <p className="text-sm text-muted-foreground mt-2">
+                                            {Object.keys(personalizedAnalysis.userPortfolioSummary.assetAllocation).length} types
+                                          </p>
+                                        </CardContent>
+                                      </Card>
+                                    </div>
+                                  )}
+
+                                  {/* AI Analysis */}
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className="flex items-center gap-2">
+                                        <Brain className="w-5 h-5" />
+                                        AI Analysis
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div 
+                                        className="prose prose-sm max-w-none dark:prose-invert"
+                                        dangerouslySetInnerHTML={{ 
+                                          __html: personalizedAnalysis.personalizedAnalysis
+                                            .replace(/\n/g, '<br/>')
+                                            .replace(/### (.*?)<br\/>/g, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
+                                            .replace(/## (.*?)<br\/>/g, '<h2 class="text-xl font-semibold mt-6 mb-3">$1</h2>')
+                                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                        }}
+                                      />
+                                    </CardContent>
+                                  </Card>
+                                </div>
+                              ) : (
+                                <div className="p-6 text-center">
+                                  <p className="text-muted-foreground">Click "Personal Impact" to analyze this article</p>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                          
+                          {article.url && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="gap-2"
+                              onClick={() => window.open(article.url!, '_blank')}
+                            >
+                              <span>Read More</span>
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
