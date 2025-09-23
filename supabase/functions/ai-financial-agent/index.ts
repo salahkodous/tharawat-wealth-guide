@@ -62,131 +62,230 @@ interface MarketDataSummary {
   };
 }
 
-const getMarketDataSummary = async (supabase: any): Promise<MarketDataSummary> => {
+async function getMarketDataSummary(supabase: any): Promise<MarketDataSummary> {
   try {
-    // Enhanced stocks data with performance analysis
-    const { data: stocks } = await supabase
-      .from('egypt_stocks')
-      .select('name, symbol, price, change, change_percent, country, market_cap, volume, exchange, high, low, open, sector, last_updated')
-      .order('change_percent', { ascending: false });
+    console.log('Fetching comprehensive market data...');
+    
+    const [
+      stocksResult,
+      cryptoResult,
+      realEstateResult,
+      bondsResult,
+      etfsResult,
+      goldResult,
+      currencyResult,
+      bankProductsResult
+    ] = await Promise.all([
+      supabase.from('stocks').select('*').order('market_cap', { ascending: false }).limit(100),
+      supabase.from('crypto_currencies').select('*').order('market_cap', { ascending: false }).limit(50),
+      supabase.from('real_estate').select('*').order('price', { ascending: false }).limit(100),
+      supabase.from('bonds').select('*').order('yield', { ascending: false }).limit(50),
+      supabase.from('etfs').select('*').order('aum', { ascending: false }).limit(50),
+      supabase.from('gold_prices').select('*').order('date', { ascending: false }).limit(1),
+      supabase.from('currency_rates').select('*').order('last_updated', { ascending: false }).limit(20),
+      supabase.from('bank_products').select('*').order('interest_rate', { ascending: false }).limit(50)
+    ]);
 
-    // Enhanced crypto data
-    const { data: crypto } = await supabase
-      .from('cryptocurrencies')
-      .select('name, symbol, price_usd, change_percentage_24h, market_cap, rank, volume_24h')
-      .order('rank', { ascending: true });
+    const stocks = stocksResult.data || [];
+    const crypto = cryptoResult.data || [];
+    const realEstate = realEstateResult.data || [];
+    const bonds = bondsResult.data || [];
+    const etfs = etfsResult.data || [];
+    const goldPrices = goldResult.data?.[0] || null;
+    const currencyRates = currencyResult.data || [];
+    const bankProducts = bankProductsResult.data || [];
 
-    // Enhanced real estate data
-    const { data: realEstate } = await supabase
-      .from('real_estate_prices')
-      .select('city_name, neighborhood_name, avg_price_per_meter, property_type, min_price, max_price, total_properties')
-      .order('avg_price_per_meter', { ascending: false });
+    // Calculate top performers for stocks
+    const topStockPerformers = stocks
+      .filter(stock => stock.change_percent !== null)
+      .sort((a, b) => (b.change_percent || 0) - (a.change_percent || 0))
+      .slice(0, 5);
 
-    // Enhanced bonds data
-    const { data: bonds } = await supabase
-      .from('bonds')
-      .select('name, bond_type, yield_to_maturity, current_price, issuer, maturity_date, coupon_rate')
-      .order('yield_to_maturity', { ascending: false });
+    const worstStockPerformers = stocks
+      .filter(stock => stock.change_percent !== null)
+      .sort((a, b) => (a.change_percent || 0) - (b.change_percent || 0))
+      .slice(0, 5);
 
-    // Enhanced ETFs data
-    const { data: etfs } = await supabase
-      .from('etfs')
-      .select('name, symbol, price, change_percentage, market_cap, category, expense_ratio, dividend_yield')
-      .order('market_cap', { ascending: false });
+    // Get unique countries from stocks
+    const stockCountries = [...new Set(stocks.map(s => s.country).filter(Boolean))];
 
-    // Gold prices with trend analysis
-    const { data: goldPrices } = await supabase
-      .from('gold_prices')
-      .select('price_24k_egp, price_22k_egp, price_21k_egp, price_18k_egp, change_percentage_24h, source, price_per_ounce_usd')
-      .order('last_updated', { ascending: false })
-      .limit(5);
+    // Calculate crypto market cap total
+    const cryptoMarketCapTotal = crypto.reduce((sum, c) => sum + (c.market_cap || 0), 0);
 
-    // Enhanced currency rates
-    const { data: currencyRates } = await supabase
-      .from('currency_rates')
-      .select('base_currency, target_currency, exchange_rate, change_percentage_24h, bid_rate, ask_rate')
-      .order('last_updated', { ascending: false });
+    // Get trending crypto (top gainers)
+    const trendingCrypto = crypto
+      .filter(c => c.change_24h !== null)
+      .sort((a, b) => (b.change_24h || 0) - (a.change_24h || 0))
+      .slice(0, 5);
 
-    // Enhanced bank products
-    const { data: bankProducts } = await supabase
-      .from('bank_products')
-      .select('bank_name, product_name, interest_rate, product_type, minimum_amount, maximum_amount, term_months, features')
-      .eq('is_active', true)
-      .order('interest_rate', { ascending: false });
+    // Get unique cities from real estate
+    const realEstateCities = [...new Set(realEstate.map(re => re.city).filter(Boolean))];
 
-    // Performance analysis
-    const bestStocks = stocks?.filter(s => s.change_percent > 0).sort((a, b) => b.change_percent - a.change_percent).slice(0, 5) || [];
-    const worstStocks = stocks?.filter(s => s.change_percent < 0).sort((a, b) => a.change_percent - b.change_percent).slice(0, 5) || [];
-    const trendingCrypto = crypto?.filter(c => c.change_percentage_24h > 5).slice(0, 5) || [];
-    const hottestAreas = realEstate?.sort((a, b) => (b.total_properties || 0) - (a.total_properties || 0)).slice(0, 5) || [];
-    const performanceETFs = etfs?.filter(e => e.change_percentage > 0).sort((a, b) => b.change_percentage - a.change_percentage).slice(0, 5) || [];
+    // Calculate average price ranges for real estate
+    const avgPriceRanges = realEstateCities.map(city => {
+      const cityProperties = realEstate.filter(re => re.city === city);
+      const avgPrice = cityProperties.reduce((sum, prop) => sum + (prop.price || 0), 0) / cityProperties.length;
+      return { city, avg_price: avgPrice, count: cityProperties.length };
+    }).sort((a, b) => b.avg_price - a.avg_price).slice(0, 10);
 
-    return {
+    // Get hottest real estate areas (highest price growth)
+    const hottestAreas = realEstate
+      .filter(re => re.price_change_percent !== null)
+      .sort((a, b) => (b.price_change_percent || 0) - (a.price_change_percent || 0))
+      .slice(0, 5);
+
+    // Calculate average bond yield
+    const avgBondYield = bonds.length > 0 
+      ? bonds.reduce((sum, bond) => sum + (bond.yield || 0), 0) / bonds.length 
+      : 0;
+
+    // Get unique bond types
+    const bondTypes = [...new Set(bonds.map(b => b.bond_type).filter(Boolean))];
+
+    // Government vs Corporate bonds analysis
+    const governmentBonds = bonds.filter(b => b.bond_type?.toLowerCase().includes('government'));
+    const corporateBonds = bonds.filter(b => b.bond_type?.toLowerCase().includes('corporate'));
+    
+    const governmentVsCorporate = {
+      government: {
+        count: governmentBonds.length,
+        avg_yield: governmentBonds.length > 0 
+          ? governmentBonds.reduce((sum, b) => sum + (b.yield || 0), 0) / governmentBonds.length 
+          : 0
+      },
+      corporate: {
+        count: corporateBonds.length,
+        avg_yield: corporateBonds.length > 0 
+          ? corporateBonds.reduce((sum, b) => sum + (b.yield || 0), 0) / corporateBonds.length 
+          : 0
+      }
+    };
+
+    // Get unique ETF categories
+    const etfCategories = [...new Set(etfs.map(e => e.category).filter(Boolean))];
+
+    // Get ETF performance leaders
+    const etfPerformanceLeaders = etfs
+      .filter(etf => etf.performance_1y !== null)
+      .sort((a, b) => (b.performance_1y || 0) - (a.performance_1y || 0))
+      .slice(0, 5);
+
+    // Process gold prices
+    const goldData = {
+      current_24k: goldPrices?.price_24k || null,
+      change_24h: goldPrices?.change_24h || null,
+      trend: goldPrices?.change_24h > 0 ? 'up' : goldPrices?.change_24h < 0 ? 'down' : 'stable'
+    };
+
+    // Process major currency pairs
+    const majorPairs = currencyRates
+      .filter(rate => ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF'].includes(rate.base_currency))
+      .slice(0, 10);
+
+    // Find strongest currencies (best performers)
+    const strongestCurrencies = currencyRates
+      .filter(rate => rate.change_24h !== null)
+      .sort((a, b) => (b.change_24h || 0) - (a.change_24h || 0))
+      .slice(0, 5);
+
+    // Get best bank product rates
+    const bestBankRates = bankProducts
+      .sort((a, b) => (b.interest_rate || 0) - (a.interest_rate || 0))
+      .slice(0, 10);
+
+    // Savings vs CD comparison
+    const savingsProducts = bankProducts.filter(p => p.product_type?.toLowerCase().includes('savings'));
+    const cdProducts = bankProducts.filter(p => p.product_type?.toLowerCase().includes('cd') || p.product_type?.toLowerCase().includes('certificate'));
+    
+    const savingsVsCd = {
+      savings: {
+        count: savingsProducts.length,
+        avg_rate: savingsProducts.length > 0 
+          ? savingsProducts.reduce((sum, p) => sum + (p.interest_rate || 0), 0) / savingsProducts.length 
+          : 0,
+        best_rate: savingsProducts.length > 0 
+          ? Math.max(...savingsProducts.map(p => p.interest_rate || 0)) 
+          : 0
+      },
+      cd: {
+        count: cdProducts.length,
+        avg_rate: cdProducts.length > 0 
+          ? cdProducts.reduce((sum, p) => sum + (p.interest_rate || 0), 0) / cdProducts.length 
+          : 0,
+        best_rate: cdProducts.length > 0 
+          ? Math.max(...cdProducts.map(p => p.interest_rate || 0)) 
+          : 0
+      }
+    };
+
+    const summary: MarketDataSummary = {
       stocks: {
-        total: stocks?.length || 0,
-        countries: [...new Set(stocks?.map(s => s.country) || [])],
-        top_performers: stocks?.slice(0, 10) || [],
-        best_performers: bestStocks,
-        worst_performers: worstStocks
+        total: stocks.length,
+        countries: stockCountries,
+        top_performers: topStockPerformers,
+        best_performers: topStockPerformers,
+        worst_performers: worstStockPerformers
       },
       crypto: {
-        total: crypto?.length || 0,
-        top_by_market_cap: crypto?.slice(0, 10) || [],
-        market_cap_total: crypto?.reduce((sum, c) => sum + (c.market_cap || 0), 0) || 0,
+        total: crypto.length,
+        top_by_market_cap: crypto.slice(0, 10),
+        market_cap_total: cryptoMarketCapTotal,
         trending: trendingCrypto
       },
       real_estate: {
-        total_neighborhoods: realEstate?.length || 0,
-        cities: [...new Set(realEstate?.map(r => r.city_name) || [])],
-        avg_price_ranges: realEstate?.slice(0, 10) || [],
+        total_neighborhoods: realEstate.length,
+        cities: realEstateCities,
+        avg_price_ranges: avgPriceRanges,
         hottest_areas: hottestAreas
       },
       bonds: {
-        total: bonds?.length || 0,
-        avg_yield: bonds?.reduce((sum, b) => sum + (b.yield_to_maturity || 0), 0) / (bonds?.length || 1),
-        types: [...new Set(bonds?.map(b => b.bond_type) || [])],
-        government_vs_corporate: {
-          government: bonds?.filter(b => b.bond_type === 'GOVERNMENT').length || 0,
-          corporate: bonds?.filter(b => b.bond_type === 'CORPORATE').length || 0
-        }
+        total: bonds.length,
+        avg_yield: avgBondYield,
+        types: bondTypes,
+        government_vs_corporate: governmentVsCorporate
       },
       etfs: {
-        total: etfs?.length || 0,
-        categories: [...new Set(etfs?.map(e => e.category) || [])],
-        performance_leaders: performanceETFs
+        total: etfs.length,
+        categories: etfCategories,
+        performance_leaders: etfPerformanceLeaders
       },
-      gold_prices: {
-        current_24k: goldPrices?.[0]?.price_24k_egp || null,
-        change_24h: goldPrices?.[0]?.change_percentage_24h || null,
-        trend: goldPrices?.[0]?.change_percentage_24h > 0 ? 'rising' : goldPrices?.[0]?.change_percentage_24h < 0 ? 'falling' : 'stable'
-      },
+      gold_prices: goldData,
       currency_rates: {
-        major_pairs: currencyRates?.filter(r => ['USD', 'EUR', 'GBP'].includes(r.base_currency)) || [],
-        strongest_currencies: currencyRates?.filter(r => r.change_percentage_24h > 0).sort((a, b) => b.change_percentage_24h - a.change_percentage_24h).slice(0, 5) || []
+        major_pairs: majorPairs,
+        strongest_currencies: strongestCurrencies
       },
       bank_products: {
-        total: bankProducts?.length || 0,
-        best_rates: bankProducts?.slice(0, 10) || [],
-        savings_vs_cd: {
-          savings: bankProducts?.filter(p => p.product_type?.toLowerCase().includes('savings')).length || 0,
-          cd: bankProducts?.filter(p => p.product_type?.toLowerCase().includes('deposit')).length || 0
-        }
+        total: bankProducts.length,
+        best_rates: bestBankRates,
+        savings_vs_cd: savingsVsCd
       }
     };
+
+    console.log('Market data summary compiled:', {
+      stocks: summary.stocks.total,
+      crypto: summary.crypto.total,
+      realEstate: summary.real_estate.total_neighborhoods,
+      bonds: summary.bonds.total,
+      etfs: summary.etfs.total,
+      bankProducts: summary.bank_products.total
+    });
+
+    return summary;
   } catch (error) {
     console.error('Error fetching market data:', error);
+    // Return empty structure on error
     return {
-      stocks: { total: 0, countries: [], top_performers: [], best_performers: [], worst_performers: [] },
-      crypto: { total: 0, top_by_market_cap: [], market_cap_total: 0, trending: [] },
-      real_estate: { total_neighborhoods: 0, cities: [], avg_price_ranges: [], hottest_areas: [] },
-      bonds: { total: 0, avg_yield: 0, types: [], government_vs_corporate: { government: 0, corporate: 0 } },
-      etfs: { total: 0, categories: [], performance_leaders: [] },
-      gold_prices: { current_24k: null, change_24h: null, trend: 'stable' },
-      currency_rates: { major_pairs: [], strongest_currencies: [] },
-      bank_products: { total: 0, best_rates: [], savings_vs_cd: { savings: 0, cd: 0 } }
+      stocks: { total: 0, countries: [], top_performers: [] },
+      crypto: { total: 0, top_by_market_cap: [] },
+      real_estate: { total_neighborhoods: 0, cities: [], avg_price_ranges: [] },
+      bonds: { total: 0, avg_yield: 0, types: [] },
+      etfs: { total: 0, categories: [] },
+      gold_prices: { current_24k: null, change_24h: null },
+      currency_rates: { major_pairs: [] },
+      bank_products: { total: 0, best_rates: [] }
     };
   }
-};
+}
 
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
@@ -215,8 +314,13 @@ serve(async (req) => {
 
   try {
     console.log('Parsing request body...');
-    const { message, userId, action, messages, model } = await req.json();
-    console.log('Request data:', { message, userId, actionType: action?.type, messageHistory: messages?.length, model });
+    const { message, userId, action, messages, model, analyzeNews } = await req.json();
+    console.log('Request data:', { message, userId, actionType: action?.type, messageHistory: messages?.length, model, analyzeNews });
+
+    // Handle news analysis requests
+    if (analyzeNews) {
+      return await handleNewsAnalysis(userId);
+    }
 
     // Read GROQ API key at request time to pick up latest secret
     const groqApiKey = Deno.env.get('GROQ');
@@ -305,6 +409,217 @@ serve(async (req) => {
     );
   }
 });
+
+// Handle news analysis for users
+async function handleNewsAnalysis(userId: string) {
+  try {
+    console.log('Starting news analysis for user:', userId)
+    
+    // Get user's financial data and country
+    const userData = await getUserFinancialData(userId)
+    const userCountry = userData.userProfile?.country || 'EGY'
+    
+    // Fetch top 3 recent news articles for the user's country
+    const { data: newsArticles, error: newsError } = await supabase
+      .from('news_articles')
+      .select('*')
+      .eq('country', userCountry)
+      .order('priority_score', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(3)
+    
+    if (newsError) {
+      console.error('Error fetching news:', newsError)
+      throw new Error('Failed to fetch news articles')
+    }
+
+    console.log(`Found ${newsArticles?.length || 0} news articles for analysis`)
+
+    const analyses = []
+    
+    for (const article of newsArticles || []) {
+      // Check if analysis already exists
+      const { data: existingAnalysis } = await supabase
+        .from('personalized_news_analysis')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('article_id', article.id)
+        .single()
+
+      if (existingAnalysis) {
+        analyses.push({
+          article: article,
+          analysis: existingAnalysis.analysis_content,
+          impact_score: existingAnalysis.impact_score,
+          recommendations: existingAnalysis.recommendations
+        })
+        continue
+      }
+
+      // Generate new analysis
+      const analysis = await generatePersonalizedNewsAnalysis(article, userData)
+      
+      if (analysis) {
+        // Store the analysis
+        const { error: insertError } = await supabase
+          .from('personalized_news_analysis')
+          .insert({
+            user_id: userId,
+            article_id: article.id,
+            analysis_content: analysis.content,
+            impact_score: analysis.impact_score,
+            recommendations: analysis.recommendations,
+            relevance_score: analysis.relevance_score
+          })
+
+        if (insertError) {
+          console.error('Error storing analysis:', insertError)
+        }
+
+        analyses.push({
+          article: article,
+          analysis: analysis.content,
+          impact_score: analysis.impact_score,
+          recommendations: analysis.recommendations
+        })
+      }
+    }
+
+    return new Response(JSON.stringify({
+      response: "Here's how today's top news affects your financial situation:",
+      newsAnalyses: analyses,
+      summary: `Analyzed ${analyses.length} articles relevant to your portfolio and financial goals.`
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+
+  } catch (error) {
+    console.error('Error in news analysis:', error)
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      response: "I couldn't analyze the news right now. Please try again later."
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+}
+
+// Generate personalized news analysis
+async function generatePersonalizedNewsAnalysis(article: any, userData: any) {
+  try {
+    const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY')
+    if (!openRouterApiKey) {
+      console.error('OpenRouter API key not found')
+      return null
+    }
+
+    const prompt = `You are a sophisticated financial advisor analyzing news for personalized impact assessment.
+
+USER FINANCIAL PROFILE:
+- Net Worth: ${userData.metrics?.netWorth ? `$${userData.metrics.netWorth.toLocaleString()}` : 'Not specified'}
+- Monthly Income: ${userData.finances?.monthly_income ? `$${userData.finances.monthly_income.toLocaleString()}` : 'Not specified'}
+- Monthly Expenses: ${userData.finances?.monthly_expenses ? `$${userData.finances.monthly_expenses.toLocaleString()}` : 'Not specified'}
+- Investment Amount: ${userData.finances?.monthly_investing_amount ? `$${userData.finances.monthly_investing_amount.toLocaleString()}` : 'Not specified'}
+- Portfolio Value: ${userData.metrics?.totalPortfolioValue ? `$${userData.metrics.totalPortfolioValue.toLocaleString()}` : 'Not specified'}
+- Primary Assets: ${userData.assets?.slice(0, 3).map((a: any) => `${a.asset_name} (${a.asset_type})`).join(', ') || 'None specified'}
+- Financial Goals: ${userData.goals?.slice(0, 2).map((g: any) => `${g.title} ($${g.target_amount?.toLocaleString()})`).join(', ') || 'None specified'}
+- Country: ${userData.userProfile?.country || 'Not specified'}
+
+NEWS ARTICLE:
+Title: ${article.title}
+Summary: ${article.summary}
+Category: ${article.category}
+Sentiment: ${article.sentiment}
+
+Provide a personalized analysis of how this news affects this specific user. Include:
+1. Direct impact on their portfolio/investments (if any)
+2. Relevance to their financial goals
+3. Recommended actions (if any)
+4. Impact score (0-100, where 100 is highly impactful)
+5. Relevance score (0-100, where 100 is highly relevant)
+
+Keep the analysis concise (2-3 paragraphs) and actionable. Focus on practical implications for this user's specific situation.`
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openRouterApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-3.5-sonnet',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.7,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('OpenRouter API error:', await response.text())
+      return null
+    }
+
+    const data = await response.json()
+    const analysisText = data.choices[0]?.message?.content
+
+    if (!analysisText) {
+      console.error('No analysis content received')
+      return null
+    }
+
+    // Extract scores from the analysis (simple pattern matching)
+    const impactMatch = analysisText.match(/impact score[:\s]*(\d+)/i)
+    const relevanceMatch = analysisText.match(/relevance score[:\s]*(\d+)/i)
+    
+    const impactScore = impactMatch ? parseInt(impactMatch[1]) : 50
+    const relevanceScore = relevanceMatch ? parseInt(relevanceMatch[1]) : 50
+
+    return {
+      content: analysisText,
+      impact_score: Math.min(100, Math.max(0, impactScore)),
+      relevance_score: Math.min(100, Math.max(0, relevanceScore)),
+      recommendations: extractRecommendations(analysisText)
+    }
+
+  } catch (error) {
+    console.error('Error generating news analysis:', error)
+    return null
+  }
+}
+
+// Extract recommendations from analysis text
+function extractRecommendations(analysisText: string): string {
+  const recommendationSections = [
+    'recommended actions',
+    'recommendations',
+    'action items',
+    'what to do',
+    'next steps'
+  ]
+  
+  for (const section of recommendationSections) {
+    const regex = new RegExp(`${section}[:\s]*([^\.]+(?:\.[^\.]+)*?)(?:\n|$)`, 'i')
+    const match = analysisText.match(regex)
+    if (match && match[1]) {
+      return match[1].trim()
+    }
+  }
+  
+  // Fallback: look for sentences with action words
+  const actionWords = ['should', 'consider', 'recommend', 'suggest', 'advise']
+  const sentences = analysisText.split(/[.!?]+/)
+  
+  for (const sentence of sentences) {
+    for (const word of actionWords) {
+      if (sentence.toLowerCase().includes(word)) {
+        return sentence.trim()
+      }
+    }
+  }
+  
+  return 'Continue monitoring this development for potential impacts.'
+}
 
 async function getUserFinancialData(userId: string) {
   try {
@@ -411,6 +726,7 @@ async function getUserFinancialData(userId: string) {
       expenseStreams: expenseStreamsResult.data || [],
       deposits: depositsResult.data || [],
       portfolios: portfoliosResult.data || [],
+      userProfile: userProfileResult.data,
       // Currency data
       userCurrency,
       currencyRates: currencyRatesResult.data || [],
@@ -441,6 +757,7 @@ async function getUserFinancialData(userId: string) {
       expenseStreams: [],
       deposits: [],
       portfolios: [],
+      userProfile: null,
       userCurrency: 'USD',
       currencyRates: [],
       convertCurrency: (amount: number) => amount,
@@ -461,527 +778,283 @@ async function getUserFinancialData(userId: string) {
   }
 }
 
+// Load agent memory for personalized interactions
 async function loadAgentMemory(userId: string) {
   try {
-    const { data } = await supabase
+    const { data: memory, error } = await supabase
       .from('ai_agent_memory')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle();
-    return data;
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error loading agent memory:', error);
+      return null;
+    }
+
+    return memory || null;
   } catch (error) {
-    console.error('Error loading agent memory:', error);
+    console.error('Error in loadAgentMemory:', error);
     return null;
   }
 }
 
+// Update agent memory with new interactions
 async function updateAgentMemory(userId: string, memoryUpdate: any) {
   try {
-    const { data: existing } = await supabase
+    const { data: existingMemory } = await supabase
       .from('ai_agent_memory')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
-    if (existing) {
-      const updatedMemory = { ...existing.memory, ...memoryUpdate };
-      await supabase
+    if (existingMemory) {
+      // Update existing memory
+      const updatedMemory = {
+        ...existingMemory.memory,
+        ...memoryUpdate,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
         .from('ai_agent_memory')
-        .update({ memory: updatedMemory, updated_at: new Date().toISOString() })
+        .update({ 
+          memory: updatedMemory,
+          summary: memoryUpdate.summary || existingMemory.summary
+        })
         .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error updating agent memory:', error);
+      }
     } else {
-      await supabase
+      // Create new memory
+      const { error } = await supabase
         .from('ai_agent_memory')
         .insert({
           user_id: userId,
-          memory: memoryUpdate,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          memory: {
+            ...memoryUpdate,
+            created_at: new Date().toISOString()
+          },
+          summary: memoryUpdate.summary || 'New user interaction'
         });
+
+      if (error) {
+        console.error('Error creating agent memory:', error);
+      }
     }
   } catch (error) {
-    console.error('Error updating agent memory:', error);
+    console.error('Error in updateAgentMemory:', error);
   }
 }
 
-async function getMarketAnalysis() {
-  try {
-    const { data, error } = await supabase.functions.invoke('market-analysis', {
-      body: { analysis_type: 'overview' }
-    });
-    
-    if (error) {
-      console.error('Market analysis error:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error getting market analysis:', error);
-    return null;
-  }
-}
-
+// Analyze user message and generate response
 async function analyzeUserMessage(
   message: string, 
   userData: any, 
   agentMemory: any, 
-  marketData: any, 
-  messages: Message[] = [],
+  marketData: MarketDataSummary, 
+  messageHistory: Message[], 
   groqApiKey: string,
-  preferredModel?: string
-): Promise<{ analysis: string, pendingAction: PendingAction | null }> {
-  
-  const conversationHistory = messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n');
-  
-  const systemPrompt = `You are a sophisticated AI financial advisor with institutional-grade capabilities and comprehensive access to real-time market data. Provide professional, insightful analysis that demonstrates deep financial expertise.
+  model?: string
+) {
+  try {
+    console.log('Starting message analysis with GROQ...');
+    
+    // Build comprehensive context
+    const context = buildComprehensiveContext(userData, agentMemory, marketData);
+    
+    // Build conversation history
+    const conversationHistory = messageHistory.slice(-10).map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
 
-## Professional Capabilities:
-1. **Advanced Portfolio Management**: Multi-asset optimization, risk-adjusted returns, rebalancing strategies
-2. **Comprehensive Financial Planning**: Income optimization, expense management, tax-efficient strategies
-3. **Investment Analysis**: Fundamental and technical analysis across all asset classes
-4. **Risk Management**: Portfolio diversification, hedging strategies, scenario planning
-5. **Market Intelligence**: Real-time analysis of global markets, economic indicators, trend identification
-6. **Wealth Building**: Goal-based investing, asset allocation models, retirement planning
-7. **Debt Optimization**: Strategic debt management, refinancing analysis, leverage optimization
-8. **Alternative Investments**: Real estate, commodities, private equity evaluation
-9. **Behavioral Finance**: Psychological factors, market sentiment analysis
-10. **Regulatory Compliance**: Tax implications, legal considerations, fiduciary standards
+    const systemPrompt = `You are an advanced AI Financial Advisor with complete access to the user's financial data and real-time market intelligence. You are designed to be helpful, accurate, and actionable.
 
-## Currency & International Finance:
-- **User's Preferred Currency**: ${userData.userCurrency}
-- **Available Exchange Rates**: ${userData.currencyRates?.length || 0} currency pairs
-- **Currency Conversion**: All amounts are displayed in user's preferred currency unless specified
-- **Multi-Currency Support**: Can analyze investments across different currencies with real-time conversion
-- **Exchange Rate Analysis**: Monitor currency fluctuations and their impact on international investments
+CORE CAPABILITIES:
+- Complete financial portfolio analysis and management
+- Real-time market data analysis and recommendations
+- Personalized investment advice based on user's specific situation
+- Financial goal planning and progress tracking
+- Debt management and optimization strategies
+- Income and expense stream management
+- Multi-currency support and conversion
 
-## Current User Financial Overview:
+CURRENT USER CONTEXT:
+${context}
 
-### Personal Finances Summary:
-- Monthly Income: ${userData.formatCurrency(userData.finances.monthly_income)}
-- Monthly Expenses: ${userData.formatCurrency(userData.finances.monthly_expenses)}
-- Net Savings: ${userData.formatCurrency(userData.finances.net_savings)}
-- Monthly Investing: ${userData.formatCurrency(userData.finances.monthly_investing_amount)}
+INTERACTION GUIDELINES:
+1. Always provide specific, actionable advice based on the user's actual financial data
+2. Reference real market data when making investment recommendations
+3. Be conversational but professional
+4. Ask clarifying questions when needed
+5. Provide concrete next steps
+6. Use the user's preferred currency for all amounts
+7. Consider their risk tolerance and financial goals
+8. Explain your reasoning clearly
 
-### Calculated Financial Metrics:
-- Net Worth: ${userData.formatCurrency(userData.metrics?.netWorth || 0)}
-- Total Portfolio Value: ${userData.formatCurrency(userData.metrics?.totalPortfolioValue || 0)}
-- Portfolio Return: ${userData.metrics?.portfolioReturn?.toFixed(2) || 0}%
-- Total Debt: ${userData.formatCurrency(userData.metrics?.totalDebt || 0)}
-- Total Savings: ${userData.formatCurrency(userData.metrics?.totalSavings || 0)}
-- Debt-to-Income Ratio: ${userData.metrics?.debtToIncomeRatio?.toFixed(1) || 0}%
-- Savings Rate: ${userData.metrics?.savingsRate?.toFixed(1) || 0}%
+RESPONSE FORMAT:
+- Provide clear, well-structured responses
+- Use bullet points for lists and recommendations
+- Include specific numbers and calculations when relevant
+- Highlight important insights or warnings
+- End with actionable next steps when appropriate
 
-### Detailed Financial Data:
+Remember: You have access to live market data, so use it to provide current, relevant advice. Always be helpful and focus on the user's financial success.`;
 
-**Income Streams (${userData.incomeStreams.length}):**
-${userData.incomeStreams.map(s => `- ${s.name}: ${userData.formatCurrency(s.amount)} (${s.income_type})`).join('\n') || '- No income streams set up'}
+    const userPrompt = `User message: "${message}"
 
-**Expense Streams (${userData.expenseStreams.length}):**
-${userData.expenseStreams.map(s => `- ${s.name}: ${userData.formatCurrency(s.amount)} (${s.expense_type})`).join('\n') || '- No expense streams set up'}
+Please analyze this message in the context of the user's complete financial situation and current market conditions. Provide a comprehensive, personalized response with specific recommendations and actionable advice.`;
 
-**Debts (${userData.debts.length}):**
-${userData.debts.map(d => `- ${d.name}: ${userData.formatCurrency(d.total_amount - d.paid_amount)} remaining (Monthly: ${userData.formatCurrency(d.monthly_payment)}, Rate: ${d.interest_rate}%)`).join('\n') || '- No active debts'}
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory,
+      { role: 'user', content: userPrompt }
+    ];
 
-**Financial Goals (${userData.goals.length}):**
-${userData.goals.map(g => `- ${g.title}: ${userData.formatCurrency(g.current_amount)}/${userData.formatCurrency(g.target_amount)} (${Math.round((g.current_amount/(g.target_amount || 1))*100)}%) - Target: ${g.target_date || 'No date'}`).join('\n') || '- No financial goals set'}
+    console.log('Sending request to GROQ API...');
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model || 'llama-3.1-70b-versatile',
+        messages: messages,
+        max_tokens: 2000,
+        temperature: 0.7,
+        top_p: 0.9,
+      }),
+    });
 
-**Deposits/Savings Accounts (${userData.deposits.length}):**
-${userData.deposits.map(d => `- ${d.deposit_type}: ${userData.formatCurrency(d.principal)} at ${d.rate}% (Interest: ${userData.formatCurrency(d.accrued_interest || 0)})`).join('\n') || '- No deposits/savings accounts'}
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('GROQ API error:', response.status, errorText);
+      throw new Error(`GROQ API error: ${response.status} - ${errorText}`);
+    }
 
-**Investment Portfolios (${userData.portfolios.length}):**
-${userData.portfolios.map(p => `- ${p.name} (Created: ${p.created_at?.slice(0,10)})`).join('\n') || '- No portfolios created'}
+    const data = await response.json();
+    console.log('GROQ API response received');
 
-**Investment Assets (${userData.assets.length}):**
-${userData.assets.map(a => {
-  const currentValue = (a.current_price || a.purchase_price || 0) * (a.quantity || 1);
-  const purchaseValue = (a.purchase_price || 0) * (a.quantity || 1);
-  const returnPct = purchaseValue > 0 ? (((currentValue - purchaseValue) / purchaseValue) * 100).toFixed(1) : '0';
-  return `- ${a.asset_name} (${a.asset_type}): ${a.quantity || 'N/A'} units, Value: ${userData.formatCurrency(currentValue)}, Return: ${returnPct}%`;
-}).join('\n') || '- No portfolio assets'}
+    const analysis = data.choices[0]?.message?.content || 'I apologize, but I could not generate a response at this time.';
 
-## Live Market Data Available:
+    return { analysis };
 
-### Stocks (${marketData.stocks?.total || 0} available):
-- Countries: ${marketData.stocks?.countries?.join(', ') || 'None'}
-- Best Performers: ${marketData.stocks?.best_performers?.map(s => `${s.symbol} (+${s.change_percent}%)`).join(', ') || 'None'}
-- Worst Performers: ${marketData.stocks?.worst_performers?.map(s => `${s.symbol} (${s.change_percent}%)`).join(', ') || 'None'}
+  } catch (error) {
+    console.error('Error in analyzeUserMessage:', error);
+    throw error;
+  }
+}
 
-### Cryptocurrency (${marketData.crypto?.total || 0} available):
-- Total Market Cap: $${(marketData.crypto?.market_cap_total || 0).toLocaleString()}
-- Trending: ${marketData.crypto?.trending?.map(c => `${c.symbol} (+${c.change_percentage_24h}%)`).join(', ') || 'None'}
+// Build comprehensive context for the AI
+function buildComprehensiveContext(userData: any, agentMemory: any, marketData: MarketDataSummary): string {
+  const { finances, goals, assets, debts, incomeStreams, expenseStreams, deposits, portfolios, userProfile, metrics, userCurrency, formatCurrency } = userData;
 
-### Real Estate (${marketData.real_estate?.total_neighborhoods || 0} neighborhoods):
-- Cities: ${marketData.real_estate?.cities?.slice(0,5).join(', ') || 'None'}
-- Hottest Areas: ${marketData.real_estate?.hottest_areas?.map(r => `${r.neighborhood_name}, ${r.city_name}`).slice(0,3).join(', ') || 'None'}
+  let context = `USER FINANCIAL PROFILE:
+Currency: ${userCurrency}
+Net Worth: ${formatCurrency(metrics.netWorth)}
+Monthly Income: ${formatCurrency(finances.monthly_income)}
+Monthly Expenses: ${formatCurrency(finances.monthly_expenses)}
+Net Savings: ${formatCurrency(finances.net_savings)}
+Monthly Investing: ${formatCurrency(finances.monthly_investing_amount)}
+Debt-to-Income Ratio: ${metrics.debtToIncomeRatio.toFixed(1)}%
+Savings Rate: ${metrics.savingsRate.toFixed(1)}%
 
-### Bonds (${marketData.bonds?.total || 0} available):
-- Average Yield: ${marketData.bonds?.avg_yield?.toFixed(2) || 0}%
-- Types: ${marketData.bonds?.types?.join(', ') || 'None'}
-- Government: ${marketData.bonds?.government_vs_corporate?.government || 0}, Corporate: ${marketData.bonds?.government_vs_corporate?.corporate || 0}
+PORTFOLIO OVERVIEW:
+Total Portfolio Value: ${formatCurrency(metrics.totalPortfolioValue)}
+Total Investment: ${formatCurrency(metrics.totalInvestment)}
+Portfolio Return: ${metrics.portfolioReturn.toFixed(2)}%
+Number of Assets: ${assets.length}
 
-### ETFs (${marketData.etfs?.total || 0} available):
-- Categories: ${marketData.etfs?.categories?.slice(0,5).join(', ') || 'None'}
-- Performance Leaders: ${marketData.etfs?.performance_leaders?.map(e => `${e.symbol} (+${e.change_percentage}%)`).join(', ') || 'None'}
+ASSETS BREAKDOWN:`;
 
-### Gold Prices:
-- 24K: ${marketData.gold_prices?.current_24k || 'N/A'} EGP (${marketData.gold_prices?.trend || 'stable'})
-- 24H Change: ${marketData.gold_prices?.change_24h || 0}%
-
-### Currency Rates:
-- Major Pairs: ${marketData.currency_rates?.major_pairs?.map(r => `${r.base_currency}/${r.target_currency}: ${r.exchange_rate}`).slice(0,3).join(', ') || 'None'}
-- Strongest: ${marketData.currency_rates?.strongest_currencies?.map(r => `${r.base_currency} (+${r.change_percentage_24h}%)`).slice(0,3).join(', ') || 'None'}
-
-### Bank Products (${marketData.bank_products?.total || 0} available):
-- Best Rates: ${marketData.bank_products?.best_rates?.map(p => `${p.bank_name} ${p.product_name}: ${p.interest_rate}%`).slice(0,3).join(', ') || 'None'}
-
-## Response Guidelines:
-- Provide comprehensive financial analysis and advice only
-- No data modifications or actions will be performed
-- Focus on insights, recommendations, and market analysis
-- Use real market data to support your analysis
-- Calculate and explain financial ratios and metrics
-- Suggest optimization strategies without implementing them
-- Identify opportunities and risks in the current financial situation
-- Provide educational content about financial concepts
-- Always format monetary values in the user's preferred currency: ${userData.userCurrency}
-
-Your response should be detailed, professional, and purely advisory without any executable actions.`;
-
-  console.log('Calling GROQ Chat Completions with enhanced context...');
-
-  // Determine model: prefer request input, then env, default to 8B for reliability
-  const selectedModel = (preferredModel === '8b' || preferredModel === 'llama-3.1-8b-instant')
-    ? 'llama-3.1-8b-instant'
-    : (preferredModel === '70b' || preferredModel === 'llama-3.3-70b-versatile')
-      ? 'llama-3.3-70b-versatile'
-      : (Deno.env.get('GROQ_MODEL') || 'llama-3.1-8b-instant');
-
-  const chatMessages = [
-    { role: 'system', content: systemPrompt },
-    ...messages.slice(-5).map(m => ({ role: m.role, content: m.content })),
-    { role: 'user', content: message }
-  ];
-
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${groqApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: selectedModel,
-      messages: chatMessages,
-      max_tokens: 1000,
-      temperature: 0.2,
-    }),
-  });
-
-  console.log('GROQ response status:', response.status);
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error('GROQ API error:', response.status, response.statusText, errText);
-    throw new Error(`GROQ API error: ${response.status} ${response.statusText}`);
+  if (assets.length > 0) {
+    assets.slice(0, 10).forEach(asset => {
+      const currentValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 1);
+      const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 1);
+      const returnPct = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue * 100).toFixed(2) : '0.00';
+      context += `\n- ${asset.asset_name} (${asset.asset_type}): ${asset.quantity || 1} shares, Current Value: ${formatCurrency(currentValue)}, Return: ${returnPct}%`;
+    });
+  } else {
+    context += '\n- No assets currently tracked';
   }
 
-  const data = await response.json();
-  console.log('GROQ response data (truncated):', JSON.stringify({
-    model: data.model,
-    usage: data.usage,
-    messagePreview: data.choices?.[0]?.message?.content?.slice(0, 200)
-  }));
-
-  const aiResponse = data.choices?.[0]?.message?.content?.trim() || JSON.stringify(data);
-
-  console.log('AI response content (first 500 chars):', aiResponse.slice(0, 500));
-
-  // Check for actionable patterns in the user message BEFORE returning the AI response
-  const textLower = message.toLowerCase();
-  
-  // Income/Salary changes or additions
-  if ((textLower.includes('salary') || textLower.includes('income')) && 
-      (textLower.includes('change') || textLower.includes('update') || textLower.includes('add') || textLower.includes('create'))) {
-    const salaryMatch = message.match(/(\d+)/);
-    
-    if (salaryMatch) {
-      const incomeAmount = parseInt(salaryMatch[0]);
-      
-      // Check if it's adding a new income stream vs updating salary
-        if ((textLower.includes('add') || textLower.includes('create')) && !textLower.includes('salary')) {
-          // Extract income name
-          const incomeNameMatch = message.match(/(?:add|create)\s+([^,.\n]+?)\s+income/i) || 
-                                  message.match(/(?:income)\s+([^,.\n\d]+)/i) ||
-                                  message.match(/([a-zA-Z\s]+)\s+income/i);
-          
-          const incomeName = incomeNameMatch ? incomeNameMatch[1].trim() : 'New Income';
-          
-          return {
-            analysis: `I can add a new income stream "${incomeName}" with $${incomeAmount} monthly income. Do you want me to proceed?`,
-            pendingAction: {
-              type: 'add_income_stream',
-              data: {
-                name: incomeName,
-                amount: incomeAmount,
-                income_type: 'stable',
-                is_active: true
-              },
-              description: `Add income stream: ${incomeName} ($${incomeAmount})`
-            }
-          };
-        } else {
-          // Update salary/total income
-          return {
-            analysis: `I need to update your salary to $${incomeAmount}. This will update both your personal finance summary and your salary income stream. Do you want me to proceed?`,
-            pendingAction: {
-              type: 'update_income',
-              data: {
-                monthly_income: incomeAmount,
-                salary: incomeAmount
-              },
-              description: `Update your monthly salary to $${incomeAmount}`
-            }
-          };
-        }
-      }
-    }
-    
-    // Expense changes or additions
-    if ((textLower.includes('expense') || textLower.includes('spending')) && 
-        (textLower.includes('change') || textLower.includes('update') || textLower.includes('add') || textLower.includes('create'))) {
-      const expenseMatch = message.match(/(\d+)/);
-      
-      if (expenseMatch) {
-        const expenseAmount = parseInt(expenseMatch[0]);
-        
-        // Check if it's adding a new expense stream vs updating total expenses
-        if (textLower.includes('add') || textLower.includes('create')) {
-          // Extract expense name
-          const expenseNameMatch = message.match(/(?:add|create)\s+([^,.\n]+?)\s+expense/i) || 
-                                   message.match(/(?:expense(?:s)?)\s+([^,.\n\d]+)/i) ||
-                                   message.match(/([a-zA-Z\s]+)\s+expense/i);
-          
-          const expenseName = expenseNameMatch ? expenseNameMatch[1].trim() : 'New Expense';
-          
-          return {
-            analysis: `I can add a new expense stream "${expenseName}" with $${expenseAmount} monthly cost. Do you want me to proceed?`,
-            pendingAction: {
-              type: 'add_expense_stream',
-              data: {
-                name: expenseName,
-                amount: expenseAmount,
-                expense_type: 'fixed',
-                is_active: true
-              },
-              description: `Add expense stream: ${expenseName} ($${expenseAmount})`
-            }
-          };
-        } else {
-          // Update total monthly expenses
-          return {
-            analysis: `I need to update your monthly expenses to $${expenseAmount}. This will update your personal finance summary. Do you want me to proceed?`,
-            pendingAction: {
-              type: 'update_expenses',
-              data: {
-                monthly_expenses: expenseAmount
-              },
-              description: `Update your monthly expenses to $${expenseAmount}`
-            }
-          };
-        }
-      }
-    }
-    
-    // Investment amount changes
-    if ((textLower.includes('invest') || textLower.includes('investing')) && (textLower.includes('change') || textLower.includes('update') || textLower.includes('set') || textLower.includes('increase') || textLower.includes('decrease') || textLower.includes('add'))) {
-      const investMatch = message.match(/(\d+)/);
-      if (investMatch) {
-        const newInvesting = parseInt(investMatch[0]);
-        
-        return {
-          analysis: `I need to update your monthly investing amount to $${newInvesting}. This will update your personal finance summary. Do you want me to proceed?`,
-          pendingAction: {
-            type: 'update_investing',
-            data: {
-              monthly_investing_amount: newInvesting
-            },
-            description: `Update your monthly investing amount to $${newInvesting}`
-          }
-        };
-      }
-    }
-    
-    // Savings: update a specific deposit by name (e.g., "reduce the cash savings to 4500")
-    if ((textLower.includes('savings') || textLower.includes('deposit')) &&
-        (textLower.includes('reduce') || textLower.includes('lower') || textLower.includes('raise') || textLower.includes('increase') || textLower.includes('decrease') || textLower.includes('set') || textLower.includes('change') || textLower.includes('update'))) {
-      const amtMatch = message.match(/(\d+[\d,]*\.?\d*)/);
-      if (amtMatch) {
-        const amount = Number(amtMatch[1].replace(/,/g, ''));
-        if (Number.isFinite(amount)) {
-          // Try to extract a deposit name before the word "savings" or "deposit"
-          let nameMatch = message.match(/the\s+([a-zA-Z_\s]+?)\s+savings/i) ||
-                          message.match(/([a-zA-Z_\s]+?)\s+savings/i) ||
-                          message.match(/the\s+([a-zA-Z_\s]+?)\s+deposit/i) ||
-                          message.match(/([a-zA-Z_\s]+?)\s+deposit/i);
-          let depositName = nameMatch ? nameMatch[1].trim() : undefined;
-          if (depositName) {
-            // Clean common determiners
-            depositName = depositName.replace(/^(the|my)\s+/i, '').trim();
-          }
-
-          if (depositName) {
-            return {
-              analysis: `I will update the ${depositName} savings/deposit to $${amount}. Do you want me to proceed?`,
-              pendingAction: {
-                type: 'update_deposit',
-                data: {
-                  name: depositName,
-                  principal: amount
-                },
-                description: `Update deposit \"${depositName}\" to $${amount}`
-              }
-            };
-          }
-        }
-      }
-    }
-    
-    // Savings: add deposit accounts
-    if ((textLower.includes('deposit') || textLower.includes('savings')) && (textLower.includes('add') || textLower.includes('create') || textLower.includes('open'))) {
-      const amtMatch = message.match(/(\d+[\d,]*\.?\d*)/);
-      const rateMatch = message.match(/(\d+(?:\.\d+)?)%/);
-      const amount = amtMatch ? Number(amtMatch[1].replace(/,/g, '')) : undefined;
-      const rate = rateMatch ? Number(rateMatch[1]) : 5; // sensible default
-      if (Number.isFinite(amount)) {
-        let depositType: 'savings' | 'fixed_cd' | 'investment_linked' = 'savings';
-        if (textLower.includes('cd') || textLower.includes('certificate') || textLower.includes('fixed')) depositType = 'fixed_cd';
-        if (textLower.includes('investment') && textLower.includes('linked')) depositType = 'investment_linked';
-        
-        return {
-          analysis: `I can open a ${depositType.replace('_',' ')} account with $${amount} at ${rate}%. Do you want me to proceed?`,
-          pendingAction: {
-            type: 'add_deposit',
-            data: {
-              deposit_type: depositType,
-              principal: amount,
-              rate,
-              start_date: new Date().toISOString().slice(0,10)
-            },
-            description: `Create ${depositType} deposit: $${amount} at ${rate}%`
-          }
-        };
-      }
-    }
-
-    // Savings: update net savings total
-    if (textLower.includes('savings') && (textLower.includes('set') || textLower.includes('change') || textLower.includes('update')) && !textLower.includes('deposit')) {
-      const savingsMatch = message.match(/(\d+[\d,]*\.?\d*)/);
-      if (savingsMatch) {
-        const net = Number(savingsMatch[1].replace(/,/g, ''));
-        if (Number.isFinite(net)) {
-          return {
-            analysis: `I need to update your net savings to $${net}. Do you want me to proceed?`,
-            pendingAction: {
-              type: 'update_savings',
-              data: { net_savings: net },
-              description: `Update net savings to $${net}`
-            }
-          };
-        }
-      }
-    }
-    
-    // Goal creation
-    if ((textLower.includes('goal') || textLower.includes('save for')) && (textLower.includes('add') || textLower.includes('create'))) {
-      const goalMatch = message.match(/(\d+)/);
-      let goalNameMatch = message.match(/(?:goal|save for)\s+([^,.\n\d]+)/i) ||
-                         message.match(/(?:add|create)\s+([^,.\n]+?)\s+goal/i) ||
-                         message.match(/goal\s+([^,.\n\d]+)/i);
-      
-      if (goalMatch) {
-        const targetAmount = parseInt(goalMatch[0]);
-        const goalName = goalNameMatch ? goalNameMatch[1].trim() : 'Financial Goal';
-        
-        return {
-          analysis: `I can create a new financial goal "${goalName}" with a target of $${targetAmount}. Do you want me to proceed?`,
-          pendingAction: {
-            type: 'create_goal',
-            data: {
-              title: goalName,
-              target_amount: targetAmount,
-              current_amount: 0,
-              category: 'general'
-            },
-            description: `Create financial goal: ${goalName} ($${targetAmount})`
-          }
-        };
-      }
-    }
-    
-    // Debt management  
-    if ((textLower.includes('debt') || textLower.includes('loan')) && (textLower.includes('add') || textLower.includes('create'))) {
-      const debtMatch = message.match(/(\d+)/);
-      let debtNameMatch = message.match(/(?:debt|loan)\s+([^,.\n\d]+)/i) ||
-                         message.match(/(?:add|create)\s+([^,.\n]+?)\s+(?:debt|loan)/i) ||
-                         message.match(/([a-zA-Z\s]+)\s+(?:debt|loan)/i);
-      
-      if (debtMatch) {
-        const totalAmount = parseInt(debtMatch[0]);
-        const debtName = debtNameMatch ? debtNameMatch[1].trim() : 'New Debt';
-        
-        return {
-          analysis: `I can add a new debt "${debtName}" with a total amount of $${totalAmount}. Do you want me to proceed?`,
-          pendingAction: {
-            type: 'add_debt',
-            data: {
-              name: debtName,
-              total_amount: totalAmount,
-              paid_amount: 0,
-              monthly_payment: 0,
-              interest_rate: 0
-            },
-            description: `Add debt: ${debtName} ($${totalAmount})`
-          }
-        };
-      }
-    }
-    
-    // Check if the response contains action keywords - if so, try to extract action intent
-    const actionKeywords = ['add', 'update', 'create', 'delete', 'remove'];
-    const hasActionIntent = actionKeywords.some(keyword => 
-      message.toLowerCase().includes(keyword) && 
-      (message.toLowerCase().includes('stock') || 
-       message.toLowerCase().includes('asset') || 
-       message.toLowerCase().includes('portfolio'))
-    );
-
-    if (hasActionIntent && message.toLowerCase().includes('add') && message.toLowerCase().includes('stock')) {
-      // Extract stock details from the message
-      const stockMatch = message.match(/(\d+)\s+stock(?:s)?\s+of\s+([^,\n]+)/i);
-      if (stockMatch) {
-        const quantity = parseInt(stockMatch[1]);
-        const stockName = stockMatch[2].trim();
-        
-        return {
-          analysis: `I can add ${quantity} shares of ${stockName} to your portfolio. This will create a new asset entry with the current market price. Do you want me to proceed?`,
-          pendingAction: {
-            type: 'add_asset',
-            data: {
-              asset_name: stockName,
-              asset_type: 'stocks',
-              quantity: quantity,
-              purchase_price: 115, // Default price - should be fetched from market data
-              current_price: 115,
-              country: 'Egypt'
-            },
-            description: `Add ${quantity} shares of ${stockName} to your portfolio at current market price`
-          }
-        };
-      }
-    }
-    
-    return {
-      analysis: aiResponse,
-      pendingAction: null
-    };
+  context += `\n\nFINANCIAL GOALS:`;
+  if (goals.length > 0) {
+    goals.slice(0, 5).forEach(goal => {
+      const progress = goal.target_amount > 0 ? ((goal.current_amount / goal.target_amount) * 100).toFixed(1) : '0.0';
+      context += `\n- ${goal.title}: ${formatCurrency(goal.current_amount)} / ${formatCurrency(goal.target_amount)} (${progress}%)`;
+    });
+  } else {
+    context += '\n- No financial goals set';
   }
+
+  context += `\n\nDEBTS:`;
+  if (debts.length > 0) {
+    debts.forEach(debt => {
+      const remaining = debt.total_amount - debt.paid_amount;
+      context += `\n- ${debt.debt_name}: ${formatCurrency(remaining)} remaining, ${formatCurrency(debt.monthly_payment)}/month`;
+    });
+    context += `\nTotal Debt: ${formatCurrency(metrics.totalDebt)}`;
+    context += `\nMonthly Debt Payments: ${formatCurrency(metrics.monthlyDebtPayments)}`;
+  } else {
+    context += '\n- No debts tracked';
+  }
+
+  context += `\n\nSAVINGS & DEPOSITS:`;
+  if (deposits.length > 0) {
+    deposits.slice(0, 5).forEach(deposit => {
+      const totalValue = deposit.principal + deposit.accrued_interest;
+      context += `\n- ${deposit.bank_name} ${deposit.product_type}: ${formatCurrency(totalValue)} (${deposit.interest_rate}% APY)`;
+    });
+    context += `\nTotal Savings: ${formatCurrency(metrics.totalSavings)}`;
+    context += `\nTotal Interest Accrued: ${formatCurrency(metrics.totalInterestAccrued)}`;
+  } else {
+    context += '\n- No savings deposits tracked';
+  }
+
+  context += `\n\nINCOME STREAMS:`;
+  if (incomeStreams.length > 0) {
+    incomeStreams.forEach(stream => {
+      context += `\n- ${stream.source_name}: ${formatCurrency(stream.monthly_amount)}/month (${stream.income_type})`;
+    });
+  } else {
+    context += '\n- Primary income only';
+  }
+
+  context += `\n\nEXPENSE STREAMS:`;
+  if (expenseStreams.length > 0) {
+    expenseStreams.slice(0, 5).forEach(stream => {
+      context += `\n- ${stream.expense_name}: ${formatCurrency(stream.monthly_amount)}/month (${stream.expense_type})`;
+    });
+  } else {
+    context += '\n- Basic expenses only';
+  }
+
+  // Add market data context
+  context += `\n\nCURRENT MARKET CONDITIONS:
+Stocks Available: ${marketData.stocks.total} (${marketData.stocks.countries.length} countries)
+Top Stock Performers Today: ${marketData.stocks.top_performers.slice(0, 3).map(s => `${s.symbol} (+${s.change_percent?.toFixed(2)}%)`).join(', ')}
+Crypto Available: ${marketData.crypto.total} currencies
+Top Crypto by Market Cap: ${marketData.crypto.top_by_market_cap.slice(0, 3).map(c => `${c.symbol} ($${(c.market_cap / 1e9).toFixed(1)}B)`).join(', ')}
+Average Bond Yield: ${marketData.bonds.avg_yield?.toFixed(2)}%
+Gold Price (24K): $${marketData.gold_prices.current_24k}/oz (${marketData.gold_prices.trend})
+Real Estate Markets: ${marketData.real_estate.cities.length} cities tracked
+Bank Products: ${marketData.bank_products.total} products, Best Rate: ${marketData.bank_products.best_rates[0]?.interest_rate?.toFixed(2)}%`;
+
+  // Add agent memory if available
+  if (agentMemory?.memory) {
+    context += `\n\nPREVIOUS INTERACTIONS:`;
+    if (agentMemory.memory.last_interaction) {
+      context += `\nLast discussed: ${agentMemory.memory.last_interaction.user_message}`;
+    }
+    if (agentMemory.memory.preferences) {
+      context += `\nUser preferences: ${JSON.stringify(agentMemory.memory.preferences)}`;
+    }
+  }
+
+  return context;
+}

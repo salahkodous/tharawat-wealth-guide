@@ -193,555 +193,6 @@ export type Database = {
         }
         Relationships: []
       }
-      bonds: {
-        Row: {
-          accrued_interest: number | null
-          ask_price: number | null
-          bid_price: number | null
-          bond_type: string
-          callable: boolean | null
-          clean_price: number | null
-          country: string | null
-          coupon_frequency: string | null
-          coupon_rate: number | null
-          created_at: string | null
-          credit_rating: string | null
-          currency: string | null
-          current_price: number | null
-          dirty_price: number | null
-          duration: number | null
-          exchange: string | null
-          face_value: number | null
-          id: number
-          isin: string | null
-          issue_date: string | null
-          issuer: string
-          issuer_ar: string | null
-          last_trade_price: number | null
-          last_updated: string | null
-          maturity_date: string | null
-          name: string
-          name_ar: string | null
-          puttable: boolean | null
-          sector: string | null
-          symbol: string
-          updated_at: string | null
-          volume: number | null
-          yield_to_maturity: number | null
-        }
-        Insert: {
-          accrued_interest?: number | null
-          ask_price?: number | null
-          bid_price?: number | null
-          bond_type: string
-          callable?: boolean | null
-          clean_price?: number | null
-          country?: string | null
-          coupon_frequency?: string | null
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string | null
-          current_price?: number | null
-          dirty_price?: number | null
-          duration?: number | null
-          exchange?: string | null
-          face_value?: number | null
-          id?: number
-          isin?: string | null
-          issue_date?: string | null
-          issuer: string
-          issuer_ar?: string | null
-          last_trade_price?: number | null
-          last_updated?: string | null
-          maturity_date?: string | null
-          name: string
-          name_ar?: string | null
-          puttable?: boolean | null
-          sector?: string | null
-          symbol: string
-          updated_at?: string | null
-          volume?: number | null
-          yield_to_maturity?: number | null
-        }
-        Update: {
-          accrued_interest?: number | null
-          ask_price?: number | null
-          bid_price?: number | null
-          bond_type?: string
-          callable?: boolean | null
-          clean_price?: number | null
-          country?: string | null
-          coupon_frequency?: string | null
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string | null
-          current_price?: number | null
-          dirty_price?: number | null
-          duration?: number | null
-          exchange?: string | null
-          face_value?: number | null
-          id?: number
-          isin?: string | null
-          issue_date?: string | null
-          issuer?: string
-          issuer_ar?: string | null
-          last_trade_price?: number | null
-          last_updated?: string | null
-          maturity_date?: string | null
-          name?: string
-          name_ar?: string | null
-          puttable?: boolean | null
-          sector?: string | null
-          symbol?: string
-          updated_at?: string | null
-          volume?: number | null
-          yield_to_maturity?: number | null
-        }
-        Relationships: []
-      }
-      china_bank_products: {
-        Row: {
-          bank_name: string
-          country: string
-          created_at: string | null
-          currency: string
-          description: string | null
-          eligibility_requirements: string | null
-          features: string[] | null
-          fees_and_charges: Json | null
-          id: number
-          interest_rate: number
-          is_active: boolean | null
-          launch_date: string | null
-          maximum_balance: number | null
-          minimum_balance: number | null
-          product_name: string
-          product_type: string
-          risk_level: string | null
-          term_months: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          bank_name: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          eligibility_requirements?: string | null
-          features?: string[] | null
-          fees_and_charges?: Json | null
-          id?: number
-          interest_rate: number
-          is_active?: boolean | null
-          launch_date?: string | null
-          maximum_balance?: number | null
-          minimum_balance?: number | null
-          product_name: string
-          product_type: string
-          risk_level?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          bank_name?: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          eligibility_requirements?: string | null
-          features?: string[] | null
-          fees_and_charges?: Json | null
-          id?: number
-          interest_rate?: number
-          is_active?: boolean | null
-          launch_date?: string | null
-          maximum_balance?: number | null
-          minimum_balance?: number | null
-          product_name?: string
-          product_type?: string
-          risk_level?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      china_bonds: {
-        Row: {
-          accrued_interest: number | null
-          bond_name: string
-          bond_type: string
-          convexity: number | null
-          country: string
-          coupon_rate: number
-          created_at: string | null
-          credit_rating: string | null
-          currency: string
-          current_price: number
-          description: string | null
-          duration: number | null
-          face_value: number
-          id: number
-          issue_date: string
-          issuer: string
-          market_segment: string | null
-          maturity_date: string
-          minimum_investment: number | null
-          modified_duration: number | null
-          rating_agency: string | null
-          sector: string | null
-          symbol: string | null
-          trading_status: string | null
-          updated_at: string | null
-          use_of_proceeds: string | null
-          yield_to_maturity: number | null
-        }
-        Insert: {
-          accrued_interest?: number | null
-          bond_name: string
-          bond_type: string
-          convexity?: number | null
-          country?: string
-          coupon_rate: number
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price: number
-          description?: string | null
-          duration?: number | null
-          face_value: number
-          id?: number
-          issue_date: string
-          issuer: string
-          market_segment?: string | null
-          maturity_date: string
-          minimum_investment?: number | null
-          modified_duration?: number | null
-          rating_agency?: string | null
-          sector?: string | null
-          symbol?: string | null
-          trading_status?: string | null
-          updated_at?: string | null
-          use_of_proceeds?: string | null
-          yield_to_maturity?: number | null
-        }
-        Update: {
-          accrued_interest?: number | null
-          bond_name?: string
-          bond_type?: string
-          convexity?: number | null
-          country?: string
-          coupon_rate?: number
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number
-          description?: string | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          issue_date?: string
-          issuer?: string
-          market_segment?: string | null
-          maturity_date?: string
-          minimum_investment?: number | null
-          modified_duration?: number | null
-          rating_agency?: string | null
-          sector?: string | null
-          symbol?: string | null
-          trading_status?: string | null
-          updated_at?: string | null
-          use_of_proceeds?: string | null
-          yield_to_maturity?: number | null
-        }
-        Relationships: []
-      }
-      china_etfs: {
-        Row: {
-          average_volume: number | null
-          benchmark_index: string | null
-          category: string
-          country: string
-          created_at: string | null
-          currency: string
-          current_price: number
-          description: string | null
-          dividend_yield: number | null
-          exchange: string
-          expense_ratio: number | null
-          fund_family: string
-          fund_manager: string | null
-          geographic_allocation: Json | null
-          id: number
-          inception_date: string | null
-          investment_objective: string | null
-          management_company: string | null
-          minimum_investment: number | null
-          name: string
-          nav: number | null
-          pb_ratio: number | null
-          pe_ratio: number | null
-          premium_discount: number | null
-          risk_level: string | null
-          sector_allocation: Json | null
-          shares_outstanding: number | null
-          symbol: string
-          top_holdings: Json | null
-          total_assets: number | null
-          trading_status: string | null
-          updated_at: string | null
-          website: string | null
-          week_52_high: number | null
-          week_52_low: number | null
-          year_to_date_return: number | null
-        }
-        Insert: {
-          average_volume?: number | null
-          benchmark_index?: string | null
-          category: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          current_price: number
-          description?: string | null
-          dividend_yield?: number | null
-          exchange: string
-          expense_ratio?: number | null
-          fund_family: string
-          fund_manager?: string | null
-          geographic_allocation?: Json | null
-          id?: number
-          inception_date?: string | null
-          investment_objective?: string | null
-          management_company?: string | null
-          minimum_investment?: number | null
-          name: string
-          nav?: number | null
-          pb_ratio?: number | null
-          pe_ratio?: number | null
-          premium_discount?: number | null
-          risk_level?: string | null
-          sector_allocation?: Json | null
-          shares_outstanding?: number | null
-          symbol: string
-          top_holdings?: Json | null
-          total_assets?: number | null
-          trading_status?: string | null
-          updated_at?: string | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-          year_to_date_return?: number | null
-        }
-        Update: {
-          average_volume?: number | null
-          benchmark_index?: string | null
-          category?: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          current_price?: number
-          description?: string | null
-          dividend_yield?: number | null
-          exchange?: string
-          expense_ratio?: number | null
-          fund_family?: string
-          fund_manager?: string | null
-          geographic_allocation?: Json | null
-          id?: number
-          inception_date?: string | null
-          investment_objective?: string | null
-          management_company?: string | null
-          minimum_investment?: number | null
-          name?: string
-          nav?: number | null
-          pb_ratio?: number | null
-          pe_ratio?: number | null
-          premium_discount?: number | null
-          risk_level?: string | null
-          sector_allocation?: Json | null
-          shares_outstanding?: number | null
-          symbol?: string
-          top_holdings?: Json | null
-          total_assets?: number | null
-          trading_status?: string | null
-          updated_at?: string | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-          year_to_date_return?: number | null
-        }
-        Relationships: []
-      }
-      china_real_estate: {
-        Row: {
-          average_price: number
-          average_size_sqm: number | null
-          city: string
-          country: string
-          created_at: string | null
-          currency: string
-          data_source: string | null
-          description: string | null
-          district: string
-          id: number
-          infrastructure_score: number | null
-          inventory_months: number | null
-          investment_rating: string | null
-          luxury_segment: boolean | null
-          market_trend: string | null
-          new_listings: number | null
-          price_per_sqm: number
-          property_type: string
-          quarter_over_quarter_change: number | null
-          rental_yield: number | null
-          sales_volume: number | null
-          school_district_rating: number | null
-          transportation_score: number | null
-          updated_at: string | null
-          year_over_year_change: number | null
-        }
-        Insert: {
-          average_price: number
-          average_size_sqm?: number | null
-          city: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          data_source?: string | null
-          description?: string | null
-          district: string
-          id?: number
-          infrastructure_score?: number | null
-          inventory_months?: number | null
-          investment_rating?: string | null
-          luxury_segment?: boolean | null
-          market_trend?: string | null
-          new_listings?: number | null
-          price_per_sqm: number
-          property_type: string
-          quarter_over_quarter_change?: number | null
-          rental_yield?: number | null
-          sales_volume?: number | null
-          school_district_rating?: number | null
-          transportation_score?: number | null
-          updated_at?: string | null
-          year_over_year_change?: number | null
-        }
-        Update: {
-          average_price?: number
-          average_size_sqm?: number | null
-          city?: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          data_source?: string | null
-          description?: string | null
-          district?: string
-          id?: number
-          infrastructure_score?: number | null
-          inventory_months?: number | null
-          investment_rating?: string | null
-          luxury_segment?: boolean | null
-          market_trend?: string | null
-          new_listings?: number | null
-          price_per_sqm?: number
-          property_type?: string
-          quarter_over_quarter_change?: number | null
-          rental_yield?: number | null
-          sales_volume?: number | null
-          school_district_rating?: number | null
-          transportation_score?: number | null
-          updated_at?: string | null
-          year_over_year_change?: number | null
-        }
-        Relationships: []
-      }
-      china_stocks: {
-        Row: {
-          avg_volume: number | null
-          change_amount: number | null
-          change_percent: number | null
-          country: string
-          created_at: string | null
-          currency: string
-          description: string | null
-          dividend_yield: number | null
-          employees: number | null
-          exchange: string
-          founded_year: number | null
-          headquarters: string | null
-          id: number
-          industry: string | null
-          market_cap: number | null
-          name: string
-          pe_ratio: number | null
-          price: number
-          sector: string | null
-          symbol: string
-          updated_at: string | null
-          volume: number | null
-          website: string | null
-          week_52_high: number | null
-          week_52_low: number | null
-        }
-        Insert: {
-          avg_volume?: number | null
-          change_amount?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          dividend_yield?: number | null
-          employees?: number | null
-          exchange: string
-          founded_year?: number | null
-          headquarters?: string | null
-          id?: number
-          industry?: string | null
-          market_cap?: number | null
-          name: string
-          pe_ratio?: number | null
-          price: number
-          sector?: string | null
-          symbol: string
-          updated_at?: string | null
-          volume?: number | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-        }
-        Update: {
-          avg_volume?: number | null
-          change_amount?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          dividend_yield?: number | null
-          employees?: number | null
-          exchange?: string
-          founded_year?: number | null
-          headquarters?: string | null
-          id?: number
-          industry?: string | null
-          market_cap?: number | null
-          name?: string
-          pe_ratio?: number | null
-          price?: number
-          sector?: string | null
-          symbol?: string
-          updated_at?: string | null
-          volume?: number | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-        }
-        Relationships: []
-      }
       cities: {
         Row: {
           country: string | null
@@ -1208,156 +659,6 @@ export type Database = {
         }
         Relationships: []
       }
-      europe_bank_products: {
-        Row: {
-          bank_full_name: string
-          bank_name: string
-          country: string
-          created_at: string | null
-          currency: string
-          deposit_protection: string | null
-          early_withdrawal_penalty: number | null
-          eligibility: string | null
-          features: string | null
-          id: number
-          interest_rate: number
-          is_active: boolean | null
-          last_updated: string | null
-          maximum_amount: number | null
-          minimum_amount: number | null
-          monthly_fee: number | null
-          opening_fee: number | null
-          product_name: string
-          product_type: string
-          term_description: string | null
-          term_months: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          bank_full_name: string
-          bank_name: string
-          country: string
-          created_at?: string | null
-          currency: string
-          deposit_protection?: string | null
-          early_withdrawal_penalty?: number | null
-          eligibility?: string | null
-          features?: string | null
-          id?: number
-          interest_rate: number
-          is_active?: boolean | null
-          last_updated?: string | null
-          maximum_amount?: number | null
-          minimum_amount?: number | null
-          monthly_fee?: number | null
-          opening_fee?: number | null
-          product_name: string
-          product_type: string
-          term_description?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          bank_full_name?: string
-          bank_name?: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          deposit_protection?: string | null
-          early_withdrawal_penalty?: number | null
-          eligibility?: string | null
-          features?: string | null
-          id?: number
-          interest_rate?: number
-          is_active?: boolean | null
-          last_updated?: string | null
-          maximum_amount?: number | null
-          minimum_amount?: number | null
-          monthly_fee?: number | null
-          opening_fee?: number | null
-          product_name?: string
-          product_type?: string
-          term_description?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      europe_bonds: {
-        Row: {
-          bond_name: string
-          bond_type: string
-          callable: boolean | null
-          country: string
-          coupon_rate: number | null
-          created_at: string | null
-          credit_rating: string | null
-          currency: string
-          current_price: number | null
-          duration: number | null
-          face_value: number
-          id: number
-          is_active: boolean | null
-          isin: string | null
-          issue_date: string | null
-          issuer: string
-          last_updated: string | null
-          maturity_date: string | null
-          minimum_investment: number | null
-          tax_exempt: boolean | null
-          updated_at: string | null
-          yield_rate: number
-        }
-        Insert: {
-          bond_name: string
-          bond_type: string
-          callable?: boolean | null
-          country: string
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency: string
-          current_price?: number | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_active?: boolean | null
-          isin?: string | null
-          issue_date?: string | null
-          issuer: string
-          last_updated?: string | null
-          maturity_date?: string | null
-          minimum_investment?: number | null
-          tax_exempt?: boolean | null
-          updated_at?: string | null
-          yield_rate: number
-        }
-        Update: {
-          bond_name?: string
-          bond_type?: string
-          callable?: boolean | null
-          country?: string
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_active?: boolean | null
-          isin?: string | null
-          issue_date?: string | null
-          issuer?: string
-          last_updated?: string | null
-          maturity_date?: string | null
-          minimum_investment?: number | null
-          tax_exempt?: boolean | null
-          updated_at?: string | null
-          yield_rate?: number
-        }
-        Relationships: []
-      }
       europe_etfs: {
         Row: {
           assets_under_management: number | null
@@ -1437,135 +738,6 @@ export type Database = {
           price?: number | null
           symbol?: string
           underlying_index?: string | null
-          updated_at?: string | null
-          volume?: number | null
-        }
-        Relationships: []
-      }
-      europe_real_estate: {
-        Row: {
-          city: string
-          country: string
-          created_at: string | null
-          currency: string
-          days_on_market: number | null
-          id: number
-          inventory_months: number | null
-          last_updated: string | null
-          market_trend: string | null
-          median_price_local: number | null
-          neighborhood: string
-          price_change_1y: number | null
-          price_per_sqm_local: number | null
-          property_type: string | null
-          region: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          city: string
-          country: string
-          created_at?: string | null
-          currency: string
-          days_on_market?: number | null
-          id?: number
-          inventory_months?: number | null
-          last_updated?: string | null
-          market_trend?: string | null
-          median_price_local?: number | null
-          neighborhood: string
-          price_change_1y?: number | null
-          price_per_sqm_local?: number | null
-          property_type?: string | null
-          region?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          city?: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          days_on_market?: number | null
-          id?: number
-          inventory_months?: number | null
-          last_updated?: string | null
-          market_trend?: string | null
-          median_price_local?: number | null
-          neighborhood?: string
-          price_change_1y?: number | null
-          price_per_sqm_local?: number | null
-          property_type?: string | null
-          region?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      europe_stocks: {
-        Row: {
-          change: number | null
-          change_percentage: number | null
-          country: string
-          created_at: string | null
-          currency: string
-          eps: number | null
-          exchange: string
-          high: number | null
-          id: number
-          last_updated: string | null
-          low: number | null
-          market_cap: number | null
-          name: string
-          open: number | null
-          pe_ratio: number | null
-          previous_close: number | null
-          price: number | null
-          sector: string | null
-          symbol: string
-          updated_at: string | null
-          volume: number | null
-        }
-        Insert: {
-          change?: number | null
-          change_percentage?: number | null
-          country: string
-          created_at?: string | null
-          currency: string
-          eps?: number | null
-          exchange: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name: string
-          open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol: string
-          updated_at?: string | null
-          volume?: number | null
-        }
-        Update: {
-          change?: number | null
-          change_percentage?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          eps?: number | null
-          exchange?: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name?: string
-          open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol?: string
           updated_at?: string | null
           volume?: number | null
         }
@@ -1652,132 +824,6 @@ export type Database = {
         }
         Relationships: []
       }
-      germany_stocks: {
-        Row: {
-          change: number | null
-          change_percentage: number | null
-          created_at: string | null
-          currency: string
-          eps: number | null
-          exchange: string
-          high: number | null
-          id: number
-          last_updated: string | null
-          low: number | null
-          market_cap: number | null
-          name: string
-          open: number | null
-          pe_ratio: number | null
-          previous_close: number | null
-          price: number | null
-          sector: string | null
-          symbol: string
-          updated_at: string | null
-          volume: number | null
-        }
-        Insert: {
-          change?: number | null
-          change_percentage?: number | null
-          created_at?: string | null
-          currency?: string
-          eps?: number | null
-          exchange?: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name: string
-          open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol: string
-          updated_at?: string | null
-          volume?: number | null
-        }
-        Update: {
-          change?: number | null
-          change_percentage?: number | null
-          created_at?: string | null
-          currency?: string
-          eps?: number | null
-          exchange?: string
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name?: string
-          open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
-          symbol?: string
-          updated_at?: string | null
-          volume?: number | null
-        }
-        Relationships: []
-      }
-      gold_prices: {
-        Row: {
-          change_24h: number | null
-          change_percentage_24h: number | null
-          created_at: string | null
-          id: number
-          last_updated: string | null
-          price_14k_egp: number | null
-          price_18k_egp: number | null
-          price_21k_egp: number | null
-          price_22k_egp: number | null
-          price_24k_egp: number | null
-          price_per_gram_egp: number
-          price_per_gram_usd: number | null
-          price_per_ounce_egp: number
-          price_per_ounce_usd: number | null
-          source: string
-          updated_at: string | null
-        }
-        Insert: {
-          change_24h?: number | null
-          change_percentage_24h?: number | null
-          created_at?: string | null
-          id?: number
-          last_updated?: string | null
-          price_14k_egp?: number | null
-          price_18k_egp?: number | null
-          price_21k_egp?: number | null
-          price_22k_egp?: number | null
-          price_24k_egp?: number | null
-          price_per_gram_egp: number
-          price_per_gram_usd?: number | null
-          price_per_ounce_egp: number
-          price_per_ounce_usd?: number | null
-          source: string
-          updated_at?: string | null
-        }
-        Update: {
-          change_24h?: number | null
-          change_percentage_24h?: number | null
-          created_at?: string | null
-          id?: number
-          last_updated?: string | null
-          price_14k_egp?: number | null
-          price_18k_egp?: number | null
-          price_21k_egp?: number | null
-          price_22k_egp?: number | null
-          price_24k_egp?: number | null
-          price_per_gram_egp?: number
-          price_per_gram_usd?: number | null
-          price_per_ounce_egp?: number
-          price_per_ounce_usd?: number | null
-          source?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       income_streams: {
         Row: {
           amount: number
@@ -1814,353 +860,77 @@ export type Database = {
         }
         Relationships: []
       }
-      india_bank_products: {
-        Row: {
-          bank_full_name: string
-          bank_name: string
-          created_at: string | null
-          currency: string
-          early_withdrawal_penalty: number | null
-          eligibility: string | null
-          features: string | null
-          id: number
-          interest_rate: number
-          is_active: boolean | null
-          last_updated: string | null
-          maximum_amount: number | null
-          minimum_amount: number | null
-          monthly_fee: number | null
-          opening_fee: number | null
-          product_name: string
-          product_type: string
-          rbi_insured: boolean | null
-          term_description: string | null
-          term_months: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          bank_full_name: string
-          bank_name: string
-          created_at?: string | null
-          currency?: string
-          early_withdrawal_penalty?: number | null
-          eligibility?: string | null
-          features?: string | null
-          id?: number
-          interest_rate: number
-          is_active?: boolean | null
-          last_updated?: string | null
-          maximum_amount?: number | null
-          minimum_amount?: number | null
-          monthly_fee?: number | null
-          opening_fee?: number | null
-          product_name: string
-          product_type: string
-          rbi_insured?: boolean | null
-          term_description?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          bank_full_name?: string
-          bank_name?: string
-          created_at?: string | null
-          currency?: string
-          early_withdrawal_penalty?: number | null
-          eligibility?: string | null
-          features?: string | null
-          id?: number
-          interest_rate?: number
-          is_active?: boolean | null
-          last_updated?: string | null
-          maximum_amount?: number | null
-          minimum_amount?: number | null
-          monthly_fee?: number | null
-          opening_fee?: number | null
-          product_name?: string
-          product_type?: string
-          rbi_insured?: boolean | null
-          term_description?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      india_bonds: {
-        Row: {
-          bond_name: string
-          bond_type: string
-          callable: boolean | null
-          coupon_rate: number | null
-          created_at: string | null
-          credit_rating: string | null
-          currency: string
-          current_price: number | null
-          duration: number | null
-          face_value: number
-          id: number
-          is_active: boolean | null
-          isin: string | null
-          issue_date: string | null
-          issuer: string
-          last_updated: string | null
-          maturity_date: string | null
-          minimum_investment: number | null
-          tax_exempt: boolean | null
-          updated_at: string | null
-          yield_rate: number
-        }
-        Insert: {
-          bond_name: string
-          bond_type: string
-          callable?: boolean | null
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_active?: boolean | null
-          isin?: string | null
-          issue_date?: string | null
-          issuer: string
-          last_updated?: string | null
-          maturity_date?: string | null
-          minimum_investment?: number | null
-          tax_exempt?: boolean | null
-          updated_at?: string | null
-          yield_rate: number
-        }
-        Update: {
-          bond_name?: string
-          bond_type?: string
-          callable?: boolean | null
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_active?: boolean | null
-          isin?: string | null
-          issue_date?: string | null
-          issuer?: string
-          last_updated?: string | null
-          maturity_date?: string | null
-          minimum_investment?: number | null
-          tax_exempt?: boolean | null
-          updated_at?: string | null
-          yield_rate?: number
-        }
-        Relationships: []
-      }
-      india_etfs: {
-        Row: {
-          assets_under_management: number | null
-          category: string | null
-          change: number | null
-          change_percentage: number | null
-          created_at: string | null
-          currency: string
-          dividend_yield: number | null
-          exchange: string | null
-          expense_ratio: number | null
-          fund_house: string | null
-          fund_type: string | null
-          id: number
-          inception_date: string | null
-          is_active: boolean | null
-          last_updated: string | null
-          name: string
-          nav: number
-          pe_ratio: number | null
-          price: number | null
-          symbol: string
-          underlying_index: string | null
-          updated_at: string | null
-          volume: number | null
-        }
-        Insert: {
-          assets_under_management?: number | null
-          category?: string | null
-          change?: number | null
-          change_percentage?: number | null
-          created_at?: string | null
-          currency?: string
-          dividend_yield?: number | null
-          exchange?: string | null
-          expense_ratio?: number | null
-          fund_house?: string | null
-          fund_type?: string | null
-          id?: number
-          inception_date?: string | null
-          is_active?: boolean | null
-          last_updated?: string | null
-          name: string
-          nav: number
-          pe_ratio?: number | null
-          price?: number | null
-          symbol: string
-          underlying_index?: string | null
-          updated_at?: string | null
-          volume?: number | null
-        }
-        Update: {
-          assets_under_management?: number | null
-          category?: string | null
-          change?: number | null
-          change_percentage?: number | null
-          created_at?: string | null
-          currency?: string
-          dividend_yield?: number | null
-          exchange?: string | null
-          expense_ratio?: number | null
-          fund_house?: string | null
-          fund_type?: string | null
-          id?: number
-          inception_date?: string | null
-          is_active?: boolean | null
-          last_updated?: string | null
-          name?: string
-          nav?: number
-          pe_ratio?: number | null
-          price?: number | null
-          symbol?: string
-          underlying_index?: string | null
-          updated_at?: string | null
-          volume?: number | null
-        }
-        Relationships: []
-      }
-      india_real_estate: {
-        Row: {
-          city: string
-          created_at: string | null
-          currency: string
-          days_on_market: number | null
-          id: number
-          inventory_months: number | null
-          last_updated: string | null
-          market_trend: string | null
-          median_price_inr: number | null
-          neighborhood: string
-          price_change_1y: number | null
-          price_per_sqft_inr: number | null
-          price_per_sqm_inr: number | null
-          property_type: string | null
-          region: string | null
-          state: string
-          updated_at: string | null
-        }
-        Insert: {
-          city: string
-          created_at?: string | null
-          currency?: string
-          days_on_market?: number | null
-          id?: number
-          inventory_months?: number | null
-          last_updated?: string | null
-          market_trend?: string | null
-          median_price_inr?: number | null
-          neighborhood: string
-          price_change_1y?: number | null
-          price_per_sqft_inr?: number | null
-          price_per_sqm_inr?: number | null
-          property_type?: string | null
-          region?: string | null
-          state: string
-          updated_at?: string | null
-        }
-        Update: {
-          city?: string
-          created_at?: string | null
-          currency?: string
-          days_on_market?: number | null
-          id?: number
-          inventory_months?: number | null
-          last_updated?: string | null
-          market_trend?: string | null
-          median_price_inr?: number | null
-          neighborhood?: string
-          price_change_1y?: number | null
-          price_per_sqft_inr?: number | null
-          price_per_sqm_inr?: number | null
-          property_type?: string | null
-          region?: string | null
-          state?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      india_stocks: {
+      international_indices: {
         Row: {
           change: number | null
-          change_percentage: number | null
+          change_percent: number | null
+          country: string
+          country_ar: string | null
+          country_code: string
           created_at: string | null
-          currency: string
-          eps: number | null
-          exchange: string
+          currency: string | null
           high: number | null
           id: number
           last_updated: string | null
           low: number | null
           market_cap: number | null
           name: string
+          name_ar: string | null
           open: number | null
-          pe_ratio: number | null
-          previous_close: number | null
-          price: number | null
-          sector: string | null
+          region: string
+          scraped_at: string | null
+          source: string
+          status: string | null
           symbol: string
-          updated_at: string | null
+          value: number | null
           volume: number | null
         }
         Insert: {
           change?: number | null
-          change_percentage?: number | null
+          change_percent?: number | null
+          country: string
+          country_ar?: string | null
+          country_code: string
           created_at?: string | null
-          currency?: string
-          eps?: number | null
-          exchange: string
+          currency?: string | null
           high?: number | null
           id?: number
           last_updated?: string | null
           low?: number | null
           market_cap?: number | null
           name: string
+          name_ar?: string | null
           open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
+          region: string
+          scraped_at?: string | null
+          source: string
+          status?: string | null
           symbol: string
-          updated_at?: string | null
+          value?: number | null
           volume?: number | null
         }
         Update: {
           change?: number | null
-          change_percentage?: number | null
+          change_percent?: number | null
+          country?: string
+          country_ar?: string | null
+          country_code?: string
           created_at?: string | null
-          currency?: string
-          eps?: number | null
-          exchange?: string
+          currency?: string | null
           high?: number | null
           id?: number
           last_updated?: string | null
           low?: number | null
           market_cap?: number | null
           name?: string
+          name_ar?: string | null
           open?: number | null
-          pe_ratio?: number | null
-          previous_close?: number | null
-          price?: number | null
-          sector?: string | null
+          region?: string
+          scraped_at?: string | null
+          source?: string
+          status?: string | null
           symbol?: string
-          updated_at?: string | null
+          value?: number | null
           volume?: number | null
         }
         Relationships: []
@@ -2209,6 +979,57 @@ export type Database = {
           },
         ]
       }
+      news_articles: {
+        Row: {
+          category: string | null
+          country: string
+          created_at: string | null
+          full_text: string
+          id: string
+          keywords: string[] | null
+          priority_score: number | null
+          sentiment: string
+          source_website: string | null
+          sources: string[]
+          summary: string
+          title: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          category?: string | null
+          country?: string
+          created_at?: string | null
+          full_text: string
+          id?: string
+          keywords?: string[] | null
+          priority_score?: number | null
+          sentiment: string
+          source_website?: string | null
+          sources: string[]
+          summary: string
+          title: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          category?: string | null
+          country?: string
+          created_at?: string | null
+          full_text?: string
+          id?: string
+          keywords?: string[] | null
+          priority_score?: number | null
+          sentiment?: string
+          source_website?: string | null
+          sources?: string[]
+          summary?: string
+          title?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       personal_finances: {
         Row: {
           created_at: string
@@ -2237,6 +1058,42 @@ export type Database = {
           monthly_income?: number | null
           monthly_investing_amount?: number | null
           net_savings?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      personalized_news_analysis: {
+        Row: {
+          analysis_content: string
+          article_id: string
+          created_at: string
+          id: string
+          impact_score: number | null
+          recommendations: string | null
+          relevance_score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_content: string
+          article_id: string
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          recommendations?: string | null
+          relevance_score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_content?: string
+          article_id?: string
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          recommendations?: string | null
+          relevance_score?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -2401,1143 +1258,153 @@ export type Database = {
         }
         Relationships: []
       }
-      saudi_bank_products: {
+      saudi_stocks: {
         Row: {
-          bank_name: string
-          bank_name_ar: string | null
-          country: string
-          created_at: string | null
-          currency: string
-          description: string | null
-          description_ar: string | null
-          eligibility_requirements: string | null
-          features: string[] | null
-          fees_and_charges: Json | null
-          id: number
-          interest_rate: number
-          is_active: boolean | null
-          is_islamic: boolean | null
-          launch_date: string | null
-          maximum_balance: number | null
-          minimum_balance: number | null
-          product_name: string
-          product_name_ar: string | null
-          product_type: string
-          profit_rate: number | null
-          risk_level: string | null
-          sharia_compliant: boolean | null
-          term_months: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          bank_name: string
-          bank_name_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          eligibility_requirements?: string | null
-          features?: string[] | null
-          fees_and_charges?: Json | null
-          id?: number
-          interest_rate: number
-          is_active?: boolean | null
-          is_islamic?: boolean | null
-          launch_date?: string | null
-          maximum_balance?: number | null
-          minimum_balance?: number | null
-          product_name: string
-          product_name_ar?: string | null
-          product_type: string
-          profit_rate?: number | null
-          risk_level?: string | null
-          sharia_compliant?: boolean | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          bank_name?: string
-          bank_name_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          eligibility_requirements?: string | null
-          features?: string[] | null
-          fees_and_charges?: Json | null
-          id?: number
-          interest_rate?: number
-          is_active?: boolean | null
-          is_islamic?: boolean | null
-          launch_date?: string | null
-          maximum_balance?: number | null
-          minimum_balance?: number | null
-          product_name?: string
-          product_name_ar?: string | null
-          product_type?: string
-          profit_rate?: number | null
-          risk_level?: string | null
-          sharia_compliant?: boolean | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      saudi_bonds: {
-        Row: {
-          accrued_interest: number | null
-          bond_name: string
-          bond_name_ar: string | null
-          bond_type: string
-          convexity: number | null
-          country: string
-          coupon_rate: number
-          created_at: string | null
-          credit_rating: string | null
-          currency: string
-          current_price: number
-          description: string | null
-          description_ar: string | null
-          duration: number | null
-          face_value: number
-          id: number
-          is_islamic: boolean | null
-          issue_date: string
-          issuer: string
-          issuer_ar: string | null
-          market_segment: string | null
-          maturity_date: string
-          minimum_investment: number | null
-          modified_duration: number | null
-          profit_rate: number | null
-          rating_agency: string | null
-          sector: string | null
-          sharia_compliant: boolean | null
-          symbol: string | null
-          trading_status: string | null
-          updated_at: string | null
-          use_of_proceeds: string | null
-          yield_to_maturity: number | null
-        }
-        Insert: {
-          accrued_interest?: number | null
-          bond_name: string
-          bond_name_ar?: string | null
-          bond_type: string
-          convexity?: number | null
-          country?: string
-          coupon_rate: number
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price: number
-          description?: string | null
-          description_ar?: string | null
-          duration?: number | null
-          face_value: number
-          id?: number
-          is_islamic?: boolean | null
-          issue_date: string
-          issuer: string
-          issuer_ar?: string | null
-          market_segment?: string | null
-          maturity_date: string
-          minimum_investment?: number | null
-          modified_duration?: number | null
-          profit_rate?: number | null
-          rating_agency?: string | null
-          sector?: string | null
-          sharia_compliant?: boolean | null
-          symbol?: string | null
-          trading_status?: string | null
-          updated_at?: string | null
-          use_of_proceeds?: string | null
-          yield_to_maturity?: number | null
-        }
-        Update: {
-          accrued_interest?: number | null
-          bond_name?: string
-          bond_name_ar?: string | null
-          bond_type?: string
-          convexity?: number | null
-          country?: string
-          coupon_rate?: number
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number
-          description?: string | null
-          description_ar?: string | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_islamic?: boolean | null
-          issue_date?: string
-          issuer?: string
-          issuer_ar?: string | null
-          market_segment?: string | null
-          maturity_date?: string
-          minimum_investment?: number | null
-          modified_duration?: number | null
-          profit_rate?: number | null
-          rating_agency?: string | null
-          sector?: string | null
-          sharia_compliant?: boolean | null
-          symbol?: string | null
-          trading_status?: string | null
-          updated_at?: string | null
-          use_of_proceeds?: string | null
-          yield_to_maturity?: number | null
-        }
-        Relationships: []
-      }
-      saudi_etfs: {
-        Row: {
-          average_volume: number | null
-          benchmark_index: string | null
-          category: string
-          country: string
-          created_at: string | null
-          currency: string
-          current_price: number
-          description: string | null
-          description_ar: string | null
-          dividend_yield: number | null
-          exchange: string
-          expense_ratio: number | null
-          fund_family: string
-          fund_manager: string | null
-          geographic_allocation: Json | null
-          id: number
-          inception_date: string | null
-          investment_objective: string | null
-          investment_objective_ar: string | null
-          is_islamic: boolean | null
-          management_company: string | null
-          minimum_investment: number | null
-          name: string
-          name_ar: string | null
-          nav: number | null
-          pb_ratio: number | null
-          pe_ratio: number | null
-          premium_discount: number | null
-          risk_level: string | null
-          sector_allocation: Json | null
-          shares_outstanding: number | null
-          sharia_compliant: boolean | null
-          symbol: string
-          top_holdings: Json | null
-          total_assets: number | null
-          trading_status: string | null
-          updated_at: string | null
-          website: string | null
-          week_52_high: number | null
-          week_52_low: number | null
-          year_to_date_return: number | null
-        }
-        Insert: {
-          average_volume?: number | null
-          benchmark_index?: string | null
-          category: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          current_price: number
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          exchange?: string
-          expense_ratio?: number | null
-          fund_family: string
-          fund_manager?: string | null
-          geographic_allocation?: Json | null
-          id?: number
-          inception_date?: string | null
-          investment_objective?: string | null
-          investment_objective_ar?: string | null
-          is_islamic?: boolean | null
-          management_company?: string | null
-          minimum_investment?: number | null
-          name: string
-          name_ar?: string | null
-          nav?: number | null
-          pb_ratio?: number | null
-          pe_ratio?: number | null
-          premium_discount?: number | null
-          risk_level?: string | null
-          sector_allocation?: Json | null
-          shares_outstanding?: number | null
-          sharia_compliant?: boolean | null
-          symbol: string
-          top_holdings?: Json | null
-          total_assets?: number | null
-          trading_status?: string | null
-          updated_at?: string | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-          year_to_date_return?: number | null
-        }
-        Update: {
-          average_volume?: number | null
-          benchmark_index?: string | null
-          category?: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          current_price?: number
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          exchange?: string
-          expense_ratio?: number | null
-          fund_family?: string
-          fund_manager?: string | null
-          geographic_allocation?: Json | null
-          id?: number
-          inception_date?: string | null
-          investment_objective?: string | null
-          investment_objective_ar?: string | null
-          is_islamic?: boolean | null
-          management_company?: string | null
-          minimum_investment?: number | null
-          name?: string
-          name_ar?: string | null
-          nav?: number | null
-          pb_ratio?: number | null
-          pe_ratio?: number | null
-          premium_discount?: number | null
-          risk_level?: string | null
-          sector_allocation?: Json | null
-          shares_outstanding?: number | null
-          sharia_compliant?: boolean | null
-          symbol?: string
-          top_holdings?: Json | null
-          total_assets?: number | null
-          trading_status?: string | null
-          updated_at?: string | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-          year_to_date_return?: number | null
-        }
-        Relationships: []
-      }
-      saudi_real_estate: {
-        Row: {
-          average_price: number
-          average_size_sqm: number | null
-          city: string
-          city_ar: string | null
-          country: string
-          created_at: string | null
-          currency: string
-          data_source: string | null
-          description: string | null
-          description_ar: string | null
-          district: string
-          district_ar: string | null
-          id: number
-          infrastructure_score: number | null
-          inventory_months: number | null
-          investment_rating: string | null
-          luxury_segment: boolean | null
-          market_trend: string | null
-          neom_project: boolean | null
-          new_listings: number | null
-          price_per_sqm: number
-          property_type: string
-          quarter_over_quarter_change: number | null
-          rental_yield: number | null
-          sales_volume: number | null
-          school_district_rating: number | null
-          transportation_score: number | null
-          updated_at: string | null
-          vision_2030_zone: boolean | null
-          year_over_year_change: number | null
-        }
-        Insert: {
-          average_price: number
-          average_size_sqm?: number | null
-          city: string
-          city_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          data_source?: string | null
-          description?: string | null
-          description_ar?: string | null
-          district: string
-          district_ar?: string | null
-          id?: number
-          infrastructure_score?: number | null
-          inventory_months?: number | null
-          investment_rating?: string | null
-          luxury_segment?: boolean | null
-          market_trend?: string | null
-          neom_project?: boolean | null
-          new_listings?: number | null
-          price_per_sqm: number
-          property_type: string
-          quarter_over_quarter_change?: number | null
-          rental_yield?: number | null
-          sales_volume?: number | null
-          school_district_rating?: number | null
-          transportation_score?: number | null
-          updated_at?: string | null
-          vision_2030_zone?: boolean | null
-          year_over_year_change?: number | null
-        }
-        Update: {
-          average_price?: number
-          average_size_sqm?: number | null
-          city?: string
-          city_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          data_source?: string | null
-          description?: string | null
-          description_ar?: string | null
-          district?: string
-          district_ar?: string | null
-          id?: number
-          infrastructure_score?: number | null
-          inventory_months?: number | null
-          investment_rating?: string | null
-          luxury_segment?: boolean | null
-          market_trend?: string | null
-          neom_project?: boolean | null
-          new_listings?: number | null
-          price_per_sqm?: number
-          property_type?: string
-          quarter_over_quarter_change?: number | null
-          rental_yield?: number | null
-          sales_volume?: number | null
-          school_district_rating?: number | null
-          transportation_score?: number | null
-          updated_at?: string | null
-          vision_2030_zone?: boolean | null
-          year_over_year_change?: number | null
-        }
-        Relationships: []
-      }
-      uae_bank_products: {
-        Row: {
-          bank_name: string
-          bank_name_ar: string | null
-          country: string
-          created_at: string | null
-          currency: string
-          description: string | null
-          description_ar: string | null
-          eligibility_requirements: string | null
-          features: string[] | null
-          fees_and_charges: Json | null
-          id: number
-          interest_rate: number
-          is_active: boolean | null
-          is_islamic: boolean | null
-          launch_date: string | null
-          maximum_balance: number | null
-          minimum_balance: number | null
-          product_name: string
-          product_name_ar: string | null
-          product_type: string
-          profit_rate: number | null
-          risk_level: string | null
-          sharia_compliant: boolean | null
-          term_months: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          bank_name: string
-          bank_name_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          eligibility_requirements?: string | null
-          features?: string[] | null
-          fees_and_charges?: Json | null
-          id?: number
-          interest_rate: number
-          is_active?: boolean | null
-          is_islamic?: boolean | null
-          launch_date?: string | null
-          maximum_balance?: number | null
-          minimum_balance?: number | null
-          product_name: string
-          product_name_ar?: string | null
-          product_type: string
-          profit_rate?: number | null
-          risk_level?: string | null
-          sharia_compliant?: boolean | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          bank_name?: string
-          bank_name_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          description_ar?: string | null
-          eligibility_requirements?: string | null
-          features?: string[] | null
-          fees_and_charges?: Json | null
-          id?: number
-          interest_rate?: number
-          is_active?: boolean | null
-          is_islamic?: boolean | null
-          launch_date?: string | null
-          maximum_balance?: number | null
-          minimum_balance?: number | null
-          product_name?: string
-          product_name_ar?: string | null
-          product_type?: string
-          profit_rate?: number | null
-          risk_level?: string | null
-          sharia_compliant?: boolean | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      uae_bonds: {
-        Row: {
-          accrued_interest: number | null
-          bond_name: string
-          bond_name_ar: string | null
-          bond_type: string
-          convexity: number | null
-          country: string
-          coupon_rate: number
-          created_at: string | null
-          credit_rating: string | null
-          currency: string
-          current_price: number
-          description: string | null
-          description_ar: string | null
-          duration: number | null
-          face_value: number
-          id: number
-          is_islamic: boolean | null
-          issue_date: string
-          issuer: string
-          issuer_ar: string | null
-          market_segment: string | null
-          maturity_date: string
-          minimum_investment: number | null
-          modified_duration: number | null
-          profit_rate: number | null
-          rating_agency: string | null
-          sector: string | null
-          sharia_compliant: boolean | null
-          symbol: string | null
-          trading_status: string | null
-          updated_at: string | null
-          use_of_proceeds: string | null
-          yield_to_maturity: number | null
-        }
-        Insert: {
-          accrued_interest?: number | null
-          bond_name: string
-          bond_name_ar?: string | null
-          bond_type: string
-          convexity?: number | null
-          country?: string
-          coupon_rate: number
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price: number
-          description?: string | null
-          description_ar?: string | null
-          duration?: number | null
-          face_value: number
-          id?: number
-          is_islamic?: boolean | null
-          issue_date: string
-          issuer: string
-          issuer_ar?: string | null
-          market_segment?: string | null
-          maturity_date: string
-          minimum_investment?: number | null
-          modified_duration?: number | null
-          profit_rate?: number | null
-          rating_agency?: string | null
-          sector?: string | null
-          sharia_compliant?: boolean | null
-          symbol?: string | null
-          trading_status?: string | null
-          updated_at?: string | null
-          use_of_proceeds?: string | null
-          yield_to_maturity?: number | null
-        }
-        Update: {
-          accrued_interest?: number | null
-          bond_name?: string
-          bond_name_ar?: string | null
-          bond_type?: string
-          convexity?: number | null
-          country?: string
-          coupon_rate?: number
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number
-          description?: string | null
-          description_ar?: string | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_islamic?: boolean | null
-          issue_date?: string
-          issuer?: string
-          issuer_ar?: string | null
-          market_segment?: string | null
-          maturity_date?: string
-          minimum_investment?: number | null
-          modified_duration?: number | null
-          profit_rate?: number | null
-          rating_agency?: string | null
-          sector?: string | null
-          sharia_compliant?: boolean | null
-          symbol?: string | null
-          trading_status?: string | null
-          updated_at?: string | null
-          use_of_proceeds?: string | null
-          yield_to_maturity?: number | null
-        }
-        Relationships: []
-      }
-      uae_etfs: {
-        Row: {
-          average_volume: number | null
-          benchmark_index: string | null
-          category: string
-          country: string
-          created_at: string | null
-          currency: string
-          current_price: number
-          description: string | null
-          description_ar: string | null
-          dividend_yield: number | null
-          exchange: string
-          expense_ratio: number | null
-          fund_family: string
-          fund_manager: string | null
-          geographic_allocation: Json | null
-          id: number
-          inception_date: string | null
-          investment_objective: string | null
-          investment_objective_ar: string | null
-          is_islamic: boolean | null
-          management_company: string | null
-          minimum_investment: number | null
-          name: string
-          name_ar: string | null
-          nav: number | null
-          pb_ratio: number | null
-          pe_ratio: number | null
-          premium_discount: number | null
-          risk_level: string | null
-          sector_allocation: Json | null
-          shares_outstanding: number | null
-          sharia_compliant: boolean | null
-          symbol: string
-          top_holdings: Json | null
-          total_assets: number | null
-          trading_status: string | null
-          updated_at: string | null
-          website: string | null
-          week_52_high: number | null
-          week_52_low: number | null
-          year_to_date_return: number | null
-        }
-        Insert: {
-          average_volume?: number | null
-          benchmark_index?: string | null
-          category: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          current_price: number
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          exchange: string
-          expense_ratio?: number | null
-          fund_family: string
-          fund_manager?: string | null
-          geographic_allocation?: Json | null
-          id?: number
-          inception_date?: string | null
-          investment_objective?: string | null
-          investment_objective_ar?: string | null
-          is_islamic?: boolean | null
-          management_company?: string | null
-          minimum_investment?: number | null
-          name: string
-          name_ar?: string | null
-          nav?: number | null
-          pb_ratio?: number | null
-          pe_ratio?: number | null
-          premium_discount?: number | null
-          risk_level?: string | null
-          sector_allocation?: Json | null
-          shares_outstanding?: number | null
-          sharia_compliant?: boolean | null
-          symbol: string
-          top_holdings?: Json | null
-          total_assets?: number | null
-          trading_status?: string | null
-          updated_at?: string | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-          year_to_date_return?: number | null
-        }
-        Update: {
-          average_volume?: number | null
-          benchmark_index?: string | null
-          category?: string
-          country?: string
-          created_at?: string | null
-          currency?: string
-          current_price?: number
-          description?: string | null
-          description_ar?: string | null
-          dividend_yield?: number | null
-          exchange?: string
-          expense_ratio?: number | null
-          fund_family?: string
-          fund_manager?: string | null
-          geographic_allocation?: Json | null
-          id?: number
-          inception_date?: string | null
-          investment_objective?: string | null
-          investment_objective_ar?: string | null
-          is_islamic?: boolean | null
-          management_company?: string | null
-          minimum_investment?: number | null
-          name?: string
-          name_ar?: string | null
-          nav?: number | null
-          pb_ratio?: number | null
-          pe_ratio?: number | null
-          premium_discount?: number | null
-          risk_level?: string | null
-          sector_allocation?: Json | null
-          shares_outstanding?: number | null
-          sharia_compliant?: boolean | null
-          symbol?: string
-          top_holdings?: Json | null
-          total_assets?: number | null
-          trading_status?: string | null
-          updated_at?: string | null
-          website?: string | null
-          week_52_high?: number | null
-          week_52_low?: number | null
-          year_to_date_return?: number | null
-        }
-        Relationships: []
-      }
-      uae_real_estate: {
-        Row: {
-          average_price: number
-          average_size_sqft: number | null
-          average_size_sqm: number | null
-          city: string
-          city_ar: string | null
-          country: string
-          created_at: string | null
-          currency: string
-          data_source: string | null
-          description: string | null
-          description_ar: string | null
-          district: string
-          district_ar: string | null
-          emirate: string
-          expo_2020_zone: boolean | null
-          free_zone: boolean | null
-          freehold_area: boolean | null
-          id: number
-          infrastructure_score: number | null
-          inventory_months: number | null
-          investment_rating: string | null
-          luxury_segment: boolean | null
-          market_trend: string | null
-          new_listings: number | null
-          price_per_sqft: number
-          price_per_sqm: number
-          property_type: string
-          quarter_over_quarter_change: number | null
-          rental_yield: number | null
-          sales_volume: number | null
-          school_district_rating: number | null
-          transportation_score: number | null
-          updated_at: string | null
-          year_over_year_change: number | null
-        }
-        Insert: {
-          average_price: number
-          average_size_sqft?: number | null
-          average_size_sqm?: number | null
-          city: string
-          city_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          data_source?: string | null
-          description?: string | null
-          description_ar?: string | null
-          district: string
-          district_ar?: string | null
-          emirate: string
-          expo_2020_zone?: boolean | null
-          free_zone?: boolean | null
-          freehold_area?: boolean | null
-          id?: number
-          infrastructure_score?: number | null
-          inventory_months?: number | null
-          investment_rating?: string | null
-          luxury_segment?: boolean | null
-          market_trend?: string | null
-          new_listings?: number | null
-          price_per_sqft: number
-          price_per_sqm: number
-          property_type: string
-          quarter_over_quarter_change?: number | null
-          rental_yield?: number | null
-          sales_volume?: number | null
-          school_district_rating?: number | null
-          transportation_score?: number | null
-          updated_at?: string | null
-          year_over_year_change?: number | null
-        }
-        Update: {
-          average_price?: number
-          average_size_sqft?: number | null
-          average_size_sqm?: number | null
-          city?: string
-          city_ar?: string | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          data_source?: string | null
-          description?: string | null
-          description_ar?: string | null
-          district?: string
-          district_ar?: string | null
-          emirate?: string
-          expo_2020_zone?: boolean | null
-          free_zone?: boolean | null
-          freehold_area?: boolean | null
-          id?: number
-          infrastructure_score?: number | null
-          inventory_months?: number | null
-          investment_rating?: string | null
-          luxury_segment?: boolean | null
-          market_trend?: string | null
-          new_listings?: number | null
-          price_per_sqft?: number
-          price_per_sqm?: number
-          property_type?: string
-          quarter_over_quarter_change?: number | null
-          rental_yield?: number | null
-          sales_volume?: number | null
-          school_district_rating?: number | null
-          transportation_score?: number | null
-          updated_at?: string | null
-          year_over_year_change?: number | null
-        }
-        Relationships: []
-      }
-      us_bank_products: {
-        Row: {
-          bank_full_name: string
-          bank_name: string
-          created_at: string | null
-          currency: string
-          early_withdrawal_penalty: number | null
-          eligibility: string | null
-          fdic_insured: boolean | null
-          features: string | null
-          id: number
-          interest_rate: number
-          is_active: boolean | null
-          last_updated: string | null
-          maximum_amount: number | null
-          minimum_amount: number | null
-          monthly_fee: number | null
-          opening_fee: number | null
-          product_name: string
-          product_type: string
-          term_description: string | null
-          term_months: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          bank_full_name: string
-          bank_name: string
-          created_at?: string | null
-          currency?: string
-          early_withdrawal_penalty?: number | null
-          eligibility?: string | null
-          fdic_insured?: boolean | null
-          features?: string | null
-          id?: number
-          interest_rate: number
-          is_active?: boolean | null
-          last_updated?: string | null
-          maximum_amount?: number | null
-          minimum_amount?: number | null
-          monthly_fee?: number | null
-          opening_fee?: number | null
-          product_name: string
-          product_type: string
-          term_description?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          bank_full_name?: string
-          bank_name?: string
-          created_at?: string | null
-          currency?: string
-          early_withdrawal_penalty?: number | null
-          eligibility?: string | null
-          fdic_insured?: boolean | null
-          features?: string | null
-          id?: number
-          interest_rate?: number
-          is_active?: boolean | null
-          last_updated?: string | null
-          maximum_amount?: number | null
-          minimum_amount?: number | null
-          monthly_fee?: number | null
-          opening_fee?: number | null
-          product_name?: string
-          product_type?: string
-          term_description?: string | null
-          term_months?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      us_bonds: {
-        Row: {
-          bond_name: string
-          bond_type: string
-          callable: boolean | null
-          coupon_rate: number | null
-          created_at: string | null
-          credit_rating: string | null
-          currency: string
-          current_price: number | null
-          cusip: string | null
-          duration: number | null
-          face_value: number
-          id: number
-          is_active: boolean | null
-          issue_date: string | null
-          issuer: string
-          last_updated: string | null
-          maturity_date: string | null
-          minimum_investment: number | null
-          tax_exempt: boolean | null
-          updated_at: string | null
-          yield_rate: number
-        }
-        Insert: {
-          bond_name: string
-          bond_type: string
-          callable?: boolean | null
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number | null
-          cusip?: string | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_active?: boolean | null
-          issue_date?: string | null
-          issuer: string
-          last_updated?: string | null
-          maturity_date?: string | null
-          minimum_investment?: number | null
-          tax_exempt?: boolean | null
-          updated_at?: string | null
-          yield_rate: number
-        }
-        Update: {
-          bond_name?: string
-          bond_type?: string
-          callable?: boolean | null
-          coupon_rate?: number | null
-          created_at?: string | null
-          credit_rating?: string | null
-          currency?: string
-          current_price?: number | null
-          cusip?: string | null
-          duration?: number | null
-          face_value?: number
-          id?: number
-          is_active?: boolean | null
-          issue_date?: string | null
-          issuer?: string
-          last_updated?: string | null
-          maturity_date?: string | null
-          minimum_investment?: number | null
-          tax_exempt?: boolean | null
-          updated_at?: string | null
-          yield_rate?: number
-        }
-        Relationships: []
-      }
-      us_etfs: {
-        Row: {
-          assets_under_management: number | null
-          category: string | null
           change: number | null
-          change_percentage: number | null
+          change_percent: number | null
+          country: string | null
           created_at: string | null
-          currency: string
-          dividend_yield: number | null
+          currency: string | null
           exchange: string | null
-          expense_ratio: number | null
-          fund_family: string | null
-          fund_type: string | null
+          high: number | null
           id: number
-          inception_date: string | null
-          is_active: boolean | null
           last_updated: string | null
+          low: number | null
+          market_cap: number | null
           name: string
-          nav: number
-          pe_ratio: number | null
+          name_ar: string | null
+          open: number | null
           price: number | null
+          sector: string | null
+          source: string | null
+          status: string | null
           symbol: string
-          underlying_index: string | null
-          updated_at: string | null
+          turnover: number | null
+          url: string | null
           volume: number | null
         }
         Insert: {
-          assets_under_management?: number | null
-          category?: string | null
           change?: number | null
-          change_percentage?: number | null
+          change_percent?: number | null
+          country?: string | null
           created_at?: string | null
-          currency?: string
-          dividend_yield?: number | null
+          currency?: string | null
           exchange?: string | null
-          expense_ratio?: number | null
-          fund_family?: string | null
-          fund_type?: string | null
+          high?: number | null
           id?: number
-          inception_date?: string | null
-          is_active?: boolean | null
           last_updated?: string | null
+          low?: number | null
+          market_cap?: number | null
           name: string
-          nav: number
-          pe_ratio?: number | null
+          name_ar?: string | null
+          open?: number | null
           price?: number | null
+          sector?: string | null
+          source?: string | null
+          status?: string | null
           symbol: string
-          underlying_index?: string | null
-          updated_at?: string | null
+          turnover?: number | null
+          url?: string | null
           volume?: number | null
         }
         Update: {
-          assets_under_management?: number | null
-          category?: string | null
           change?: number | null
-          change_percentage?: number | null
+          change_percent?: number | null
+          country?: string | null
           created_at?: string | null
-          currency?: string
-          dividend_yield?: number | null
+          currency?: string | null
           exchange?: string | null
-          expense_ratio?: number | null
-          fund_family?: string | null
-          fund_type?: string | null
+          high?: number | null
           id?: number
-          inception_date?: string | null
-          is_active?: boolean | null
           last_updated?: string | null
+          low?: number | null
+          market_cap?: number | null
           name?: string
-          nav?: number
-          pe_ratio?: number | null
+          name_ar?: string | null
+          open?: number | null
           price?: number | null
+          sector?: string | null
+          source?: string | null
+          status?: string | null
           symbol?: string
-          underlying_index?: string | null
-          updated_at?: string | null
+          turnover?: number | null
+          url?: string | null
           volume?: number | null
         }
         Relationships: []
       }
-      us_real_estate: {
+      uae_stocks: {
         Row: {
-          city: string
+          change: number | null
+          change_percent: number | null
+          country: string | null
           created_at: string | null
-          currency: string
-          days_on_market: number | null
+          currency: string | null
+          exchange: string | null
+          high: number | null
           id: number
-          inventory_months: number | null
           last_updated: string | null
-          market_trend: string | null
-          median_price_usd: number | null
-          neighborhood: string
-          price_change_1y: number | null
-          price_per_sqft_usd: number | null
-          price_per_sqm_usd: number | null
-          property_type: string | null
-          region: string | null
-          state: string
-          updated_at: string | null
+          low: number | null
+          market_cap: number | null
+          name: string
+          name_ar: string | null
+          open: number | null
+          price: number | null
+          sector: string | null
+          source: string | null
+          status: string | null
+          symbol: string
+          turnover: number | null
+          url: string | null
+          volume: number | null
         }
         Insert: {
-          city: string
+          change?: number | null
+          change_percent?: number | null
+          country?: string | null
           created_at?: string | null
-          currency?: string
-          days_on_market?: number | null
+          currency?: string | null
+          exchange?: string | null
+          high?: number | null
           id?: number
-          inventory_months?: number | null
           last_updated?: string | null
-          market_trend?: string | null
-          median_price_usd?: number | null
-          neighborhood: string
-          price_change_1y?: number | null
-          price_per_sqft_usd?: number | null
-          price_per_sqm_usd?: number | null
-          property_type?: string | null
-          region?: string | null
-          state: string
-          updated_at?: string | null
+          low?: number | null
+          market_cap?: number | null
+          name: string
+          name_ar?: string | null
+          open?: number | null
+          price?: number | null
+          sector?: string | null
+          source?: string | null
+          status?: string | null
+          symbol: string
+          turnover?: number | null
+          url?: string | null
+          volume?: number | null
         }
         Update: {
-          city?: string
+          change?: number | null
+          change_percent?: number | null
+          country?: string | null
           created_at?: string | null
-          currency?: string
-          days_on_market?: number | null
+          currency?: string | null
+          exchange?: string | null
+          high?: number | null
           id?: number
-          inventory_months?: number | null
           last_updated?: string | null
-          market_trend?: string | null
-          median_price_usd?: number | null
-          neighborhood?: string
-          price_change_1y?: number | null
-          price_per_sqft_usd?: number | null
-          price_per_sqm_usd?: number | null
-          property_type?: string | null
-          region?: string | null
-          state?: string
-          updated_at?: string | null
+          low?: number | null
+          market_cap?: number | null
+          name?: string
+          name_ar?: string | null
+          open?: number | null
+          price?: number | null
+          sector?: string | null
+          source?: string | null
+          status?: string | null
+          symbol?: string
+          turnover?: number | null
+          url?: string | null
+          volume?: number | null
         }
         Relationships: []
       }
@@ -3588,7 +1455,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      international_indices_by_region: {
+        Row: {
+          avg_change_percent: number | null
+          country: string | null
+          gainers: number | null
+          index_count: number | null
+          losers: number | null
+          region: string | null
+          unchanged: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_deposit_accrual: {

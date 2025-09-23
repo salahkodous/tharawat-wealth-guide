@@ -10,7 +10,11 @@ import {
   Send,
   User,
   Brain,
-  MessageSquare
+  MessageSquare,
+  Newspaper,
+  TrendingUp,
+  DollarSign,
+  Target
 } from 'lucide-react';
 
 interface Message {
@@ -24,6 +28,12 @@ interface Message {
     stack?: string;
     statusCode?: number;
   };
+  newsAnalyses?: Array<{
+    article: any;
+    analysis: string;
+    impact_score: number;
+    recommendations: string;
+  }>;
 }
 
 const AIFinancialAgent = () => {
@@ -32,7 +42,7 @@ const AIFinancialAgent = () => {
     {
       id: '1',
       type: 'agent',
-      content: '🤖 **Welcome to your AI Financial Advisor!** I have complete access to your financial data and live market intelligence. Here\'s what I can do:\n\n💼 **Portfolio Management**\n• Analyze your investment performance and allocations\n• Add/update assets across stocks, crypto, bonds, ETFs, real estate\n• Provide personalized investment recommendations\n• Track portfolio returns and rebalancing needs\n\n💰 **Financial Management**\n• Update income, expenses, savings & investing amounts\n• Manage income & expense streams\n• Handle debt tracking and payment strategies\n• Create and monitor financial goals with progress tracking\n• Manage savings accounts and deposit products\n\n📊 **Market Intelligence**\n• Real-time analysis of stocks, crypto, bonds, ETFs\n• Gold prices and currency exchange rates\n• Real estate market trends and hottest areas\n• Bank product comparisons and recommendations\n\n🧠 **Advanced Analytics**\n• Calculate debt-to-income ratios and savings rates\n• Net worth tracking and financial health metrics\n• Investment return analysis and projections\n• Risk assessment and portfolio optimization\n\n💬 **Try asking me:**\n• "Analyze my complete financial situation"\n• "My salary increased to $8000, update my income"\n• "Add Apple stock to my portfolio, 10 shares at $150"\n• "What are the best performing stocks today?"\n• "Should I invest in crypto or bonds right now?"\n• "Help me create a goal to save $50,000 for a house"',
+      content: '🤖 **Welcome to your AI Financial Advisor!** I have complete access to your financial data and live market intelligence. Here\'s what I can do:\n\n💼 **Portfolio Management**\n• Analyze your investment performance and allocations\n• Add/update assets across stocks, crypto, bonds, ETFs, real estate\n• Provide personalized investment recommendations\n• Track portfolio returns and rebalancing needs\n\n💰 **Financial Management**\n• Update income, expenses, savings & investing amounts\n• Manage income & expense streams\n• Handle debt tracking and payment strategies\n• Create and monitor financial goals with progress tracking\n• Manage savings accounts and deposit products\n\n📊 **Market Intelligence**\n• Real-time analysis of stocks, crypto, bonds, ETFs\n• Gold prices and currency exchange rates\n• Real estate market trends and hottest areas\n• Bank product comparisons and recommendations\n\n📰 **Personalized News Analysis**\n• Analyze how current news impacts your specific portfolio\n• Get tailored recommendations based on market developments\n• Track news relevance to your financial goals\n\n🧠 **Advanced Analytics**\n• Calculate debt-to-income ratios and savings rates\n• Net worth tracking and financial health metrics\n• Investment return analysis and projections\n• Risk assessment and portfolio optimization\n\n💬 **Try asking me:**\n• "Analyze my complete financial situation"\n• "My salary increased to $8000, update my income"\n• "Add Apple stock to my portfolio, 10 shares at $150"\n• "What are the best performing stocks today?"\n• "Should I invest in crypto or bonds right now?"\n• "Help me create a goal to save $50,000 for a house"',
       timestamp: new Date()
     }
   ]);
@@ -48,24 +58,27 @@ const AIFinancialAgent = () => {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading || !user) {
-      console.log('Send message blocked:', { input: input.trim(), isLoading, user: !!user });
+  const sendMessage = async (messageText?: string, isNewsAnalysis = false) => {
+    const messageToSend = messageText || input.trim();
+    if (!messageToSend && !isNewsAnalysis || isLoading || !user) {
+      console.log('Send message blocked:', { input: messageToSend, isLoading, user: !!user });
       return;
     }
 
-    console.log('Sending message:', input);
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: input,
-      timestamp: new Date()
-    };
+    console.log('Sending message:', messageToSend, 'isNewsAnalysis:', isNewsAnalysis);
+    
+    // Add user message (unless it's automatic news analysis)
+    if (!isNewsAnalysis) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        type: 'user',
+        content: messageToSend,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+    }
 
-    setMessages(prev => [...prev, userMessage]);
-    const messageToSend = input;
-    // Clear input only after successfully adding to messages
-    setInput('');
     setIsLoading(true);
 
     try {
@@ -75,6 +88,7 @@ const AIFinancialAgent = () => {
         body: {
           message: messageToSend,
           userId: user.id,
+          analyzeNews: isNewsAnalysis,
           messages: messages.map(m => ({ 
             role: m.type === 'user' ? 'user' : 'assistant', 
             content: m.content 
@@ -99,7 +113,8 @@ const AIFinancialAgent = () => {
         id: (Date.now() + 1).toString(),
         type: 'agent',
         content: data?.response || 'No response received',
-        timestamp: new Date()
+        timestamp: new Date(),
+        newsAnalyses: data?.newsAnalyses
       };
 
       setMessages(prev => [...prev, agentMessage]);
@@ -133,6 +148,10 @@ const AIFinancialAgent = () => {
     }
   };
 
+  const analyzeNews = () => {
+    sendMessage("Analyze today's news for me", true);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -159,6 +178,46 @@ const AIFinancialAgent = () => {
               Chat with your AI advisor to analyze and manage your finances
             </p>
           </div>
+        </div>
+        
+        {/* Quick Action Buttons */}
+        <div className="flex gap-2 mt-4 flex-wrap">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setInput("How is my portfolio performing?")}
+            className="text-xs"
+          >
+            <TrendingUp className="w-3 h-3 mr-1" />
+            Portfolio
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setInput("What should I invest in next?")}
+            className="text-xs"
+          >
+            <DollarSign className="w-3 h-3 mr-1" />
+            Invest
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setInput("Help me plan my financial goals")}
+            className="text-xs"
+          >
+            <Target className="w-3 h-3 mr-1" />
+            Goals
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={analyzeNews}
+            className="text-xs"
+          >
+            <Newspaper className="w-3 h-3 mr-1" />
+            News Impact
+          </Button>
         </div>
       </CardHeader>
       
@@ -317,6 +376,33 @@ const AIFinancialAgent = () => {
                       })()
                     )}
                   </div>
+                  
+                  {/* Render news analyses if present */}
+                  {message.newsAnalyses && message.newsAnalyses.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {message.newsAnalyses.map((newsAnalysis, index) => (
+                        <div key={index} className="border border-border/20 rounded-md p-2 bg-background/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Newspaper className="w-3 h-3 text-primary" />
+                            <span className="text-xs font-medium text-foreground/80">
+                              {newsAnalysis.article.title}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              Impact: {newsAnalysis.impact_score}/100
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">
+                            {newsAnalysis.analysis}
+                          </p>
+                          {newsAnalysis.recommendations && (
+                            <p className="text-xs font-medium text-primary">
+                              💡 {newsAnalysis.recommendations}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               {message.type === 'user' && (
@@ -354,7 +440,7 @@ const AIFinancialAgent = () => {
             className="flex-1"
           />
           <Button 
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={!input.trim() || isLoading}
             size="icon"
           >
@@ -365,7 +451,7 @@ const AIFinancialAgent = () => {
         <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <Brain className="w-3 h-3 text-primary" />
-            AI Financial Advisor
+            AI Financial Advisor with News Analysis
           </div>
         </div>
       </CardContent>
