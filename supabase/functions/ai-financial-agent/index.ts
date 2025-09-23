@@ -417,7 +417,11 @@ async function handleNewsAnalysis(userId: string) {
     
     // Get user's financial data and country
     const userData = await getUserFinancialData(userId)
-    const userCountry = userData.userProfile?.country || 'EGY'
+    // Always default to EGY since that's where we have news articles
+    const userCountry = 'EGY' // userData.userProfile?.country || 'EGY'
+    
+    console.log('User country determined as:', userCountry)
+    console.log('User profile exists:', !!userData.userProfile)
     
     // Fetch top 3 recent news articles for the user's country
     const { data: newsArticles, error: newsError } = await supabase
@@ -427,6 +431,8 @@ async function handleNewsAnalysis(userId: string) {
       .order('priority_score', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(3)
+    
+    console.log('Query executed with country:', userCountry)
     
     if (newsError) {
       console.error('Error fetching news:', newsError)
@@ -485,8 +491,10 @@ async function handleNewsAnalysis(userId: string) {
       }
     }
 
+    console.log('Final analyses count:', analyses.length)
+
     return new Response(JSON.stringify({
-      response: "Here's how today's top news affects your financial situation:",
+      response: `Here's how today's top news affects your financial situation:${analyses.length === 0 ? ' (No recent news found for analysis)' : ''}`,
       newsAnalyses: analyses,
       summary: `Analyzed ${analyses.length} articles relevant to your portfolio and financial goals.`
     }), {
