@@ -13,7 +13,6 @@ import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
-import Assistant from "./pages/Assistant";
 import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
@@ -60,11 +59,6 @@ const AppRoutes = () => {
       <Route path="/finances" element={
         <ProtectedRoute>
           <Finances />
-        </ProtectedRoute>
-      } />
-      <Route path="/assistant" element={
-        <ProtectedRoute>
-          <Assistant />
         </ProtectedRoute>
       } />
       <Route path="/analytics" element={

@@ -51,7 +51,6 @@ const Navigation = () => {
     { path: '/dashboard', icon: Home, label: t('dashboard') },
     { path: '/portfolio', icon: Briefcase, label: t('portfolio') },
     { path: '/finances', icon: Calculator, label: t('finances') },
-    { path: '/assistant', icon: Bot, label: t('assistant') },
     { path: '/analytics', icon: Globe, label: 'News' },
   ];
 
