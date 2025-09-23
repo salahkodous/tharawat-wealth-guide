@@ -983,7 +983,7 @@ Please analyze this message in the context of the user's complete financial situ
           'X-Title': 'AI Financial Agent'
         },
         body: JSON.stringify({
-          model: model || 'anthropic/claude-3.5-sonnet',
+          model: model || 'deepseek/deepseek-r1:nitro',
           messages: messages,
           max_tokens: 2000,
           temperature: 0.7,
