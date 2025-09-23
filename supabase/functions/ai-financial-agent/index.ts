@@ -724,6 +724,9 @@ async function getUserFinancialData(userId: string) {
     };
 
     const formatCurrency = (amount: number, currency = userCurrency) => {
+      if (amount === null || amount === undefined || isNaN(amount)) {
+        amount = 0;
+      }
       const symbol = currencySymbols[currency] || currency;
       return `${symbol}${amount.toLocaleString()}`;
     };
@@ -793,7 +796,12 @@ async function getUserFinancialData(userId: string) {
       userCurrency: 'USD',
       currencyRates: [],
       convertCurrency: (amount: number) => amount,
-      formatCurrency: (amount: number) => `$${amount.toLocaleString()}`,
+      formatCurrency: (amount: number) => {
+        if (amount === null || amount === undefined || isNaN(amount)) {
+          amount = 0;
+        }
+        return `$${amount.toLocaleString()}`;
+      },
       metrics: {
         totalPortfolioValue: 0,
         totalInvestment: 0,
