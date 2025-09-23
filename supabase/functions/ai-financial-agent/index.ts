@@ -55,9 +55,10 @@ serve(async (req) => {
     console.log('Request data:', { message, userId });
 
     // Get Groq API key
-    const groqApiKey = Deno.env.get('groq anakin');
+    const groqApiKey = Deno.env.get('groq_anakin') || Deno.env.get('groq anakin');
     console.log('Groq API key exists:', !!groqApiKey);
     console.log('Groq API key length:', groqApiKey?.length || 0);
+    console.log('Available env vars:', Object.keys(Deno.env.toObject()).filter(key => key.toLowerCase().includes('groq')));
 
     if (!groqApiKey) {
       console.error('Groq API key not found');
