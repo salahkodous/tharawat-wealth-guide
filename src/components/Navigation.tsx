@@ -1,5 +1,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Home, 
   Briefcase, 
@@ -10,10 +16,12 @@ import {
   Settings,
   Menu,
   X,
-  Globe
+  Globe,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useUserCountry } from '@/hooks/useUserCountry';
 import { Link, useLocation } from 'react-router-dom';
 import AnakinLogo from '@/components/AnakinLogo';
 import CurrencySymbol from '@/components/CurrencySymbol';
@@ -24,9 +32,19 @@ const Navigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t, isRTL } = useTranslation();
+  const { userCountry, setUserCountry, getAllCountries } = useUserCountry();
+  
+  const countries = getAllCountries();
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handleCountryChange = (countryCode: string) => {
+    const selectedCountry = countries.find(c => c.code === countryCode);
+    if (selectedCountry) {
+      setUserCountry(selectedCountry);
+    }
   };
 
   const navItems = [
@@ -60,6 +78,30 @@ const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
+            {/* Country Selector */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2 bg-background/80 backdrop-blur-sm">
+                  <Globe className="w-4 h-4" />
+                  <span>{userCountry?.flag} {userCountry?.code || 'Select Country'}</span>
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-background/95 backdrop-blur-md border border-border/20 z-50" align="end">
+                {countries.map((country) => (
+                  <DropdownMenuItem
+                    key={country.code}
+                    onClick={() => handleCountryChange(country.code)}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-accent/50"
+                  >
+                    <span>{country.flag}</span>
+                    <span>{country.name}</span>
+                    <span className="text-xs text-muted-foreground">({country.currency})</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <CurrencySymbol variant="ghost" />
             <Link to="/settings">
               <Button variant="ghost" className="flex items-center gap-2">
@@ -102,6 +144,32 @@ const Navigation = () => {
                   </Button>
                 </Link>
               ))}
+              {/* Mobile Country Selector */}
+              <div className="px-3 py-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start gap-2 bg-background/80 backdrop-blur-sm">
+                      <Globe className="w-4 h-4" />
+                      <span>{userCountry?.flag} {userCountry?.name || 'Select Country'}</span>
+                      <ChevronDown className="w-3 h-3 ml-auto" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-background/95 backdrop-blur-md border border-border/20 z-50 w-56">
+                    {countries.map((country) => (
+                      <DropdownMenuItem
+                        key={country.code}
+                        onClick={() => handleCountryChange(country.code)}
+                        className="flex items-center gap-2 cursor-pointer hover:bg-accent/50"
+                      >
+                        <span>{country.flag}</span>
+                        <span>{country.name}</span>
+                        <span className="text-xs text-muted-foreground">({country.currency})</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
               <div className="px-3 py-2">
                 <CurrencySymbol variant="ghost" className="w-full" />
               </div>
