@@ -28,6 +28,36 @@ const AIFinancialAgent = () => {
     scrollToBottom();
   }, [messages]);
 
+  const formatAgentResponse = (content: string) => {
+    // Split content into sentences and apply different styles
+    const sentences = content.split('.').filter(sentence => sentence.trim());
+    
+    return sentences.map((sentence, index) => {
+      const isImportant = sentence.toLowerCase().includes('recommend') || 
+                         sentence.toLowerCase().includes('important') || 
+                         sentence.toLowerCase().includes('alert');
+      const isNumber = /\$[\d,]+|\d+%/.test(sentence);
+      
+      let className = 'inline ';
+      
+      if (isImportant) {
+        className += 'text-lg font-semibold text-primary';
+      } else if (isNumber) {
+        className += 'font-bold text-success';
+      } else if (index === 0) {
+        className += 'text-base font-medium';
+      } else {
+        className += 'text-sm';
+      }
+      
+      return (
+        <span key={index} className={className}>
+          {sentence.trim()}{index < sentences.length - 1 ? '. ' : ''}
+        </span>
+      );
+    });
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading || !user) return;
 
@@ -93,7 +123,7 @@ const AIFinancialAgent = () => {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
+    <Card className="h-[450px] flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
@@ -101,68 +131,92 @@ const AIFinancialAgent = () => {
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-        <div className="flex-1 overflow-y-auto space-y-4">
-          {messages.map((message) => (
-            <div key={message.id} className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : ''}`}>
-              {message.type !== 'user' && (
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.type === 'error' ? 'bg-red-100' : 'bg-primary/20'
-                }`}>
-                  <Bot className={`w-4 h-4 ${message.type === 'error' ? 'text-red-600' : 'text-primary'}`} />
+      <CardContent className={`flex-1 flex flex-col gap-4 overflow-hidden ${messages.length === 0 ? 'justify-center' : ''}`}>
+        {messages.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex gap-2 w-full max-w-md">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask about your finances..."
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button onClick={sendMessage} disabled={isLoading || !input.trim()}>
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 overflow-y-auto space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : ''}`}>
+                  {message.type !== 'user' && (
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      message.type === 'error' ? 'bg-red-100' : 'bg-primary/20'
+                    }`}>
+                      <Bot className={`w-4 h-4 ${message.type === 'error' ? 'text-red-600' : 'text-primary'}`} />
+                    </div>
+                  )}
+                  
+                  <div className={`max-w-[80%] ${message.type === 'user' ? 'order-1' : ''}`}>
+                    <div className={`p-3 rounded-lg ${
+                      message.type === 'user' 
+                        ? 'bg-primary text-primary-foreground' 
+                        : message.type === 'error'
+                        ? 'bg-red-50 border border-red-200 text-red-800'
+                        : 'bg-muted'
+                    }`}>
+                      {message.type === 'agent' ? (
+                        <div className="space-y-1">
+                          {formatAgentResponse(message.content)}
+                        </div>
+                      ) : (
+                        message.content
+                      )}
+                    </div>
+                  </div>
+                  
+                  {message.type === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {isLoading && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-primary animate-pulse" />
+                  </div>
+                  <div className="bg-muted p-3 rounded-lg">
+                    <div className="text-sm text-muted-foreground animate-pulse">
+                      Analyzing your financial data...
+                    </div>
+                  </div>
                 </div>
               )}
-              
-              <div className={`max-w-[80%] ${message.type === 'user' ? 'order-1' : ''}`}>
-                <div className={`p-3 rounded-lg ${
-                  message.type === 'user' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : message.type === 'error'
-                    ? 'bg-red-50 border border-red-200 text-red-800'
-                    : 'bg-muted'
-                }`}>
-                  {message.content}
-                </div>
-              </div>
-              
-              {message.type === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                  <User className="w-4 h-4" />
-                </div>
-              )}
+              <div ref={messagesEndRef} />
             </div>
-          ))}
-          
-          {isLoading && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary animate-pulse" />
-              </div>
-              <div className="bg-muted p-3 rounded-lg">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </div>
+            
+            <div className="flex gap-2">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask about your finances..."
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button onClick={sendMessage} disabled={isLoading || !input.trim()}>
+                <Send className="w-4 h-4" />
+              </Button>
             </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-        
-        <div className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask about your finances..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button onClick={sendMessage} disabled={isLoading || !input.trim()}>
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
