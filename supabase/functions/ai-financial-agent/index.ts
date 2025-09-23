@@ -7,28 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function searchWeb(query: string): Promise<string> {
-  try {
-    const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`, {
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Encoding': 'gzip',
-        'X-Subscription-Token': Deno.env.get('BRAVE_API_KEY') || ''
-      }
-    });
-    
-    if (!response.ok) {
-      return 'Web search temporarily unavailable.';
-    }
-    
-    const data = await response.json();
-    const results = data.web?.results?.slice(0, 3) || [];
-    return results.map((r: any) => `${r.title}: ${r.description}`).join('\n');
-  } catch (error) {
-    console.error('Web search error:', error);
-    return 'Web search temporarily unavailable.';
-  }
-}
 
 async function getUserFinancialData(userId: string, supabase: any) {
   try {
@@ -77,10 +55,10 @@ async function getUserFinancialData(userId: string, supabase: any) {
   }
 }
 
-async function callGroqAPI(message: string, groqApiKey: string, userData: any, webResults?: string): Promise<string> {
-  console.log('Making enhanced Groq API call...');
+async function callGroqAPI(message: string, groqApiKey: string, userData: any): Promise<string> {
+  console.log('Making enhanced Groq API call with web search capabilities...');
   
-  const systemPrompt = `You are Anakin, an advanced AI financial advisor with access to comprehensive user data and real-time information.
+  const systemPrompt = `You are Anakin, an advanced AI financial advisor with access to comprehensive user data and web search capabilities for real-time information.
 
 USER FINANCIAL PROFILE:
 Personal Finances: ${JSON.stringify(userData?.personalFinances, null, 2)}
@@ -93,22 +71,21 @@ Expense Streams: ${JSON.stringify(userData?.expenseStreams, null, 2)}
 Savings/Deposits: ${JSON.stringify(userData?.deposits, null, 2)}
 Portfolios: ${JSON.stringify(userData?.portfolios, null, 2)}
 
-${webResults ? `RECENT WEB SEARCH RESULTS:\n${webResults}\n` : ''}
-
 RECENT FINANCIAL NEWS:
 ${userData?.newsArticles?.map((article: any) => `- ${article.title}: ${article.summary}`).join('\n') || 'No recent news available'}
 
-You have complete access to this user's financial situation. Provide personalized, actionable advice based on their actual data. Be specific about their assets, debts, goals, and financial position. Reference their actual numbers and provide concrete recommendations.
+You have complete access to this user's financial situation and can search the web for current market information, news, and financial data. Provide personalized, actionable advice based on their actual data. Be specific about their assets, debts, goals, and financial position. Reference their actual numbers and provide concrete recommendations.
 
 Key capabilities:
 - Analyze their complete financial picture
+- Search the web for current market data and news when needed
 - Provide investment advice based on their portfolio
 - Help with debt management strategies
 - Track progress toward their goals
 - Offer market insights relevant to their assets
 - Suggest optimizations for their income/expense streams
 
-Be conversational, insightful, and reference their specific financial data when relevant.`;
+Be conversational, insightful, and reference their specific financial data when relevant. Use web search to get current information when discussing market conditions or recent financial news.`;
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -117,7 +94,7 @@ Be conversational, insightful, and reference their specific financial data when 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       messages: [
         {
           role: 'system',
@@ -174,19 +151,6 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl!, supabaseKey!);
 
-    // Check if message contains web search intent
-    const needsWebSearch = message.toLowerCase().includes('news') || 
-                          message.toLowerCase().includes('market') || 
-                          message.toLowerCase().includes('current') ||
-                          message.toLowerCase().includes('latest');
-
-    // Perform web search if needed
-    let webResults = '';
-    if (needsWebSearch) {
-      console.log('Performing web search for financial context...');
-      webResults = await searchWeb(`${message} financial news market`);
-    }
-
     // Fetch comprehensive user financial data
     let userData = null;
     if (userId) {
@@ -196,7 +160,7 @@ serve(async (req) => {
 
     // Make enhanced API call with all context
     console.log('Calling enhanced Groq API with full context...');
-    const response = await callGroqAPI(message, groqApiKey, userData, webResults);
+    const response = await callGroqAPI(message, groqApiKey, userData);
 
     return new Response(JSON.stringify({ 
       response: response
