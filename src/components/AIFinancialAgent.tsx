@@ -29,33 +29,52 @@ const AIFinancialAgent = () => {
   }, [messages]);
 
   const formatAgentResponse = (content: string) => {
-    // Split content into sentences and apply different styles
-    const sentences = content.split('.').filter(sentence => sentence.trim());
+    // Clean up any markdown formatting that might be causing issues
+    const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
     
-    return sentences.map((sentence, index) => {
-      const isImportant = sentence.toLowerCase().includes('recommend') || 
-                         sentence.toLowerCase().includes('important') || 
-                         sentence.toLowerCase().includes('alert');
-      const isNumber = /\$[\d,]+|\d+%/.test(sentence);
+    // Check if it's a simple greeting or short response
+    if (cleanContent.length < 100 && (
+      cleanContent.toLowerCase().includes('hello') || 
+      cleanContent.toLowerCase().includes('hi') ||
+      cleanContent.toLowerCase().includes('welcome')
+    )) {
+      return <span className="text-base">{cleanContent}</span>;
+    }
+    
+    // Split into logical sections (by periods, colons, or numbered points)
+    const sections = cleanContent.split(/(?:\d+\.|•|\n\n|:\s)/).filter(section => section.trim());
+    
+    return sections.map((section, index) => {
+      const trimmedSection = section.trim();
+      if (!trimmedSection) return null;
       
-      let className = 'inline ';
+      const isTitle = index === 0 || trimmedSection.length < 50;
+      const isImportant = trimmedSection.toLowerCase().includes('recommend') || 
+                         trimmedSection.toLowerCase().includes('important') || 
+                         trimmedSection.toLowerCase().includes('alert') ||
+                         trimmedSection.toLowerCase().includes('warning');
+      const hasNumbers = /\$[\d,]+|\d+%|\d+\.\d+/.test(trimmedSection);
       
-      if (isImportant) {
-        className += 'text-lg font-semibold text-primary';
-      } else if (isNumber) {
-        className += 'font-bold text-success';
-      } else if (index === 0) {
-        className += 'text-base font-medium';
+      let className = 'block ';
+      let marginClass = index > 0 ? 'mt-3 ' : '';
+      
+      if (isTitle && index === 0) {
+        className += 'text-lg font-bold text-foreground';
+      } else if (isImportant) {
+        className += 'text-base font-semibold text-primary';
+      } else if (hasNumbers) {
+        className += 'text-base font-medium text-success';
       } else {
-        className += 'text-sm';
+        className += 'text-sm text-muted-foreground leading-relaxed';
       }
       
       return (
-        <span key={index} className={className}>
-          {sentence.trim()}{index < sentences.length - 1 ? '. ' : ''}
+        <span key={index} className={className + marginClass}>
+          {index > 0 && !isTitle ? '• ' : ''}{trimmedSection}
+          {!trimmedSection.endsWith('.') && !trimmedSection.endsWith('?') && !trimmedSection.endsWith('!') ? '.' : ''}
         </span>
       );
-    });
+    }).filter(Boolean);
   };
 
   const sendMessage = async () => {
