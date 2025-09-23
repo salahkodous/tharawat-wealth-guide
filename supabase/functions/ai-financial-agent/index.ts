@@ -399,10 +399,23 @@ serve(async (req) => {
     console.error('Error stack:', error.stack);
     console.error('Error name:', error.name);
     console.error('Error message:', error.message);
+    // Provide user-friendly error messages
+    let userMessage = 'I apologize, but I\'m experiencing technical difficulties at the moment. Please try rephrasing your request or try again in a few moments. If the issue persists, our technical team has been notified.';
+    
+    if (error.message?.includes('rate limit')) {
+      userMessage = 'I\'m currently experiencing high traffic. Please wait a moment and try again.';
+    } else if (error.message?.includes('quota exceeded')) {
+      userMessage = 'The AI service is temporarily unavailable due to usage limits. Please try again later.';
+    } else if (error.message?.includes('timeout') || error.message?.includes('AbortError')) {
+      userMessage = 'The request timed out. Please try again with a shorter message.';
+    } else if (error.message?.includes('Cannot read properties of undefined')) {
+      userMessage = 'I\'m having trouble accessing your financial data. Please try again.';
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Failed to process request',
-        response: `Sorry, I encountered an error: ${error.message || 'Unknown error'}. Please try again.`,
+        response: userMessage,
         errorDetails: {
           name: error.name,
           message: error.message,
@@ -955,25 +968,51 @@ Please analyze this message in the context of the user's complete financial situ
     ];
 
     console.log('Sending request to GROQ API...');
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model || 'llama-3.1-70b-versatile',
-        messages: messages,
-        max_tokens: 2000,
-        temperature: 0.7,
-        top_p: 0.9,
-      }),
-    });
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model || 'llama-3.1-70b-versatile',
+          messages: messages,
+          max_tokens: 2000,
+          temperature: 0.7,
+          top_p: 0.9,
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('GROQ API error:', response.status, errorText);
-      throw new Error(`GROQ API error: ${response.status} - ${errorText}`);
+      console.error('GROQ API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText
+      });
+      
+      // Handle specific error codes
+      if (response.status === 429) {
+        throw new Error('API rate limit exceeded. Please try again in a moment.');
+      } else if (response.status === 401) {
+        throw new Error('API authentication failed. Please check configuration.');
+      } else if (response.status === 402) {
+        throw new Error('API quota exceeded. Please check your billing status.');
+      } else if (response.status >= 500) {
+        throw new Error('API service temporarily unavailable. Please try again later.');
+      } else {
+        throw new Error(`API error (${response.status}): ${errorText}`);
+      }
     }
 
     const data = await response.json();
