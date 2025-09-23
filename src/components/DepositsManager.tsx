@@ -199,19 +199,11 @@ export const DepositsManager: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">
-                <OptimizedCurrencyValue amount={getTotalDepositsValue()} />
-              </div>
-              <div className="text-sm text-muted-foreground">Total Savings Value</div>
+          <div className="text-center p-4 bg-muted/50 rounded-lg max-w-sm mx-auto">
+            <div className="text-2xl font-bold text-primary">
+              <OptimizedCurrencyValue amount={getTotalDepositsValue()} />
             </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">
-                <OptimizedCurrencyValue amount={getTotalMonthlySavings()} />
-              </div>
-              <div className="text-sm text-muted-foreground">Monthly Savings</div>
-            </div>
+            <div className="text-sm text-muted-foreground">Total Savings Value</div>
           </div>
           
           {deposits.length === 0 ? (
