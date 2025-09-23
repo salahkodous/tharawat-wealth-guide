@@ -1,14 +1,115 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function callGroqAPI(message: string, groqApiKey: string): Promise<string> {
-  console.log('Making simple Groq API call...');
+async function searchWeb(query: string): Promise<string> {
+  try {
+    const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip',
+        'X-Subscription-Token': Deno.env.get('BRAVE_API_KEY') || ''
+      }
+    });
+    
+    if (!response.ok) {
+      return 'Web search temporarily unavailable.';
+    }
+    
+    const data = await response.json();
+    const results = data.web?.results?.slice(0, 3) || [];
+    return results.map((r: any) => `${r.title}: ${r.description}`).join('\n');
+  } catch (error) {
+    console.error('Web search error:', error);
+    return 'Web search temporarily unavailable.';
+  }
+}
+
+async function getUserFinancialData(userId: string, supabase: any) {
+  try {
+    console.log('Fetching comprehensive user data for:', userId);
+    
+    // Fetch all financial data in parallel
+    const [
+      personalFinances,
+      debts,
+      assets,
+      portfolioGoals,
+      financialGoals,
+      incomeStreams,
+      expenseStreams,
+      deposits,
+      portfolios,
+      newsArticles
+    ] = await Promise.all([
+      supabase.from('personal_finances').select('*').eq('user_id', userId).single(),
+      supabase.from('debts').select('*').eq('user_id', userId),
+      supabase.from('assets').select('*').eq('user_id', userId),
+      supabase.from('portfolio_goals').select('*').eq('user_id', userId),
+      supabase.from('financial_goals').select('*').eq('user_id', userId),
+      supabase.from('income_streams').select('*').eq('user_id', userId),
+      supabase.from('expense_streams').select('*').eq('user_id', userId),
+      supabase.from('deposits').select('*').eq('user_id', userId),
+      supabase.from('portfolios').select('*').eq('user_id', userId),
+      supabase.from('news_articles').select('*').limit(5)
+    ]);
+
+    return {
+      personalFinances: personalFinances.data,
+      debts: debts.data || [],
+      assets: assets.data || [],
+      portfolioGoals: portfolioGoals.data || [],
+      financialGoals: financialGoals.data || [],
+      incomeStreams: incomeStreams.data || [],
+      expenseStreams: expenseStreams.data || [],
+      deposits: deposits.data || [],
+      portfolios: portfolios.data || [],
+      newsArticles: newsArticles.data || []
+    };
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return null;
+  }
+}
+
+async function callGroqAPI(message: string, groqApiKey: string, userData: any, webResults?: string): Promise<string> {
+  console.log('Making enhanced Groq API call...');
   
+  const systemPrompt = `You are Anakin, an advanced AI financial advisor with access to comprehensive user data and real-time information.
+
+USER FINANCIAL PROFILE:
+Personal Finances: ${JSON.stringify(userData?.personalFinances, null, 2)}
+Debts: ${JSON.stringify(userData?.debts, null, 2)}
+Assets/Portfolio: ${JSON.stringify(userData?.assets, null, 2)}
+Portfolio Goals: ${JSON.stringify(userData?.portfolioGoals, null, 2)}
+Financial Goals: ${JSON.stringify(userData?.financialGoals, null, 2)}
+Income Streams: ${JSON.stringify(userData?.incomeStreams, null, 2)}
+Expense Streams: ${JSON.stringify(userData?.expenseStreams, null, 2)}
+Savings/Deposits: ${JSON.stringify(userData?.deposits, null, 2)}
+Portfolios: ${JSON.stringify(userData?.portfolios, null, 2)}
+
+${webResults ? `RECENT WEB SEARCH RESULTS:\n${webResults}\n` : ''}
+
+RECENT FINANCIAL NEWS:
+${userData?.newsArticles?.map((article: any) => `- ${article.title}: ${article.summary}`).join('\n') || 'No recent news available'}
+
+You have complete access to this user's financial situation. Provide personalized, actionable advice based on their actual data. Be specific about their assets, debts, goals, and financial position. Reference their actual numbers and provide concrete recommendations.
+
+Key capabilities:
+- Analyze their complete financial picture
+- Provide investment advice based on their portfolio
+- Help with debt management strategies
+- Track progress toward their goals
+- Offer market insights relevant to their assets
+- Suggest optimizations for their income/expense streams
+
+Be conversational, insightful, and reference their specific financial data when relevant.`;
+
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -16,18 +117,18 @@ async function callGroqAPI(message: string, groqApiKey: string): Promise<string>
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      model: 'llama-3.1-70b-versatile',
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful financial assistant. Keep responses short and helpful.'
+          content: systemPrompt
         },
         {
           role: 'user',
           content: message
         }
       ],
-      max_tokens: 500,
+      max_tokens: 1000,
       temperature: 0.7
     }),
   });
@@ -54,25 +155,48 @@ serve(async (req) => {
     const { message, userId } = await req.json();
     console.log('Request data:', { message, userId });
 
-    // Get Groq API key
+    // Get API keys
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
-    console.log('Groq API key exists:', !!groqApiKey);
-    console.log('Groq API key length:', groqApiKey?.length || 0);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!groqApiKey) {
       console.error('Groq API key not found');
       return new Response(JSON.stringify({ 
         error: 'API key not configured',
-        response: 'I need the Groq API key configured as "groq anakin" in Supabase Edge Function secrets.'
+        response: 'I need the Groq API key configured in Supabase Edge Function secrets.'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Make simple API call to Groq
-    console.log('Calling Groq API...');
-    const response = await callGroqAPI(message, groqApiKey);
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl!, supabaseKey!);
+
+    // Check if message contains web search intent
+    const needsWebSearch = message.toLowerCase().includes('news') || 
+                          message.toLowerCase().includes('market') || 
+                          message.toLowerCase().includes('current') ||
+                          message.toLowerCase().includes('latest');
+
+    // Perform web search if needed
+    let webResults = '';
+    if (needsWebSearch) {
+      console.log('Performing web search for financial context...');
+      webResults = await searchWeb(`${message} financial news market`);
+    }
+
+    // Fetch comprehensive user financial data
+    let userData = null;
+    if (userId) {
+      console.log('Fetching user financial data...');
+      userData = await getUserFinancialData(userId, supabase);
+    }
+
+    // Make enhanced API call with all context
+    console.log('Calling enhanced Groq API with full context...');
+    const response = await callGroqAPI(message, groqApiKey, userData, webResults);
 
     return new Response(JSON.stringify({ 
       response: response
