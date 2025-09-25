@@ -27,7 +27,6 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useUserCountry } from '@/hooks/useUserCountry';
 import { Link, useLocation } from 'react-router-dom';
 import AnakinLogo from '@/components/AnakinLogo';
-import CurrencySymbol from '@/components/CurrencySymbol';
 import { useState } from 'react';
 
 const Navigation = () => {
@@ -120,7 +119,6 @@ const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <CurrencySymbol variant="ghost" />
             <Link to="/settings">
               <Button variant="ghost" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
@@ -189,9 +187,6 @@ const Navigation = () => {
                 </Link>
               ))}
               
-              <div className="px-3 py-2">
-                <CurrencySymbol variant="ghost" className="w-full" />
-              </div>
               <Link to="/settings" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
                   <Settings className="w-4 h-4" />
