@@ -23,6 +23,7 @@ export const useUserCountry = () => {
   const { stocks, bonds, etfs, realEstate } = useMarketData(userCountry?.code);
 
   const setUserCountryWithSettings = (country: CountryInfo | null) => {
+    console.log('🏳️ Country changed to:', country?.code, country?.name, 'Currency:', country?.currency);
     setUserCountry(country);
     // Update user settings to reflect the currency of the selected country
     if (country?.currency) {

@@ -133,6 +133,8 @@ export interface BankProduct {
 }
 
 export const useMarketData = (userCountryCode?: string) => {
+  console.log('🔄 useMarketData called with userCountryCode:', userCountryCode);
+  
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
   const [bonds, setBonds] = useState<Bond[]>([]);

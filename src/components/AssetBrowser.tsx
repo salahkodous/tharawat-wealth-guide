@@ -31,6 +31,8 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
   const { formatAmount } = useCurrency();
   const { userCountry } = useUserCountry();
   
+  console.log('🔍 AssetBrowser - userCountry:', userCountry?.code, userCountry?.name);
+  
   const {
     stocks,
     cryptos,
