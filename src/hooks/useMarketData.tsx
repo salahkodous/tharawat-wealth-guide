@@ -132,7 +132,7 @@ export interface BankProduct {
   is_active?: boolean;
 }
 
-export const useMarketData = () => {
+export const useMarketData = (userCountryCode?: string) => {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
   const [bonds, setBonds] = useState<Bond[]>([]);
@@ -143,16 +143,44 @@ export const useMarketData = () => {
   const [bankProducts, setBankProducts] = useState<BankProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // For backward compatibility, this hook still fetches from base tables (Egypt)
-  // Use useGlobalMarketData for country-specific data
+  // Country to table mapping for stocks
+  const getStockTableName = (countryCode: string) => {
+    switch (countryCode) {
+      case 'EG':
+        return 'egypt_stocks';
+      case 'SA':
+        return 'saudi_stocks';
+      case 'AE':
+        return 'uae_stocks';
+      default:
+        return 'egypt_stocks'; // Default to Egypt
+    }
+  };
+
+  // Country name mapping
+  const getCountryName = (countryCode: string) => {
+    switch (countryCode) {
+      case 'EG':
+        return 'Egypt';
+      case 'SA':
+        return 'Saudi Arabia';
+      case 'AE':
+        return 'UAE';
+      default:
+        return 'Egypt';
+    }
+  };
 
   const fetchStocks = async () => {
     try {
-      console.log('Fetching stocks from Egypt stocks table...');
+      const countryCode = userCountryCode || 'EG';
+      const tableName = getStockTableName(countryCode);
+      const countryName = getCountryName(countryCode);
+      
+      console.log(`Fetching stocks from ${tableName} for ${countryName}...`);
 
-      // Fetch data from the Egypt stocks table with 24h changes
       const { data, error } = await supabase
-        .from('egypt_stocks')
+        .from(tableName as any)
         .select('*')
         .order('change_percent', { ascending: false });
       
@@ -172,9 +200,9 @@ export const useMarketData = () => {
         change_percent: stock.change_percent,
         volume: stock.volume,
         market_cap: stock.market_cap || null,
-        country: stock.country || 'Egypt',
-        currency: stock.currency || 'EGP',
-        exchange: stock.exchange || 'EGX',
+        country: stock.country || countryName,
+        currency: stock.currency || (countryCode === 'EG' ? 'EGP' : countryCode === 'SA' ? 'SAR' : 'AED'),
+        exchange: stock.exchange || (countryCode === 'EG' ? 'EGX' : countryCode === 'SA' ? 'TADAWUL' : 'ADX'),
         sector: stock.sector || null,
         last_updated: stock.last_updated,
         high: stock.high,
@@ -201,22 +229,33 @@ export const useMarketData = () => {
   };
 
   const fetchBonds = async () => {
-    // Note: bonds table does not exist in current schema
-    // const { data, error } = await supabase
-    //   .from('bonds')
-    //   .select('*')
-    //   .order('yield_to_maturity', { ascending: false });
+    const countryName = getCountryName(userCountryCode || 'EG');
     
-    // if (!error && data) {
-    //   setBonds(data as Bond[]);
-    // }
-    console.log('Bonds table not available in current schema');
+    try {
+      // Try to fetch from bonds table with country filter
+      const { data, error } = await supabase
+        .from('bonds' as any)
+        .select('*')
+        .eq('country', countryName)
+        .order('yield', { ascending: false });
+      
+      if (!error && data) {
+        setBonds(data as unknown as Bond[]);
+      } else {
+        console.log('Bonds table not available or no data for country:', countryName);
+      }
+    } catch (err) {
+      console.log('Bonds table not available:', err);
+    }
   };
 
   const fetchETFs = async () => {
+    const countryName = getCountryName(userCountryCode || 'EG');
+    
     const { data, error } = await supabase
       .from('etfs')
       .select('*')
+      .eq('country', countryName)
       .order('market_cap', { ascending: false });
     
     if (!error && data) {
@@ -225,28 +264,65 @@ export const useMarketData = () => {
   };
 
   const fetchRealEstate = async () => {
+    const countryName = getCountryName(userCountryCode || 'EG');
+    
+    // Check if we have real estate data with country column
     const { data, error } = await supabase
-      .from('real_estate_prices')
+      .from('real_estate' as any)
       .select('*')
-      .order('avg_price_per_meter', { ascending: false });
+      .eq('country', countryName)
+      .order('price_per_sqm', { ascending: false });
     
     if (!error && data) {
-      setRealEstate(data as RealEstatePrice[]);
+      // Map real_estate table format to RealEstatePrice interface
+      const mappedData = data.map((item: any) => ({
+        id: item.id,
+        city_name: item.city,
+        neighborhood_name: item.area_name,
+        property_type: item.property_type,
+        min_price: null,
+        max_price: item.avg_total_price,
+        avg_price_per_meter: item.price_per_sqm,
+        min_price_per_meter: null,
+        max_price_per_meter: null,
+        currency: item.currency,
+        total_properties: null,
+        last_updated: item.last_updated,
+      }));
+      setRealEstate(mappedData as RealEstatePrice[]);
+    } else {
+      // Fallback to real_estate_prices table if real_estate doesn't exist
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('real_estate_prices')
+        .select('*')
+        .order('avg_price_per_meter', { ascending: false });
+      
+      if (!fallbackError && fallbackData) {
+        setRealEstate(fallbackData as RealEstatePrice[]);
+      }
     }
   };
 
   const fetchGoldPrices = async () => {
-    // Note: gold_prices table does not exist in current schema
-    // const { data, error } = await supabase
-    //   .from('gold_prices')
-    //   .select('*')
-    //   .order('last_updated', { ascending: false })
-    //   .limit(10);
+    const countryName = getCountryName(userCountryCode || 'EG');
     
-    // if (!error && data) {
-    //   setGoldPrices(data as GoldPrice[]);
-    // }
-    console.log('Gold prices table not available in current schema');
+    try {
+      // Try to fetch from gold_prices table with country filter
+      const { data, error } = await supabase
+        .from('gold_prices' as any)
+        .select('*')
+        .eq('country', countryName)
+        .order('last_updated', { ascending: false })
+        .limit(10);
+      
+      if (!error && data) {
+        setGoldPrices(data as unknown as GoldPrice[]);
+      } else {
+        console.log('Gold prices table not available or no data for country:', countryName);
+      }
+    } catch (err) {
+      console.log('Gold prices table not available:', err);
+    }
   };
 
   const fetchCurrencyRates = async () => {
@@ -261,6 +337,8 @@ export const useMarketData = () => {
   };
 
   const fetchBankProducts = async () => {
+    const countryName = getCountryName(userCountryCode || 'EG');
+    
     const { data, error } = await supabase
       .from('bank_products')
       .select('*')
@@ -294,7 +372,7 @@ export const useMarketData = () => {
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [userCountryCode]);
 
   const refetch = fetchAllData;
 

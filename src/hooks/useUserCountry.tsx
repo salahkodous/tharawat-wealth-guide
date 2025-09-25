@@ -17,8 +17,8 @@ const countryData: CountryInfo[] = [
 
 export const useUserCountry = () => {
   const { user } = useAuth();
-  const { stocks, bonds, etfs, realEstate } = useMarketData();
   const [userCountry, setUserCountry] = useState<CountryInfo | null>(null);
+  const { stocks, bonds, etfs, realEstate } = useMarketData(userCountry?.code);
 
   useEffect(() => {
     if (user?.user_metadata?.country) {
