@@ -35,6 +35,10 @@ export const useUserCountry = () => {
     if (user?.user_metadata?.country) {
       const country = countryData.find(c => c.code === user.user_metadata.country);
       setUserCountry(country || null);
+    } else {
+      // Set default country to Egypt if no user metadata
+      const defaultCountry = countryData.find(c => c.code === 'EG');
+      setUserCountry(defaultCountry || null);
     }
   }, [user]);
 
