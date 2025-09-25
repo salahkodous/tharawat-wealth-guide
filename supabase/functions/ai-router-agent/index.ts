@@ -10,6 +10,17 @@ const corsHeaders = {
 async function classifyQuery(message: string, groqApiKey: string) {
   console.log('Classifying query:', message.substring(0, 100));
   
+  // Quick check for obvious greetings before API call
+  const lowerMessage = message.toLowerCase().trim();
+  if (lowerMessage.match(/^(hi|hello|hey|good morning|good afternoon|good evening|how are you|what's up|greetings)\.?$/)) {
+    console.log('Detected greeting, skipping API classification');
+    return {
+      type: "greeting",
+      context: [],
+      priority: "low"
+    };
+  }
+  
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -23,6 +34,7 @@ async function classifyQuery(message: string, groqApiKey: string) {
         content: `Analyze this financial query and return a JSON response with the query type and needed context.
 
 QUERY TYPES:
+- greeting: Simple greetings, hellos, casual conversation (hi, hello, how are you, etc.)
 - portfolio_analysis: Holdings, performance, diversification questions
 - debt_management: Debt strategy, payments, consolidation questions  
 - investment_advice: Buying/selling, asset allocation recommendations
@@ -41,6 +53,13 @@ Return ONLY this JSON format:
   "type": "query_type",
   "context": ["context1", "context2"],
   "priority": "high|medium|low"
+}
+
+IMPORTANT: For simple greetings (hi, hello, how are you), always return:
+{
+  "type": "greeting", 
+  "context": [],
+  "priority": "low"
 }`
       }, {
         role: 'user', 
@@ -57,7 +76,15 @@ Return ONLY this JSON format:
     console.log('Classification result:', classification);
     return classification;
   } catch (e) {
-    console.log('Classification parse error, using defaults');
+    console.log('Classification parse error, checking if greeting');
+    // Simple fallback for greetings
+    if (lowerMessage.match(/^(hi|hello|hey|good morning|good afternoon|good evening|how are you|what's up|greetings)\.?$/)) {
+      return {
+        type: "greeting",
+        context: [],
+        priority: "low"
+      };
+    }
     return {
       type: "general_financial",
       context: ["personal_finances"],
@@ -126,6 +153,8 @@ async function fetchRelevantData(userId: string, contextTypes: string[], supabas
 
 function generateSpecializedPrompt(queryType: string, userData: any): string {
   const prompts = {
+    greeting: `You are Anakin, a friendly AI financial advisor. Respond to this greeting warmly and briefly. Keep your response under 50 words. Simply say hello back and ask how you can help with their financial needs today. DO NOT provide any financial analysis or data unless specifically asked.`,
+    
     portfolio_analysis: `You are Anakin, a portfolio analysis specialist. Provide detailed insights about holdings, performance, and diversification. Structure your response with:
 
 **📊 PORTFOLIO OVERVIEW**
@@ -150,7 +179,7 @@ function generateSpecializedPrompt(queryType: string, userData: any): string {
 **⚠️ RISK ASSESSMENT**
 **🚀 ACTION STEPS**`,
 
-    news_analysis: `You are Anakin, a financial news analyst. Analyze how market news impacts the user's portfolio. Structure your response with:
+    news_analysis: `You are Anakin, a financial news analyst. Analyze how recent market news impacts the user's portfolio. Structure your response with:
 
 **📰 NEWS IMPACT SUMMARY**
 **📊 PORTFOLIO EFFECTS**
@@ -177,12 +206,17 @@ function generateSpecializedPrompt(queryType: string, userData: any): string {
 
   const prompt = prompts[queryType as keyof typeof prompts] || prompts.general_financial;
   
+  // For greetings, don't include any user data
+  if (queryType === 'greeting') {
+    return prompt;
+  }
+  
   let contextData = '';
-  for (const [key, value] of Object.entries(userData)) {
+  Object.entries(userData).forEach(([key, value]) => {
     if (value && (Array.isArray(value) ? value.length > 0 : Object.keys(value).length > 0)) {
       contextData += `\n\n${key.toUpperCase()}: ${JSON.stringify(value, null, 2)}`;
     }
-  }
+  });
 
   return `${prompt}
 
@@ -208,8 +242,8 @@ async function generateResponse(message: string, queryType: string, userData: an
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
-      max_tokens: 1500,
-      temperature: queryType === 'market_research' ? 0.3 : 0.7
+      max_tokens: queryType === 'greeting' ? 100 : 1500,
+      temperature: queryType === 'greeting' ? 0.5 : (queryType === 'market_research' ? 0.3 : 0.7)
     }),
   });
 
@@ -230,7 +264,7 @@ serve(async (req) => {
 
   try {
     const { message, userId } = await req.json();
-    console.log('Processing query for user:', userId);
+    console.log('Processing query for user:', userId, 'Message type check:', message.toLowerCase().trim());
 
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -244,14 +278,21 @@ serve(async (req) => {
 
     // Step 1: Classify the query
     const classification = await classifyQuery(message, groqApiKey);
+    console.log('Final classification:', classification);
     
-    // Step 2: Fetch relevant data
-    const userData = await fetchRelevantData(userId, classification.context, supabase);
+    // Step 2: Fetch relevant data (skip for greetings to save tokens)
+    let userData = {};
+    if (classification.type !== 'greeting') {
+      console.log('Fetching user data for non-greeting query');
+      userData = await fetchRelevantData(userId, classification.context, supabase);
+    } else {
+      console.log('Skipping data fetch for greeting - saving tokens');
+    }
     
     // Step 3: Generate specialized response
     const response = await generateResponse(message, classification.type, userData, groqApiKey);
 
-    console.log('Response generated successfully');
+    console.log('Response generated successfully for type:', classification.type);
     return new Response(JSON.stringify({ response }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
