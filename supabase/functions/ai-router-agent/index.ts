@@ -116,60 +116,112 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
   console.log('Executing tools:', toolsNeeded);
   const toolResults: any = {};
   
+  // Extract user geography from user data
+  const userCountry = userData.personal_finances?.country || userData.user_country || 'Egypt';
+  const userCurrency = userData.personal_finances?.currency || 'EGP';
+  const currentYear = new Date().getFullYear();
+  
   try {
     for (const tool of toolsNeeded) {
       switch (tool) {
         case 'web_search':
-          // Simple market search for investment opportunities
-          const searchQuery = `investment opportunities ${new Date().getFullYear()} market trends financial advice`;
-          console.log('Performing web search for:', searchQuery);
+          // Geographic and context-aware search
+          let searchQuery = '';
+          if (message.toLowerCase().includes('business') || message.toLowerCase().includes('invest') || message.toLowerCase().includes('opportunity')) {
+            searchQuery = `${userCountry} business investment opportunities ${currentYear} ${userCurrency} market economy industry trends`;
+          } else if (message.toLowerCase().includes('real estate') || message.toLowerCase().includes('property')) {
+            searchQuery = `${userCountry} real estate market ${currentYear} property investment ${userCurrency} trends`;
+          } else if (message.toLowerCase().includes('stock') || message.toLowerCase().includes('trading')) {
+            searchQuery = `${userCountry} stock market ${currentYear} ${userCurrency} trading opportunities local stocks`;
+          } else {
+            searchQuery = `${userCountry} financial market ${currentYear} investment opportunities ${userCurrency} economy`;
+          }
           
-          // For now, we'll add a placeholder - in a real implementation, you'd integrate with a search API
+          console.log('Performing geographic web search for:', searchQuery);
+          
+          // Enhanced placeholder with geographic context
           toolResults.web_search = {
-            summary: "Current market trends suggest diversified portfolios with tech stocks, green energy, and emerging markets show potential.",
-            trends: ["AI and technology stocks", "Renewable energy investments", "Emerging market opportunities"],
-            risks: ["Market volatility", "Interest rate changes", "Geopolitical tensions"]
+            country: userCountry,
+            currency: userCurrency,
+            summary: `Current ${userCountry} market trends suggest opportunities in local sectors aligned with economic growth patterns.`,
+            local_opportunities: [`${userCountry} emerging sectors`, `Local ${userCurrency} investment vehicles`, `Regional market advantages`],
+            economic_context: [`${userCountry} economic indicators`, `${userCurrency} exchange rate trends`, `Local regulatory environment`],
+            risks: [`${userCountry} market volatility`, `${userCurrency} currency risks`, `Local political/economic stability`],
+            search_query: searchQuery
           };
           break;
           
         case 'portfolio_analysis':
-          // Enhanced portfolio analysis based on user data
+          // Enhanced geographic portfolio analysis
           if (userData.assets) {
             const totalValue = userData.assets.reduce((sum: number, asset: any) => sum + (asset.current_value || 0), 0);
             const diversification = userData.assets.length > 1 ? "Diversified" : "Concentrated";
+            const localAssets = userData.assets.filter((asset: any) => asset.country === userCountry);
+            const internationalAssets = userData.assets.filter((asset: any) => asset.country !== userCountry);
             
             toolResults.portfolio_analysis = {
               total_value: totalValue,
+              currency: userCurrency,
               diversification_score: diversification,
               asset_count: userData.assets.length,
-              recommendations: totalValue < 10000 ? ["Consider low-cost index funds", "Build emergency fund first"] : ["Rebalance quarterly", "Consider international exposure"]
+              geographic_breakdown: {
+                local_assets: localAssets.length,
+                international_assets: internationalAssets.length,
+                local_percentage: localAssets.length / userData.assets.length * 100
+              },
+              recommendations: totalValue < 10000 ? 
+                [`Consider low-cost ${userCountry} index funds`, `Build emergency fund in ${userCurrency}`, `Explore local ${userCountry} investment platforms`] : 
+                [`Rebalance quarterly considering ${userCurrency} fluctuations`, `Consider international exposure beyond ${userCountry}`, `Review ${userCountry} tax implications`]
             };
           }
           break;
           
         case 'goal_planning':
-          // Long-term financial planning
+          // Geographic goal planning
           if (userData.goals) {
+            const localInflationRate = userCountry === 'Egypt' ? 15 : userCountry === 'UAE' ? 3 : 5; // Approximate rates
             toolResults.goal_planning = {
+              country: userCountry,
+              currency: userCurrency,
               active_goals: userData.goals.financial?.length || 0,
               portfolio_goals: userData.goals.portfolio?.length || 0,
+              local_inflation_context: `${localInflationRate}% estimated ${userCountry} inflation`,
               planning_horizon: "5-10 years recommended for wealth building",
-              strategies: ["Dollar-cost averaging", "Tax-advantaged accounts", "Compound growth focus"]
+              strategies: [
+                `${userCurrency}-denominated investments`, 
+                `${userCountry} tax-advantaged accounts`, 
+                `Local ${userCountry} compound growth opportunities`,
+                `Hedge against ${userCurrency} devaluation`
+              ]
             };
           }
           break;
           
         case 'risk_analysis':
-          // Risk assessment based on user profile
+          // Geographic risk assessment
           const income = userData.income_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0;
           const expenses = userData.expense_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0;
           const netIncome = income - expenses;
           
+          // Country-specific risk factors
+          const countryRiskFactors = {
+            'Egypt': ['Currency devaluation risk', 'High inflation environment', 'Political stability considerations'],
+            'UAE': ['Oil price dependency', 'Real estate market cycles', 'Regional geopolitical factors'],
+            'Saudi Arabia': ['Economic diversification progress', 'Oil market volatility', 'Vision 2030 implementation']
+          };
+          
           toolResults.risk_analysis = {
+            country: userCountry,
+            currency: userCurrency,
             risk_capacity: netIncome > 0 ? "Positive" : "Limited",
             emergency_fund_needed: expenses * 6,
             risk_tolerance: income > 50000 ? "Moderate to High" : "Conservative",
-            insurance_needs: ["Health insurance", "Life insurance if dependents", "Disability insurance"]
+            local_risk_factors: countryRiskFactors[userCountry as keyof typeof countryRiskFactors] || ['Market volatility', 'Currency fluctuation', 'Economic policy changes'],
+            insurance_needs: [
+              `${userCountry} health insurance requirements`, 
+              `Life insurance with ${userCurrency} coverage`, 
+              `${userCountry} disability/unemployment insurance`
+            ]
           };
           break;
       }
@@ -193,6 +245,12 @@ async function fetchRelevantData(userId: string, contextTypes: string[], supabas
         case 'personal_finances':
           const pf = await supabase.from('personal_finances').select('*').eq('user_id', userId).single();
           if (pf.data) dataMap[type] = pf.data;
+          
+          // Also fetch user settings for currency/country preferences
+          const settings = await supabase.from('user_settings').select('currency, language').eq('user_id', userId).single();
+          if (settings.data) {
+            dataMap.user_settings = settings.data;
+          }
           break;
         case 'debts':
           const debts = await supabase.from('debts').select('*').eq('user_id', userId);
@@ -242,37 +300,41 @@ async function fetchRelevantData(userId: string, contextTypes: string[], supabas
 }
 
 function generateSpecializedPrompt(queryType: string, responseType: string, toolsNeeded: string[], userData: any): string {
+  // Extract geographic context
+  const userCountry = userData.user_settings?.country || userData.personal_finances?.country || 'Egypt';
+  const userCurrency = userData.user_settings?.currency || userData.personal_finances?.currency || 'EGP';
+  
   const basePrompts = {
     greeting: `You are Anakin, a friendly AI financial advisor. Respond warmly and briefly. Keep under 50 words.`,
     
-    quick_value: `You are Anakin. Provide the exact value requested with minimal context. Be precise and concise.`,
+    quick_value: `You are Anakin. Provide the exact value requested in ${userCurrency} with minimal context. Be precise and concise.`,
     
-    portfolio_analysis: `You are Anakin, a portfolio analysis specialist. Provide insights about holdings, performance, and diversification.`,
+    portfolio_analysis: `You are Anakin, a portfolio analysis specialist for ${userCountry} market. Provide insights about holdings, performance, and diversification considering ${userCountry} economic conditions and ${userCurrency} implications.`,
 
-    debt_management: `You are Anakin, a debt management expert. Analyze debt strategy and provide optimization recommendations.`,
+    debt_management: `You are Anakin, a debt management expert specializing in ${userCountry} financial systems. Analyze debt strategy considering local ${userCurrency} interest rates and ${userCountry} banking practices.`,
 
-    investment_advice: `You are Anakin, an investment advisor. Provide personalized investment recommendations.`,
+    investment_advice: `You are Anakin, an investment advisor specializing in ${userCountry} markets. Provide personalized investment recommendations considering ${userCountry} economic climate, ${userCurrency} stability, and local investment opportunities.`,
 
-    news_analysis: `You are Anakin, a financial news analyst. Analyze how recent market news impacts the user's portfolio.`,
+    news_analysis: `You are Anakin, a financial news analyst focused on ${userCountry} markets. Analyze how recent ${userCountry} and regional news impacts the user's portfolio, considering ${userCurrency} market dynamics.`,
 
-    goal_tracking: `You are Anakin, a goal tracking specialist. Monitor progress and provide guidance.`,
+    goal_tracking: `You are Anakin, a goal tracking specialist for ${userCountry} residents. Monitor progress considering local ${userCountry} inflation rates, ${userCurrency} purchasing power, and regional economic factors.`,
 
-    general_financial: `You are Anakin, a comprehensive financial advisor. Provide professional financial guidance.`
+    general_financial: `You are Anakin, a comprehensive financial advisor specializing in ${userCountry} financial landscape. Provide professional guidance considering ${userCountry} economic conditions, ${userCurrency} market dynamics, local regulations, and cultural financial practices.`
   };
 
   const responseStructures = {
     brief: "",
-    value: "Provide just the number/value with one line of context.",
-    medium: `Structure your response with:
-**💡 KEY INSIGHT**
-**📊 ANALYSIS**  
-**⚡ ACTION**`,
-    detailed: `Structure your response with:
-**📊 OVERVIEW**
-**🎯 KEY INSIGHTS** 
-**⚡ IMMEDIATE ACTIONS**
-**🔍 DETAILED ANALYSIS**
-**📈 RECOMMENDATIONS**`
+    value: `Provide just the number/value in ${userCurrency} with one line of context.`,
+    medium: `Structure your response with geographic context for ${userCountry}:
+**💡 KEY INSIGHT** (${userCountry} specific)
+**📊 ANALYSIS** (considering ${userCurrency} and local market)
+**⚡ ACTION** (actionable for ${userCountry} resident)`,
+    detailed: `Structure your response with comprehensive ${userCountry} context:
+**📊 OVERVIEW** (${userCountry} market perspective)
+**🎯 KEY INSIGHTS** (local ${userCurrency} implications)
+**⚡ IMMEDIATE ACTIONS** (specific to ${userCountry} regulations/options)
+**🔍 DETAILED ANALYSIS** (${userCountry} economic factors)
+**📈 RECOMMENDATIONS** (optimized for ${userCountry} resident)`
   };
 
   let prompt = basePrompts[queryType as keyof typeof basePrompts] || basePrompts.general_financial;
@@ -282,17 +344,17 @@ function generateSpecializedPrompt(queryType: string, responseType: string, tool
     prompt += `\n\n${responseStructures[responseType as keyof typeof responseStructures]}`;
   }
 
-  // Add tool-specific instructions
+  // Add tool-specific instructions with geographic context
   if (toolsNeeded.includes('web_search')) {
-    prompt += `\n\nIMPORTANT: Include current market trends and investment opportunities based on recent market conditions.`;
+    prompt += `\n\nIMPORTANT: Include current ${userCountry} market trends, local investment opportunities, and ${userCurrency} market conditions based on recent regional economic developments.`;
   }
   
   if (toolsNeeded.includes('portfolio_analysis')) {
-    prompt += `\n\nFocus on portfolio optimization, diversification analysis, and performance metrics.`;
+    prompt += `\n\nFocus on portfolio optimization for ${userCountry} resident, diversification analysis considering ${userCurrency} exposure, and performance metrics relative to ${userCountry} market benchmarks.`;
   }
   
   if (toolsNeeded.includes('goal_planning')) {
-    prompt += `\n\nProvide long-term financial planning strategies and milestone projections.`;
+    prompt += `\n\nProvide long-term financial planning strategies specific to ${userCountry} economic environment, considering local inflation rates, ${userCurrency} stability, and regional growth projections.`;
   }
 
   // For greetings and quick values, don't include user data
@@ -310,10 +372,12 @@ function generateSpecializedPrompt(queryType: string, responseType: string, tool
   });
 
   return `${prompt}
+  
+GEOGRAPHIC CONTEXT: You are advising a ${userCountry} resident dealing with ${userCurrency}. All advice must be relevant to ${userCountry} economic conditions, local market opportunities, regulatory environment, and cultural financial practices.
 
 USER FINANCIAL DATA:${contextData}
 
-Provide professional, actionable advice with specific references to the user's data. Use concrete numbers and be specific about recommendations.`;
+Provide professional, actionable advice with specific references to the user's data and ${userCountry} context. Use concrete numbers in ${userCurrency} and be specific about recommendations that work in ${userCountry}.`;
 }
 
 async function generateResponse(message: string, classification: any, userData: any, groqApiKey: string): Promise<string> {
