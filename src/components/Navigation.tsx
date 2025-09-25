@@ -17,7 +17,10 @@ import {
   Menu,
   X,
   Globe,
-  ChevronDown
+  ChevronDown,
+  Mountain,
+  Building2,
+  Palmtree
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -35,6 +38,22 @@ const Navigation = () => {
   const { userCountry, setUserCountry, getAllCountries } = useUserCountry();
   
   const countries = getAllCountries();
+
+  // Get country landmark icon
+  const getCountryIcon = (countryCode?: string) => {
+    switch (countryCode) {
+      case 'EG':
+        return Mountain; // Represents pyramids
+      case 'SA':
+        return Palmtree; // Represents Arabian heritage
+      case 'AE':
+        return Building2; // Represents modern architecture like Burj Khalifa
+      default:
+        return Mountain; // Default to Egypt's pyramid
+    }
+  };
+
+  const CountryIcon = getCountryIcon(userCountry?.code);
 
   const handleSignOut = async () => {
     await signOut();
@@ -81,8 +100,8 @@ const Navigation = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2 bg-background/80 backdrop-blur-sm">
-                  <Globe className="w-4 h-4" />
-                  <span>{userCountry?.flag} {userCountry?.code || 'Select Country'}</span>
+                  <CountryIcon className="w-4 h-4" />
+                  <span>{userCountry?.flag} {userCountry?.code || 'EG'}</span>
                   <ChevronDown className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
@@ -123,7 +142,7 @@ const Navigation = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-1 bg-background/80 backdrop-blur-sm px-2 py-1">
-                  <Globe className="w-3 h-3" />
+                  <CountryIcon className="w-3 h-3" />
                   <span className="text-xs">{userCountry?.flag || '🇪🇬'}</span>
                   <ChevronDown className="w-2 h-2" />
                 </Button>
