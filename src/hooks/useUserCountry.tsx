@@ -19,7 +19,10 @@ const countryData: CountryInfo[] = [
 export const useUserCountry = () => {
   const { user } = useAuth();
   const { updateSettings } = useSettings();
-  const [userCountry, setUserCountry] = useState<CountryInfo | null>(null);
+  const [userCountry, setUserCountry] = useState<CountryInfo | null>(countryData[0]); // Default to first country (Egypt)
+  
+  console.log('🏛️ useUserCountry hook initialized with default:', countryData[0]);
+  
   const { stocks, bonds, etfs, realEstate } = useMarketData(userCountry?.code);
 
   const setUserCountryWithSettings = (country: CountryInfo | null) => {

@@ -59,9 +59,12 @@ const Navigation = () => {
   };
 
   const handleCountryChange = (countryCode: string) => {
+    console.log('🌍 Navigation: Changing country to:', countryCode);
     const selectedCountry = countries.find(c => c.code === countryCode);
+    console.log('🌍 Navigation: Found country:', selectedCountry);
     if (selectedCountry) {
       setUserCountry(selectedCountry);
+      console.log('🌍 Navigation: Country changed successfully to:', selectedCountry.name);
     }
   };
 
