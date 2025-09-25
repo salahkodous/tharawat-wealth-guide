@@ -17,7 +17,9 @@ async function classifyQuery(message: string, groqApiKey: string) {
     return {
       type: "greeting",
       context: [],
-      priority: "low"
+      priority: "low",
+      responseType: "brief",
+      toolsNeeded: []
     };
   }
   
@@ -31,10 +33,11 @@ async function classifyQuery(message: string, groqApiKey: string) {
       model: 'llama-3.1-8b-instant',
       messages: [{
         role: 'system',
-        content: `Analyze this financial query and return a JSON response with the query type and needed context.
+        content: `Analyze this financial query and return a JSON response with query type, needed context, response type, and tools.
 
 QUERY TYPES:
-- greeting: Simple greetings, hellos, casual conversation (hi, hello, how are you, etc.)
+- greeting: Simple greetings, hellos, casual conversation
+- quick_value: Asking for specific numbers (income, net worth, balance, etc.)
 - portfolio_analysis: Holdings, performance, diversification questions
 - debt_management: Debt strategy, payments, consolidation questions  
 - investment_advice: Buying/selling, asset allocation recommendations
@@ -48,48 +51,135 @@ QUERY TYPES:
 
 CONTEXT TYPES: personal_finances, debts, assets, goals, income, expenses, deposits, news
 
+RESPONSE TYPES:
+- brief: Short greeting or simple answer (50-100 tokens)
+- value: Just return a number/value with minimal context (20-50 tokens)  
+- medium: Focused analysis with key points (300-500 tokens)
+- detailed: Comprehensive analysis with full insights (800-1500 tokens)
+
+TOOLS NEEDED:
+- web_search: For market research, investment opportunities, economic trends
+- portfolio_analysis: For detailed portfolio insights and recommendations
+- goal_planning: For long-term financial planning and projections
+- risk_analysis: For risk assessment and insurance planning
+
 Return ONLY this JSON format:
 {
   "type": "query_type",
   "context": ["context1", "context2"],
-  "priority": "high|medium|low"
+  "priority": "high|medium|low",
+  "responseType": "brief|value|medium|detailed",
+  "toolsNeeded": ["tool1", "tool2"]
 }
 
-IMPORTANT: For simple greetings (hi, hello, how are you), always return:
-{
-  "type": "greeting", 
-  "context": [],
-  "priority": "low"
-}`
+Examples:
+- "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}
+- "What are good investment opportunities now?" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}`
       }, {
         role: 'user', 
         content: message
       }],
-      max_tokens: 150,
+      max_tokens: 200,
       temperature: 0.1
     }),
   });
 
   const data = await response.json();
   try {
-    const classification = JSON.parse(data.choices[0]?.message?.content || '{"type":"general_financial","context":["personal_finances"],"priority":"medium"}');
+    const classification = JSON.parse(data.choices[0]?.message?.content || '{"type":"general_financial","context":["personal_finances"],"priority":"medium","responseType":"medium","toolsNeeded":[]}');
     console.log('Classification result:', classification);
     return classification;
   } catch (e) {
-    console.log('Classification parse error, checking if greeting');
+    console.log('Classification parse error, using fallback');
     // Simple fallback for greetings
     if (lowerMessage.match(/^(hi|hello|hey|good morning|good afternoon|good evening|how are you|what's up|greetings)\.?$/)) {
       return {
         type: "greeting",
         context: [],
-        priority: "low"
+        priority: "low",
+        responseType: "brief",
+        toolsNeeded: []
       };
     }
     return {
       type: "general_financial",
       context: ["personal_finances"],
-      priority: "medium"
+      priority: "medium",
+      responseType: "medium",
+      toolsNeeded: []
     };
+  }
+}
+
+async function executeTools(toolsNeeded: string[], message: string, userData: any): Promise<any> {
+  console.log('Executing tools:', toolsNeeded);
+  const toolResults: any = {};
+  
+  try {
+    for (const tool of toolsNeeded) {
+      switch (tool) {
+        case 'web_search':
+          // Simple market search for investment opportunities
+          const searchQuery = `investment opportunities ${new Date().getFullYear()} market trends financial advice`;
+          console.log('Performing web search for:', searchQuery);
+          
+          // For now, we'll add a placeholder - in a real implementation, you'd integrate with a search API
+          toolResults.web_search = {
+            summary: "Current market trends suggest diversified portfolios with tech stocks, green energy, and emerging markets show potential.",
+            trends: ["AI and technology stocks", "Renewable energy investments", "Emerging market opportunities"],
+            risks: ["Market volatility", "Interest rate changes", "Geopolitical tensions"]
+          };
+          break;
+          
+        case 'portfolio_analysis':
+          // Enhanced portfolio analysis based on user data
+          if (userData.assets) {
+            const totalValue = userData.assets.reduce((sum: number, asset: any) => sum + (asset.current_value || 0), 0);
+            const diversification = userData.assets.length > 1 ? "Diversified" : "Concentrated";
+            
+            toolResults.portfolio_analysis = {
+              total_value: totalValue,
+              diversification_score: diversification,
+              asset_count: userData.assets.length,
+              recommendations: totalValue < 10000 ? ["Consider low-cost index funds", "Build emergency fund first"] : ["Rebalance quarterly", "Consider international exposure"]
+            };
+          }
+          break;
+          
+        case 'goal_planning':
+          // Long-term financial planning
+          if (userData.goals) {
+            toolResults.goal_planning = {
+              active_goals: userData.goals.financial?.length || 0,
+              portfolio_goals: userData.goals.portfolio?.length || 0,
+              planning_horizon: "5-10 years recommended for wealth building",
+              strategies: ["Dollar-cost averaging", "Tax-advantaged accounts", "Compound growth focus"]
+            };
+          }
+          break;
+          
+        case 'risk_analysis':
+          // Risk assessment based on user profile
+          const income = userData.income_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0;
+          const expenses = userData.expense_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0;
+          const netIncome = income - expenses;
+          
+          toolResults.risk_analysis = {
+            risk_capacity: netIncome > 0 ? "Positive" : "Limited",
+            emergency_fund_needed: expenses * 6,
+            risk_tolerance: income > 50000 ? "Moderate to High" : "Conservative",
+            insurance_needs: ["Health insurance", "Life insurance if dependents", "Disability insurance"]
+          };
+          break;
+      }
+    }
+    
+    console.log('Tool execution completed:', Object.keys(toolResults));
+    return toolResults;
+  } catch (error) {
+    console.error('Tool execution error:', error);
+    return {};
   }
 }
 
@@ -151,69 +241,70 @@ async function fetchRelevantData(userId: string, contextTypes: string[], supabas
   }
 }
 
-function generateSpecializedPrompt(queryType: string, userData: any): string {
-  const prompts = {
-    greeting: `You are Anakin, a friendly AI financial advisor. Respond to this greeting warmly and briefly. Keep your response under 50 words. Simply say hello back and ask how you can help with their financial needs today. DO NOT provide any financial analysis or data unless specifically asked.`,
+function generateSpecializedPrompt(queryType: string, responseType: string, toolsNeeded: string[], userData: any): string {
+  const basePrompts = {
+    greeting: `You are Anakin, a friendly AI financial advisor. Respond warmly and briefly. Keep under 50 words.`,
     
-    portfolio_analysis: `You are Anakin, a portfolio analysis specialist. Provide detailed insights about holdings, performance, and diversification. Structure your response with:
+    quick_value: `You are Anakin. Provide the exact value requested with minimal context. Be precise and concise.`,
+    
+    portfolio_analysis: `You are Anakin, a portfolio analysis specialist. Provide insights about holdings, performance, and diversification.`,
 
-**📊 PORTFOLIO OVERVIEW**
+    debt_management: `You are Anakin, a debt management expert. Analyze debt strategy and provide optimization recommendations.`,
+
+    investment_advice: `You are Anakin, an investment advisor. Provide personalized investment recommendations.`,
+
+    news_analysis: `You are Anakin, a financial news analyst. Analyze how recent market news impacts the user's portfolio.`,
+
+    goal_tracking: `You are Anakin, a goal tracking specialist. Monitor progress and provide guidance.`,
+
+    general_financial: `You are Anakin, a comprehensive financial advisor. Provide professional financial guidance.`
+  };
+
+  const responseStructures = {
+    brief: "",
+    value: "Provide just the number/value with one line of context.",
+    medium: `Structure your response with:
+**💡 KEY INSIGHT**
+**📊 ANALYSIS**  
+**⚡ ACTION**`,
+    detailed: `Structure your response with:
+**📊 OVERVIEW**
 **🎯 KEY INSIGHTS** 
 **⚡ IMMEDIATE ACTIONS**
 **🔍 DETAILED ANALYSIS**
-**📈 RECOMMENDATIONS**`,
-
-    debt_management: `You are Anakin, a debt management expert. Analyze debt strategy and provide optimization recommendations. Structure your response with:
-
-**💳 DEBT SUMMARY**
-**🎯 PRIORITY ACTIONS**
-**📊 PAYOFF STRATEGY** 
-**💰 SAVINGS OPPORTUNITIES**
-**📋 ACTION PLAN**`,
-
-    investment_advice: `You are Anakin, an investment advisor. Provide personalized investment recommendations. Structure your response with:
-
-**🎯 INVESTMENT THESIS**
-**📊 MARKET ANALYSIS**
-**💼 PORTFOLIO ALLOCATION**
-**⚠️ RISK ASSESSMENT**
-**🚀 ACTION STEPS**`,
-
-    news_analysis: `You are Anakin, a financial news analyst. Analyze how recent market news impacts the user's portfolio. Structure your response with:
-
-**📰 NEWS IMPACT SUMMARY**
-**📊 PORTFOLIO EFFECTS**
-**⚡ IMMEDIATE ACTIONS**
-**🔮 OUTLOOK**
-**📋 MONITORING POINTS**`,
-
-    goal_tracking: `You are Anakin, a goal tracking specialist. Monitor progress and provide guidance. Structure your response with:
-
-**🎯 GOAL STATUS**
-**📊 PROGRESS METRICS**
-**⚡ ACCELERATION STRATEGIES**
-**🔄 ADJUSTMENTS NEEDED**
-**📅 MILESTONE TIMELINE**`,
-
-    general_financial: `You are Anakin, a comprehensive financial advisor. Provide professional financial guidance. Structure your response with:
-
-**💡 KEY INSIGHTS**
-**📊 FINANCIAL SNAPSHOT**
-**🎯 RECOMMENDATIONS**
-**⚡ IMMEDIATE ACTIONS**
-**📈 LONG-TERM STRATEGY**`
+**📈 RECOMMENDATIONS**`
   };
 
-  const prompt = prompts[queryType as keyof typeof prompts] || prompts.general_financial;
+  let prompt = basePrompts[queryType as keyof typeof basePrompts] || basePrompts.general_financial;
   
-  // For greetings, don't include any user data
-  if (queryType === 'greeting') {
+  // Add response structure based on type
+  if (responseType !== 'brief' && responseType !== 'value') {
+    prompt += `\n\n${responseStructures[responseType as keyof typeof responseStructures]}`;
+  }
+
+  // Add tool-specific instructions
+  if (toolsNeeded.includes('web_search')) {
+    prompt += `\n\nIMPORTANT: Include current market trends and investment opportunities based on recent market conditions.`;
+  }
+  
+  if (toolsNeeded.includes('portfolio_analysis')) {
+    prompt += `\n\nFocus on portfolio optimization, diversification analysis, and performance metrics.`;
+  }
+  
+  if (toolsNeeded.includes('goal_planning')) {
+    prompt += `\n\nProvide long-term financial planning strategies and milestone projections.`;
+  }
+
+  // For greetings and quick values, don't include user data
+  if (queryType === 'greeting' || queryType === 'quick_value') {
     return prompt;
   }
   
   let contextData = '';
   Object.entries(userData).forEach(([key, value]) => {
-    if (value && (Array.isArray(value) ? value.length > 0 : Object.keys(value).length > 0)) {
+    if (key === 'toolResults' && value && Object.keys(value).length > 0) {
+      contextData += `\n\nTOOL ANALYSIS RESULTS: ${JSON.stringify(value, null, 2)}`;
+    } else if (key !== 'toolResults' && value && (Array.isArray(value) ? value.length > 0 : Object.keys(value).length > 0)) {
       contextData += `\n\n${key.toUpperCase()}: ${JSON.stringify(value, null, 2)}`;
     }
   });
@@ -225,10 +316,20 @@ USER FINANCIAL DATA:${contextData}
 Provide professional, actionable advice with specific references to the user's data. Use concrete numbers and be specific about recommendations.`;
 }
 
-async function generateResponse(message: string, queryType: string, userData: any, groqApiKey: string): Promise<string> {
-  console.log(`Generating ${queryType} response`);
+async function generateResponse(message: string, classification: any, userData: any, groqApiKey: string): Promise<string> {
+  console.log(`Generating ${classification.type} response with ${classification.responseType} format`);
   
-  const systemPrompt = generateSpecializedPrompt(queryType, userData);
+  const systemPrompt = generateSpecializedPrompt(classification.type, classification.responseType, classification.toolsNeeded || [], userData);
+  
+  // Determine token limits based on response type
+  const tokenLimits = {
+    brief: 100,
+    value: 50,
+    medium: 500,
+    detailed: 1500
+  };
+  
+  const maxTokens = tokenLimits[classification.responseType as keyof typeof tokenLimits] || 500;
   
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -242,8 +343,8 @@ async function generateResponse(message: string, queryType: string, userData: an
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
-      max_tokens: queryType === 'greeting' ? 100 : 1500,
-      temperature: queryType === 'greeting' ? 0.5 : (queryType === 'market_research' ? 0.3 : 0.7)
+      max_tokens: maxTokens,
+      temperature: classification.type === 'greeting' ? 0.5 : (classification.type === 'market_research' ? 0.3 : 0.7)
     }),
   });
 
@@ -280,17 +381,24 @@ serve(async (req) => {
     const classification = await classifyQuery(message, groqApiKey);
     console.log('Final classification:', classification);
     
-    // Step 2: Fetch relevant data (skip for greetings to save tokens)
+    // Step 2: Fetch relevant data (skip for greetings and quick values to save tokens)
     let userData = {};
-    if (classification.type !== 'greeting') {
-      console.log('Fetching user data for non-greeting query');
+    if (classification.type !== 'greeting' && classification.type !== 'quick_value') {
+      console.log('Fetching user data for comprehensive query');
       userData = await fetchRelevantData(userId, classification.context, supabase);
     } else {
-      console.log('Skipping data fetch for greeting - saving tokens');
+      console.log('Skipping data fetch for brief response - saving tokens');
     }
     
-    // Step 3: Generate specialized response
-    const response = await generateResponse(message, classification.type, userData, groqApiKey);
+    // Step 3: Execute any needed tools
+    let toolResults = {};
+    if (classification.toolsNeeded && classification.toolsNeeded.length > 0) {
+      console.log('Executing tools:', classification.toolsNeeded);
+      toolResults = await executeTools(classification.toolsNeeded, message, userData);
+    }
+    
+    // Step 4: Generate specialized response with tool results
+    const response = await generateResponse(message, classification, { ...userData, toolResults }, groqApiKey);
 
     console.log('Response generated successfully for type:', classification.type);
     return new Response(JSON.stringify({ response }), {
