@@ -81,3 +81,6 @@ verify_jwt = false
 
 [functions.personalized-news-agent]
 verify_jwt = false
+
+[functions.ai-router-agent]
+verify_jwt = false

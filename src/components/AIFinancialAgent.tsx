@@ -95,7 +95,7 @@ const AIFinancialAgent = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-financial-agent', {
+      const { data, error } = await supabase.functions.invoke('ai-router-agent', {
         body: {
           message: messageToSend,
           userId: user.id
