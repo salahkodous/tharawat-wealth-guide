@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { useMarketData } from './useMarketData';
+import { useSettings } from './useSettings';
 
 interface CountryInfo {
   code: string;
@@ -17,8 +18,17 @@ const countryData: CountryInfo[] = [
 
 export const useUserCountry = () => {
   const { user } = useAuth();
+  const { updateSettings } = useSettings();
   const [userCountry, setUserCountry] = useState<CountryInfo | null>(null);
   const { stocks, bonds, etfs, realEstate } = useMarketData(userCountry?.code);
+
+  const setUserCountryWithSettings = (country: CountryInfo | null) => {
+    setUserCountry(country);
+    // Update user settings to reflect the currency of the selected country
+    if (country?.currency) {
+      updateSettings({ currency: country.currency });
+    }
+  };
 
   useEffect(() => {
     if (user?.user_metadata?.country) {
@@ -97,7 +107,7 @@ export const useUserCountry = () => {
 
   return {
     userCountry,
-    setUserCountry,
+    setUserCountry: setUserCountryWithSettings,
     getLocalAssets,
     getInternationalAssets,
     getCountryInfo,

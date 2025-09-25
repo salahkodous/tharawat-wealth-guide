@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo, useCall
 import { useAuth } from './useAuth';
 import { useSettings } from './useSettings';
 import { useCurrencyConversion } from './useCurrencyConversion';
+import { useUserCountry } from './useUserCountry';
 
 interface CurrencyContextType {
   currency: string;
@@ -44,16 +45,19 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { user } = useAuth();
   const { settings } = useSettings();
   const { convertCurrency, formatCurrency } = useCurrencyConversion();
+  const { userCountry } = useUserCountry();
   const [currency, setCurrency] = useState('USD');
 
   useEffect(() => {
-    // Prefer settings context over user metadata
-    if (settings.currency) {
+    // Priority order: selected country currency > settings > user metadata
+    if (userCountry?.currency) {
+      setCurrency(userCountry.currency);
+    } else if (settings.currency) {
       setCurrency(settings.currency);
     } else if (user?.user_metadata?.currency) {
       setCurrency(user.user_metadata.currency);
     }
-  }, [user, settings.currency]);
+  }, [user, settings.currency, userCountry?.currency]);
 
   const formatAmount = useCallback((amount: number, fromCurrency?: string): string => {
     if (fromCurrency && fromCurrency !== currency) {
