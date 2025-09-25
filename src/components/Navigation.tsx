@@ -118,14 +118,40 @@ const Navigation = () => {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <Button 
-            variant="ghost" 
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
+          {/* Mobile Country Selector - Always visible */}
+          <div className="md:hidden flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-1 bg-background/80 backdrop-blur-sm px-2 py-1">
+                  <Globe className="w-3 h-3" />
+                  <span className="text-xs">{userCountry?.flag || '🇪🇬'}</span>
+                  <ChevronDown className="w-2 h-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-background/95 backdrop-blur-md border border-border/20 z-50 w-48" align="end">
+                {countries.map((country) => (
+                  <DropdownMenuItem
+                    key={country.code}
+                    onClick={() => handleCountryChange(country.code)}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-accent/50"
+                  >
+                    <span>{country.flag}</span>
+                    <span className="text-sm">{country.name}</span>
+                    <span className="text-xs text-muted-foreground">({country.currency})</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Mobile Menu Button */}
+            <Button 
+              variant="ghost" 
+              className="p-2"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -143,31 +169,6 @@ const Navigation = () => {
                   </Button>
                 </Link>
               ))}
-              {/* Mobile Country Selector */}
-              <div className="px-3 py-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start gap-2 bg-background/80 backdrop-blur-sm">
-                      <Globe className="w-4 h-4" />
-                      <span>{userCountry?.flag} {userCountry?.name || 'Select Country'}</span>
-                      <ChevronDown className="w-3 h-3 ml-auto" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-background/95 backdrop-blur-md border border-border/20 z-50 w-56">
-                    {countries.map((country) => (
-                      <DropdownMenuItem
-                        key={country.code}
-                        onClick={() => handleCountryChange(country.code)}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-accent/50"
-                      >
-                        <span>{country.flag}</span>
-                        <span>{country.name}</span>
-                        <span className="text-xs text-muted-foreground">({country.currency})</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
               
               <div className="px-3 py-2">
                 <CurrencySymbol variant="ghost" className="w-full" />
