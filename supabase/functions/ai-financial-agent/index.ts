@@ -171,7 +171,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in ai-financial-agent function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to process request',
+      error: error instanceof Error ? error.message : 'Failed to process request',
       response: 'Sorry, I encountered an error. Please try again.'
     }), {
       status: 500,

@@ -72,7 +72,7 @@ Please provide personalized investment analysis and recommendations.`;
     console.error('Error in ai-investment-analysis function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to generate AI analysis',
+        error: error instanceof Error ? error.message : 'Failed to generate AI analysis',
         details: 'Please check if your OpenAI API key is properly configured.'
       }), 
       {

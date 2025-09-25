@@ -77,7 +77,7 @@ Include current market conditions, key trends, and investment outlook.`;
     console.error('Error in market-analysis function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to generate market analysis',
+        error: error instanceof Error ? error.message : 'Failed to generate market analysis',
         details: 'Please check if your Hugging Face API token is properly configured.'
       }), 
       {
