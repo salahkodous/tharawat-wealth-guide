@@ -134,6 +134,7 @@ export interface BankProduct {
 
 export const useMarketData = (userCountryCode?: string) => {
   console.log('🔄 useMarketData called with userCountryCode:', userCountryCode);
+  console.log('🔄 useMarketData: Will fetch data for country:', userCountryCode || 'undefined');
   
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
@@ -179,7 +180,7 @@ export const useMarketData = (userCountryCode?: string) => {
       const tableName = getStockTableName(countryCode);
       const countryName = getCountryName(countryCode);
       
-      console.log(`Fetching stocks from ${tableName} for ${countryName}...`);
+      console.log('📊 Fetching stocks from table:', tableName, 'for country code:', countryCode, '(' + countryName + ')');
 
       const { data, error } = await supabase
         .from(tableName as any)
@@ -187,11 +188,15 @@ export const useMarketData = (userCountryCode?: string) => {
         .order('change_percent', { ascending: false });
       
       if (error) {
-        console.error('Error fetching stocks:', error);
+        console.error('❌ Error fetching stocks from', tableName, ':', error);
+        setStocks([]);
         return;
       }
       
-      console.log('Fetched stocks:', data?.length || 0);
+      console.log('✅ Stocks fetched successfully from', tableName, ':', data?.length || 0, 'records');
+      if (data && data.length > 0 && data[0]) {
+        console.log('📊 First stock example:', data[0]);
+      }
       
       const formattedStocks: Stock[] = (data || []).map((stock: any) => ({
         id: stock.id,

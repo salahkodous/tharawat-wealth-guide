@@ -44,6 +44,9 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
     bankProducts,
     loading
   } = useMarketData(userCountry?.code);
+  
+  console.log('🏦 AssetBrowser: Current stocks count:', stocks.length, 'for country:', userCountry?.code);
+  console.log('🏦 AssetBrowser: Loading state:', loading);
 
   const formatPrice = (price: number | null, currency?: string) => {
     if (price === null || price === undefined) return 'N/A';
