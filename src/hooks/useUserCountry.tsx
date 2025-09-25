@@ -21,11 +21,13 @@ export const useUserCountry = () => {
   const [userCountry, setUserCountry] = useState<CountryInfo | null>(countryData[0]); // Default to first country (Egypt)
   
   console.log('🏛️ useUserCountry hook initialized with default:', countryData[0]);
+  console.log('🏛️ useUserCountry current state:', userCountry?.code, userCountry?.name);
 
   const setUserCountryWithSettings = (country: CountryInfo | null) => {
     console.log('🏳️ useUserCountry: Setting country to:', country?.code, country?.name, 'Currency:', country?.currency);
+    console.log('🏳️ useUserCountry: Previous userCountry was:', userCountry?.code, userCountry?.name);
     setUserCountry(country);
-    console.log('🏳️ useUserCountry: State updated, new userCountry:', country);
+    console.log('🏳️ useUserCountry: State updated, new userCountry should be:', country?.code);
     // Update user settings to reflect the currency of the selected country
     if (country?.currency) {
       updateSettings({ currency: country.currency });

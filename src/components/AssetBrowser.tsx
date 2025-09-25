@@ -32,6 +32,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
   const { userCountry } = useUserCountry();
   
   console.log('🔍 AssetBrowser - userCountry:', userCountry?.code, userCountry?.name);
+  console.log('🔍 AssetBrowser - Calling useMarketData with:', userCountry?.code);
   
   const {
     stocks,
@@ -47,6 +48,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
   
   console.log('🏦 AssetBrowser: Current stocks count:', stocks.length, 'for country:', userCountry?.code);
   console.log('🏦 AssetBrowser: Loading state:', loading);
+  console.log('🏦 AssetBrowser: First 3 stocks:', stocks.slice(0, 3).map(s => s.symbol));
 
   const formatPrice = (price: number | null, currency?: string) => {
     if (price === null || price === undefined) return 'N/A';

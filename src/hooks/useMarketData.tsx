@@ -135,6 +135,7 @@ export interface BankProduct {
 export const useMarketData = (userCountryCode?: string) => {
   console.log('🔄 useMarketData called with userCountryCode:', userCountryCode);
   console.log('🔄 useMarketData: Will fetch data for country:', userCountryCode || 'undefined');
+  console.log('🔄 useMarketData: Hook re-rendered at:', new Date().toISOString());
   
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
@@ -426,6 +427,8 @@ export const useMarketData = (userCountryCode?: string) => {
   };
 
   useEffect(() => {
+    console.log('📈 useMarketData useEffect triggered with userCountryCode:', userCountryCode);
+    console.log('📈 useMarketData: About to call fetchAllData...');
     fetchAllData();
   }, [userCountryCode]);
 
