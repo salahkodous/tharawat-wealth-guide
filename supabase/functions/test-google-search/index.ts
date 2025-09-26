@@ -35,9 +35,11 @@ serve(async (req) => {
 
     // Test multiple search engine IDs
     const searchEngineIds = [
-      'a12ac54d856bf4e8e', // General web search
-      '017576662512468239146:omuauf_lfve', // Alternative
-      'f1e0e1a6f93e14704' // Third option
+      '017576662512468239146:omuauf_lfve', // Primary general search
+      'a12ac54d856bf4e8e', // Alternative ID
+      'f1e0e1a6f93e14704', // Backup ID
+      '015836716817887271234:9amtfxjk_ea', // Additional fallback
+      '017576662512468239146:9rmzp9bkf6a' // Final fallback
     ];
 
     let searchSuccess = false;
