@@ -59,6 +59,7 @@ RESPONSE TYPES:
 
 TOOLS NEEDED:
 - web_search: For market research, investment opportunities, economic trends, latest news, stock/company information
+- egyptian_news: For Egyptian stock market news specifically
 - portfolio_analysis: For detailed portfolio insights and recommendations
 - goal_planning: For long-term financial planning and projections
 - risk_analysis: For risk assessment and insurance planning
@@ -74,18 +75,11 @@ Return ONLY this JSON format:
 
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "سهم جهينة" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "اخر ارقام للشركه" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "آخر أرقام الشركة" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "معلومات عن سهم CIB" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "Egyptian stock market news" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
+- "اخر اخبار البورصة" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
+- "latest EGX news" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
 - "Apple stock information" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "latest company financials" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "company earnings" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}
-- "What are good investment opportunities now?" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "اخر اخبار السهم" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "آخر أخبار البورصة" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "What's the latest news about Apple stock?" → {"type":"news_analysis","context":["news","assets"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}`
+- "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}`
       }, {
         role: 'user', 
         content: message
@@ -102,16 +96,6 @@ Examples:
     return classification;
   } catch (e) {
     console.log('Classification parse error, using fallback');
-    // Simple fallback for greetings
-    if (lowerMessage.match(/^(hi|hello|hey|good morning|good afternoon|good evening|how are you|what's up|greetings)\.?$/)) {
-      return {
-        type: "greeting",
-        context: [],
-        priority: "low",
-        responseType: "brief",
-        toolsNeeded: []
-      };
-    }
     return {
       type: "general_financial",
       context: ["personal_finances"],
@@ -126,419 +110,218 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
   console.log('Executing tools:', toolsNeeded);
   const toolResults: any = {};
   
-  // Extract user geography from user data
   const userCountry = userData.personal_finances?.country || userData.user_country || 'Egypt';
   const userCurrency = userData.personal_finances?.currency || 'EGP';
-  const currentYear = new Date().getFullYear();
   
   try {
     for (const tool of toolsNeeded) {
       switch (tool) {
-        case 'web_search':
-          // Geographic and context-aware search
-          let searchQuery = '';
-          if (message.toLowerCase().includes('سهم') || message.toLowerCase().includes('stock') || 
-              message.toLowerCase().includes('شركة') || message.toLowerCase().includes('company')) {
-            // Stock/company specific search
-            searchQuery = `${message} company information stock analysis news ${userCountry} market`;
-          } else if (message.toLowerCase().includes('business') || message.toLowerCase().includes('invest') || message.toLowerCase().includes('opportunity')) {
-            searchQuery = `${userCountry} business investment opportunities ${currentYear} ${userCurrency} market economy industry trends`;
-          } else if (message.toLowerCase().includes('real estate') || message.toLowerCase().includes('property')) {
-            searchQuery = `${userCountry} real estate market ${currentYear} property investment ${userCurrency} trends`;
-          } else if (message.toLowerCase().includes('trading')) {
-            searchQuery = `${userCountry} stock market ${currentYear} ${userCurrency} trading opportunities local stocks`;
-          } else {
-            searchQuery = `${userCountry} financial market ${currentYear} investment opportunities ${userCurrency} economy`;
-          }
-          
-          console.log('Performing Google search for:', searchQuery);
-          
+        case 'egyptian_news':
+          console.log('Fetching Egyptian market news...');
           try {
-            const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
+            const supabaseUrl = Deno.env.get('SUPABASE_URL');
+            const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
             
-            if (googleApiKey) {
-              // Try multiple search approaches for better reliability
-              let searchSuccess = false;
-              let searchResults: any[] = [];
+            if (!supabaseUrl || !supabaseKey) {
+              throw new Error('Supabase credentials not configured');
+            }
+            
+            const newsResponse = await fetch(`${supabaseUrl}/functions/v1/egyptian-market-news`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ query: message })
+            });
+            
+            if (newsResponse.ok) {
+              const newsData = await newsResponse.json();
+              console.log('Egyptian news retrieved:', newsData.news?.length || 0, 'articles');
               
-              // Approach 1: Use a general web search engine ID
-              const searchEngineIds = [
-                '017576662512468239146:omuauf_lfve', // Primary general search
-                'a12ac54d856bf4e8e', // Alternative ID
-                'f1e0e1a6f93e14704', // Backup ID
-                '015836716817887271234:9amtfxjk_ea', // Additional fallback
-                '017576662512468239146:9rmzp9bkf6a' // Final fallback
-              ];
-              
-              for (const searchEngineId of searchEngineIds) {
-                if (searchSuccess) break;
-                
-                try {
-                  const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=8&safe=active`;
-                  
-                  console.log(`Attempting search with engine ${searchEngineId}...`);
-                  const searchResponse = await fetch(googleSearchUrl, {
-                    method: 'GET',
-                    headers: {
-                      'Accept': 'application/json',
-                    }
-                  });
-                  
-                  if (searchResponse.ok) {
-                    const searchData = await searchResponse.json();
-                    
-                    if (searchData.items && searchData.items.length > 0) {
-                      searchResults = searchData.items.map((item: any) => ({
-                        title: item.title,
-                        snippet: item.snippet,
-                        link: item.link,
-                        source: item.displayLink
-                      }));
-                      searchSuccess = true;
-                      console.log(`Search successful with engine ${searchEngineId}, found ${searchResults.length} results`);
-                    }
-                  }
-                } catch (engineError) {
-                  console.log(`Search engine ${searchEngineId} failed:`, engineError);
-                  continue;
-                }
-              }
-              
-              if (searchSuccess && searchResults.length > 0) {
-                // Extract key insights from search results
-                const insights = searchResults.map((result: any) => result.snippet).join(' ');
-                
-                toolResults.web_search = {
-                  country: userCountry,
-                  currency: userCurrency,
-                  query: searchQuery,
-                  results: searchResults,
-                  summary: `Real-time web search results for ${searchQuery}`,
-                  key_insights: insights.substring(0, 1000) + (insights.length > 1000 ? '...' : ''),
-                  sources: searchResults.map((r: any) => r.source).slice(0, 5),
-                  last_updated: new Date().toISOString(),
-                  total_results: searchResults.length.toString(),
-                  search_status: 'success'
+              if (newsData.success && newsData.news && newsData.news.length > 0) {
+                toolResults.egyptian_news = {
+                  success: true,
+                  news: newsData.news.slice(0, 5),
+                  summary: `Found ${newsData.news.length} recent articles about Egyptian stock market`,
+                  key_insights: newsData.news.slice(0, 3).map((item: any) => `${item.title}: ${item.snippet}`).join('\n\n'),
+                  sources: newsData.news.slice(0, 3).map((item: any) => item.source),
+                  last_updated: newsData.timestamp
                 };
-                
-                console.log('Google search completed successfully with', searchResults.length, 'results');
               } else {
-                throw new Error('No search engines returned results');
+                toolResults.egyptian_news = {
+                  success: false,
+                  message: 'No recent Egyptian market news found'
+                };
               }
             } else {
-              console.log('Google API key not found in environment');
-              throw new Error('Google API key not configured');
+              throw new Error('News service unavailable');
             }
           } catch (error) {
-            console.error('Google search error:', error);
+            console.error('Egyptian news error:', error);
+            toolResults.egyptian_news = {
+              success: false,
+              error: 'News service temporarily unavailable',
+              message: 'Unable to fetch latest Egyptian market news at the moment'
+            };
+          }
+          break;
+          
+        case 'web_search':
+          console.log('Performing general web search...');
+          try {
+            const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
+            const searchEngineId = Deno.env.get('GOOGLE_SEARCH_ENGINE_ID');
             
-            // For news queries specifically, provide a clear message about web search failure
-            if (message.toLowerCase().includes('اخبار') || message.toLowerCase().includes('news') || 
-                message.toLowerCase().includes('خبر') || message.toLowerCase().includes('أخبار')) {
-              toolResults.web_search = {
-                country: userCountry,
-                currency: userCurrency,
-                query: searchQuery,
-                search_status: 'failed',
-                message: `حاولت البحث عن أحدث الأخبار في المواقع الإخبارية ولكن لم أتمكن من الوصول إلى نتائج البحث حالياً. قاعدة البيانات لدينا تحتوي فقط على أسعار الأسهم وليس الأخبار. أنصحك بزيارة المواقع الإخبارية المالية مثل موقع معلومات مباشر أو موقع البورصة المصرية للحصول على آخر الأخبار.`,
-                summary: `Web search temporarily unavailable - our database contains only stock prices, not news updates`,
-                note: 'تعذر الوصول للبحث في المواقع الإخبارية حالياً',
-                suggestions: [
-                  'زيارة موقع معلومات مباشر (mubasher.info)',
-                  'موقع البورصة المصرية الرسمي',
-                  'مواقع الأخبار المالية المحلية'
-                ]
-              };
+            if (googleApiKey && searchEngineId) {
+              let searchQuery = `${message} financial market analysis investment`;
+              if (userCountry !== 'Egypt') {
+                searchQuery += ` ${userCountry}`;
+              }
+              
+              const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=5&safe=active`;
+              
+              const searchResponse = await fetch(googleSearchUrl);
+              
+              if (searchResponse.ok) {
+                const searchData = await searchResponse.json();
+                
+                if (searchData.items && searchData.items.length > 0) {
+                  toolResults.web_search = {
+                    success: true,
+                    results: searchData.items.slice(0, 3).map((item: any) => ({
+                      title: item.title,
+                      snippet: item.snippet,
+                      link: item.link,
+                      source: item.displayLink
+                    })),
+                    summary: `Found ${searchData.items.length} relevant search results`,
+                    query: searchQuery
+                  };
+                } else {
+                  throw new Error('No search results found');
+                }
+              } else {
+                throw new Error('Search service error');
+              }
             } else {
-              // For other queries, use the general fallback
-              toolResults.web_search = {
-                country: userCountry,
-                currency: userCurrency,
-                summary: `Current ${userCountry} market trends suggest opportunities in local sectors aligned with economic growth patterns.`,
-                local_opportunities: [`${userCountry} emerging sectors`, `Local ${userCurrency} investment vehicles`, `Regional market advantages`],
-                economic_context: [`${userCountry} economic indicators`, `${userCurrency} exchange rate trends`, `Local regulatory environment`],
-                risks: [`${userCountry} market volatility`, `${userCurrency} currency risks`, `Local political/economic stability`],
-                search_query: searchQuery,
-                note: 'Using cached market intelligence due to search service unavailability'
-              };
+              throw new Error('Search API not configured');
             }
+          } catch (error) {
+            console.error('Web search error:', error);
+            toolResults.web_search = {
+              success: false,
+              error: 'Search service temporarily unavailable',
+              message: `General market analysis for ${userCountry} - search service unavailable`
+            };
           }
           break;
           
         case 'portfolio_analysis':
-          // Enhanced geographic portfolio analysis
           if (userData.assets) {
             const totalValue = userData.assets.reduce((sum: number, asset: any) => sum + (asset.current_value || 0), 0);
-            const diversification = userData.assets.length > 1 ? "Diversified" : "Concentrated";
-            const localAssets = userData.assets.filter((asset: any) => asset.country === userCountry);
-            const internationalAssets = userData.assets.filter((asset: any) => asset.country !== userCountry);
-            
             toolResults.portfolio_analysis = {
               total_value: totalValue,
               currency: userCurrency,
-              diversification_score: diversification,
               asset_count: userData.assets.length,
-              geographic_breakdown: {
-                local_assets: localAssets.length,
-                international_assets: internationalAssets.length,
-                local_percentage: localAssets.length / userData.assets.length * 100
-              },
+              diversification: userData.assets.length > 1 ? "Diversified" : "Concentrated",
               recommendations: totalValue < 10000 ? 
-                [`Consider low-cost ${userCountry} index funds`, `Build emergency fund in ${userCurrency}`, `Explore local ${userCountry} investment platforms`] : 
-                [`Rebalance quarterly considering ${userCurrency} fluctuations`, `Consider international exposure beyond ${userCountry}`, `Review ${userCountry} tax implications`]
+                [`Build emergency fund in ${userCurrency}`, `Consider low-cost ${userCountry} index funds`] : 
+                [`Rebalance quarterly`, `Consider international diversification`]
             };
           }
           break;
           
         case 'goal_planning':
-          // Geographic goal planning
           if (userData.goals) {
-            const localInflationRate = userCountry === 'Egypt' ? 15 : userCountry === 'UAE' ? 3 : 5; // Approximate rates
             toolResults.goal_planning = {
+              active_goals: userData.goals.financial?.length || 0,
               country: userCountry,
               currency: userCurrency,
-              active_goals: userData.goals.financial?.length || 0,
-              portfolio_goals: userData.goals.portfolio?.length || 0,
-              local_inflation_context: `${localInflationRate}% estimated ${userCountry} inflation`,
-              planning_horizon: "5-10 years recommended for wealth building",
-              strategies: [
-                `${userCurrency}-denominated investments`, 
-                `${userCountry} tax-advantaged accounts`, 
-                `Local ${userCountry} compound growth opportunities`,
-                `Hedge against ${userCurrency} devaluation`
-              ]
+              strategies: [`${userCurrency}-denominated investments`, `${userCountry} tax-advantaged accounts`]
             };
           }
           break;
           
         case 'risk_analysis':
-          // Geographic risk assessment
           const income = userData.income_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0;
           const expenses = userData.expense_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0;
-          const netIncome = income - expenses;
-          
-          // Country-specific risk factors
-          const countryRiskFactors = {
-            'Egypt': ['Currency devaluation risk', 'High inflation environment', 'Political stability considerations'],
-            'UAE': ['Oil price dependency', 'Real estate market cycles', 'Regional geopolitical factors'],
-            'Saudi Arabia': ['Economic diversification progress', 'Oil market volatility', 'Vision 2030 implementation']
-          };
           
           toolResults.risk_analysis = {
-            country: userCountry,
-            currency: userCurrency,
-            risk_capacity: netIncome > 0 ? "Positive" : "Limited",
+            risk_capacity: (income - expenses) > 0 ? "Positive" : "Limited",
             emergency_fund_needed: expenses * 6,
-            risk_tolerance: income > 50000 ? "Moderate to High" : "Conservative",
-            local_risk_factors: countryRiskFactors[userCountry as keyof typeof countryRiskFactors] || ['Market volatility', 'Currency fluctuation', 'Economic policy changes'],
-            insurance_needs: [
-              `${userCountry} health insurance requirements`, 
-              `Life insurance with ${userCurrency} coverage`, 
-              `${userCountry} disability/unemployment insurance`
-            ]
+            country: userCountry,
+            currency: userCurrency
           };
           break;
       }
     }
-    
-    console.log('Tool execution completed:', Object.keys(toolResults));
-    return toolResults;
   } catch (error) {
     console.error('Tool execution error:', error);
-    return {};
   }
+  
+  return toolResults;
 }
 
-async function fetchRelevantData(userId: string, contextTypes: string[], supabase: any) {
-  console.log('Fetching data for contexts:', contextTypes);
-  const dataMap: Record<string, any> = {};
+async function generateResponse(classification: any, userData: any, toolResults: any, groqApiKey: string) {
+  console.log('Generating response for type:', classification.type);
   
-  try {
-    for (const type of contextTypes) {
-      switch (type) {
-        case 'personal_finances':
-          const pf = await supabase.from('personal_finances').select('*').eq('user_id', userId).single();
-          if (pf.data) dataMap[type] = pf.data;
-          
-          // Also fetch user settings for currency/country preferences
-          const settings = await supabase.from('user_settings').select('currency, language').eq('user_id', userId).single();
-          if (settings.data) {
-            dataMap.user_settings = settings.data;
-          }
-          break;
-        case 'debts':
-          const debts = await supabase.from('debts').select('*').eq('user_id', userId);
-          if (debts.data?.length) dataMap[type] = debts.data;
-          break;
-        case 'assets':
-          const assets = await supabase.from('assets').select('*').eq('user_id', userId);
-          if (assets.data?.length) dataMap[type] = assets.data;
-          break;
-        case 'goals':
-          const [portfolioGoals, financialGoals] = await Promise.all([
-            supabase.from('portfolio_goals').select('*').eq('user_id', userId),
-            supabase.from('financial_goals').select('*').eq('user_id', userId)
-          ]);
-          if (portfolioGoals.data?.length || financialGoals.data?.length) {
-            dataMap[type] = {
-              portfolio: portfolioGoals.data || [],
-              financial: financialGoals.data || []
-            };
-          }
-          break;
-        case 'income':
-          const income = await supabase.from('income_streams').select('*').eq('user_id', userId);
-          if (income.data?.length) dataMap[type] = income.data;
-          break;
-        case 'expenses':
-          const expenses = await supabase.from('expense_streams').select('*').eq('user_id', userId);
-          if (expenses.data?.length) dataMap[type] = expenses.data;
-          break;
-        case 'deposits':
-          const deposits = await supabase.from('deposits').select('*').eq('user_id', userId);
-          if (deposits.data?.length) dataMap[type] = deposits.data;
-          break;
-        case 'news':
-          const news = await supabase.from('news_articles').select('*').limit(5);
-          if (news.data?.length) dataMap[type] = news.data;
-          break;
-      }
-    }
-    
-    console.log('Fetched data keys:', Object.keys(dataMap));
-    return dataMap;
-  } catch (error) {
-    console.error('Data fetch error:', error);
-    return dataMap;
-  }
-}
-
-function generateSpecializedPrompt(queryType: string, responseType: string, toolsNeeded: string[], userData: any): string {
-  // Extract geographic context
-  const userCountry = userData.user_settings?.country || userData.personal_finances?.country || 'Egypt';
-  const userCurrency = userData.user_settings?.currency || userData.personal_finances?.currency || 'EGP';
+  const userCountry = userData.personal_finances?.country || userData.user_country || 'Egypt';
+  const userCurrency = userData.personal_finances?.currency || 'EGP';
   
-  const basePrompts = {
-    greeting: `You are Anakin, a friendly AI financial advisor. Respond warmly and briefly. Keep under 50 words.`,
-    
-    quick_value: `You are Anakin. Provide the exact value requested in ${userCurrency} with minimal context. Be precise and concise.`,
-    
-    portfolio_analysis: `You are Anakin, a portfolio analysis specialist for ${userCountry} market. Provide insights about holdings, performance, and diversification considering ${userCountry} economic conditions and ${userCurrency} implications.`,
+  let systemPrompt = `You are an expert financial advisor assistant with deep knowledge of ${userCountry} markets and ${userCurrency} currency. Provide helpful, accurate financial guidance.
 
-    debt_management: `You are Anakin, a debt management expert specializing in ${userCountry} financial systems. Analyze debt strategy considering local ${userCurrency} interest rates and ${userCountry} banking practices.`,
+Current context:
+- User location: ${userCountry}
+- User currency: ${userCurrency}
+- Query type: ${classification.type}
+- Response length: ${classification.responseType}
 
-    investment_advice: `You are Anakin, an investment advisor specializing in ${userCountry} markets. Provide personalized investment recommendations considering ${userCountry} economic climate, ${userCurrency} stability, and local investment opportunities.`,
+Guidelines:
+- Be concise and practical
+- Use specific numbers when available
+- Include currency (${userCurrency}) in financial figures
+- Consider ${userCountry} market conditions
+- Provide actionable advice
+- If you have news/search results, incorporate key insights naturally`;
 
-    market_research: `You are Anakin, a market research specialist. When users ask about specific stocks, companies, or market information:
-
-1. Use web search results to provide accurate, current information about the company/stock
-2. If web search succeeded: Analyze the company's business, recent news, market position, and performance
-3. If web search failed: Be honest about limitations and suggest reliable financial websites
-4. Never fabricate company information, stock prices, or market data
-5. Focus on factual information from reliable sources, not speculation
-6. Include relevant market context for ${userCountry} investors when applicable
-
-Always base your response on actual search results, not assumptions.`,
-
-    news_analysis: `You are Anakin, a financial news analyst. When a user asks about specific stock news:
-
-1. If web search data is available, analyze the specific news and its impact
-2. If web search failed or no specific news found, be direct and honest:
-   - Acknowledge you couldn't access current news sources
-   - Explain that your database only contains stock prices, not news
-   - Suggest specific financial news websites they can check
-   - If they asked about a specific stock, provide basic info from your database if available
-
-Always be clear about your limitations and provide actionable alternatives. Avoid generic financial advice unless specifically requested.`,
-
-    goal_tracking: `You are Anakin, a goal tracking specialist for ${userCountry} residents. Monitor progress considering local ${userCountry} inflation rates, ${userCurrency} purchasing power, and regional economic factors.`,
-
-    general_financial: `You are Anakin, a comprehensive financial advisor specializing in ${userCountry} financial landscape. Provide professional guidance considering ${userCountry} economic conditions, ${userCurrency} market dynamics, local regulations, and cultural financial practices.`
-  };
-
-  const responseStructures = {
-    brief: "",
-    value: `Provide just the number/value in ${userCurrency} with one line of context.`,
-    medium: `Structure your response with geographic context for ${userCountry}:
-**💡 KEY INSIGHT** (${userCountry} specific)
-**📊 ANALYSIS** (considering ${userCurrency} and local market)
-**⚡ ACTION** (actionable for ${userCountry} resident)
-
-For news queries: If web search failed, replace the standard structure with a clear explanation of limitations and practical alternatives.`,
-    detailed: `Structure your response with comprehensive ${userCountry} context:
-**📊 OVERVIEW** (${userCountry} market perspective)
-**🎯 KEY INSIGHTS** (local ${userCurrency} implications)
-**⚡ IMMEDIATE ACTIONS** (specific to ${userCountry} regulations/options)
-**🔍 DETAILED ANALYSIS** (${userCountry} economic factors)
-**📈 RECOMMENDATIONS** (optimized for ${userCountry} resident)`
-  };
-
-  let prompt = basePrompts[queryType as keyof typeof basePrompts] || basePrompts.general_financial;
-  
-  // Add response structure based on type
-  if (responseType !== 'brief' && responseType !== 'value') {
-    prompt += `\n\n${responseStructures[responseType as keyof typeof responseStructures]}`;
+  if (classification.responseType === 'brief') {
+    systemPrompt += '\n\nKeep response under 100 words.';
+  } else if (classification.responseType === 'value') {
+    systemPrompt += '\n\nProvide just the specific value/number requested with minimal context.';
+  } else if (classification.responseType === 'medium') {
+    systemPrompt += '\n\nProvide 200-400 words with key insights and recommendations.';
+  } else {
+    systemPrompt += '\n\nProvide comprehensive 500-800 word analysis with detailed insights.';
   }
 
-  // Add tool-specific instructions with geographic context
-  if (toolsNeeded.includes('web_search')) {
-    if (queryType === 'news_analysis') {
-      prompt += `\n\nFor stock news queries:
-- If web search succeeded: Analyze the specific news found
-- If web search failed (search_status: 'failed'): Clearly state you cannot access current news, explain database limitations, and provide helpful alternatives
-- Never provide generic financial advice as a substitute for specific news requests
-- Be direct and honest about limitations`;
-    } else {
-      prompt += `\n\nIMPORTANT: Include current ${userCountry} market trends, local investment opportunities, and ${userCurrency} market conditions based on recent regional economic developments.`;
-    }
+  // Add tool results context
+  let toolContext = '';
+  
+  if (toolResults.egyptian_news?.success) {
+    toolContext += `\n\nLATEST EGYPTIAN MARKET NEWS:\n${toolResults.egyptian_news.key_insights}`;
   }
   
-  if (toolsNeeded.includes('portfolio_analysis')) {
-    prompt += `\n\nFocus on portfolio optimization for ${userCountry} resident, diversification analysis considering ${userCurrency} exposure, and performance metrics relative to ${userCountry} market benchmarks.`;
+  if (toolResults.web_search?.success) {
+    toolContext += `\n\nRELEVANT SEARCH RESULTS:\n${toolResults.web_search.results.map((r: any) => `${r.title}: ${r.snippet}`).join('\n')}`;
   }
   
-  if (toolsNeeded.includes('goal_planning')) {
-    prompt += `\n\nProvide long-term financial planning strategies specific to ${userCountry} economic environment, considering local inflation rates, ${userCurrency} stability, and regional growth projections.`;
+  if (toolResults.portfolio_analysis) {
+    toolContext += `\n\nPORTFOLIO DATA: Total value: ${toolResults.portfolio_analysis.total_value} ${userCurrency}, Assets: ${toolResults.portfolio_analysis.asset_count}, Diversification: ${toolResults.portfolio_analysis.diversification}`;
   }
 
-  // For greetings and quick values, don't include user data
-  if (queryType === 'greeting' || queryType === 'quick_value') {
-    return prompt;
-  }
-  
-  let contextData = '';
-  Object.entries(userData).forEach(([key, value]) => {
-    if (key === 'toolResults' && value && Object.keys(value).length > 0) {
-      contextData += `\n\nTOOL ANALYSIS RESULTS: ${JSON.stringify(value, null, 2)}`;
-    } else if (key !== 'toolResults' && value && (Array.isArray(value) ? value.length > 0 : Object.keys(value).length > 0)) {
-      contextData += `\n\n${key.toUpperCase()}: ${JSON.stringify(value, null, 2)}`;
-    }
-  });
+  const userDataContext = `
+PERSONAL DATA:
+- Income: ${userData.income_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0} ${userCurrency}/month
+- Expenses: ${userData.expense_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0} ${userCurrency}/month
+- Assets: ${userData.assets?.length || 0} holdings
+- Debts: ${userData.debts?.length || 0} debts`;
 
-  return `${prompt}
-  
-GEOGRAPHIC CONTEXT: You are advising a ${userCountry} resident dealing with ${userCurrency}. All advice must be relevant to ${userCountry} economic conditions, local market opportunities, regulatory environment, and cultural financial practices.
+  const messages = [
+    { role: 'system', content: systemPrompt + toolContext + userDataContext },
+    { role: 'user', content: `${classification.type === 'greeting' ? 'Hello' : userData.originalMessage}` }
+  ];
 
-USER FINANCIAL DATA:${contextData}
-
-Provide professional, actionable advice with specific references to the user's data and ${userCountry} context. Use concrete numbers in ${userCurrency} and be specific about recommendations that work in ${userCountry}.`;
-}
-
-async function generateResponse(message: string, classification: any, userData: any, groqApiKey: string): Promise<string> {
-  console.log(`Generating ${classification.type} response with ${classification.responseType} format`);
-  
-  const systemPrompt = generateSpecializedPrompt(classification.type, classification.responseType, classification.toolsNeeded || [], userData);
-  
-  // Determine token limits based on response type
-  const tokenLimits = {
-    brief: 100,
-    value: 50,
-    medium: 500,
-    detailed: 1500
-  };
-  
-  const maxTokens = tokenLimits[classification.responseType as keyof typeof tokenLimits] || 500;
-  
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -546,82 +329,130 @@ async function generateResponse(message: string, classification: any, userData: 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message }
-      ],
-      max_tokens: maxTokens,
-      temperature: classification.type === 'greeting' ? 0.5 : (classification.type === 'market_research' ? 0.3 : 0.7)
+      model: 'llama-3.1-70b-versatile',
+      messages,
+      max_tokens: classification.responseType === 'brief' ? 150 : 
+                   classification.responseType === 'value' ? 50 :
+                   classification.responseType === 'medium' ? 500 : 800,
+      temperature: 0.3
     }),
   });
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
   const data = await response.json();
-  return data.choices[0]?.message?.content || 'Unable to generate response.';
+  let finalResponse = data.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.';
+  
+  // Add news links if we have Egyptian news results
+  if (toolResults.egyptian_news?.success && toolResults.egyptian_news.news?.length > 0) {
+    const newsLinks = toolResults.egyptian_news.news.slice(0, 3).map((item: any) => 
+      `• [${item.title}](${item.link}) - ${item.source}`
+    ).join('\n');
+    
+    finalResponse += `\n\n**Latest News Sources:**\n${newsLinks}`;
+  }
+  
+  return finalResponse;
 }
 
 serve(async (req) => {
-  console.log('AI Router Agent - Request received');
-  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { message, userId } = await req.json();
-    console.log('Processing query for user:', userId, 'Message type check:', message.toLowerCase().trim());
+    
+    if (!message?.trim()) {
+      return new Response(JSON.stringify({ error: 'Message is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Processing message:', message);
 
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
+    if (!groqApiKey) {
+      throw new Error('GROQ API key not configured');
+    }
+
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!groqApiKey) {
-      throw new Error('API configuration missing');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase configuration missing');
     }
 
-    const supabase = createClient(supabaseUrl!, supabaseKey!);
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Step 1: Classify the query
+    // Fetch user data in parallel
+    const [
+      { data: personalFinances },
+      { data: assets },
+      { data: debts },
+      { data: incomeStreams },
+      { data: expenseStreams },
+      { data: deposits },
+      { data: goals },
+      { data: userSettings }
+    ] = await Promise.all([
+      supabase.from('personal_finances').select('*').eq('user_id', userId),
+      supabase.from('assets').select('*').eq('user_id', userId),
+      supabase.from('debts').select('*').eq('user_id', userId),
+      supabase.from('income_streams').select('*').eq('user_id', userId),
+      supabase.from('expense_streams').select('*').eq('user_id', userId),
+      supabase.from('deposits').select('*').eq('user_id', userId),
+      supabase.from('goals').select('*').eq('user_id', userId),
+      supabase.from('user_settings').select('*').eq('user_id', userId)
+    ]);
+
+    const userData = {
+      originalMessage: message,
+      user_country: userSettings?.[0]?.currency === 'EGP' ? 'Egypt' : 'International',
+      personal_finances: personalFinances?.[0],
+      assets: assets || [],
+      debts: debts || [],
+      income_streams: incomeStreams || [],
+      expense_streams: expenseStreams || [],
+      deposits: deposits || [],
+      goals: {
+        financial: goals?.filter((g: any) => g.goal_type === 'financial') || [],
+        portfolio: goals?.filter((g: any) => g.goal_type === 'portfolio') || []
+      }
+    };
+
+    console.log('User data loaded:', {
+      country: userData.user_country,
+      assets: userData.assets.length,
+      income_streams: userData.income_streams.length
+    });
+
+    // Classify the query
     const classification = await classifyQuery(message, groqApiKey);
-    console.log('Final classification:', classification);
-    
-    // Step 2: Fetch relevant data (skip for greetings and quick values to save tokens)
-    let userData = {};
-    if (classification.type !== 'greeting' && classification.type !== 'quick_value') {
-      console.log('Fetching user data for comprehensive query');
-      userData = await fetchRelevantData(userId, classification.context, supabase);
-    } else {
-      console.log('Skipping data fetch for brief response - saving tokens');
-    }
-    
-    // Step 3: Execute any needed tools
-    let toolResults = {};
-    if (classification.toolsNeeded && classification.toolsNeeded.length > 0) {
-      console.log('Executing tools:', classification.toolsNeeded);
-      toolResults = await executeTools(classification.toolsNeeded, message, userData);
-    }
-    
-    // Step 4: Generate specialized response with tool results
-    const response = await generateResponse(message, classification, { ...userData, toolResults }, groqApiKey);
+    console.log('Query classified as:', classification);
 
-    console.log('Response generated successfully for type:', classification.type);
-    return new Response(JSON.stringify({ response }), {
+    // Execute required tools
+    const toolResults = await executeTools(classification.toolsNeeded || [], message, userData);
+    console.log('Tool results:', Object.keys(toolResults));
+
+    // Generate response
+    const response = await generateResponse(classification, userData, toolResults, groqApiKey);
+
+    return new Response(JSON.stringify({ 
+      response,
+      classification: classification.type,
+      tools_used: classification.toolsNeeded || []
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Router error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    
+    console.error('Error in ai-router-agent:', error);
     return new Response(JSON.stringify({ 
-      error: errorMessage,
-      response: 'I encountered an error processing your request. Please try again.'
+      error: 'Service temporarily unavailable',
+      response: 'I apologize, but I\'m experiencing technical difficulties. Please try again in a moment.'
     }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
