@@ -52,34 +52,40 @@ serve(async (req) => {
       });
     }
 
-    // For now, let's test the Google API step by step
+    // For Google API test, let's go step by step with extensive logging
+    console.log('=== FULL API TEST MODE ===');
     console.log('Testing Google API integration...');
     
-    // Step 1: Check if API key exists
-    const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
-    console.log('Google API Key present:', !!googleApiKey);
-    
-    if (!googleApiKey) {
-      console.log('Google API key missing');
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Google API key not configured',
-        test_status: 'API_KEY_MISSING',
-        message: 'GOOGLE_SEARCH_API_KEY environment variable is missing'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    // Step 2: Test a single search engine ID
-    const searchEngineId = '017576662512468239146:omuauf_lfve';
-    const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=3&safe=active`;
-    
-    console.log('Attempting Google search...');
-    console.log('Search URL (without key):', googleSearchUrl.replace(googleApiKey, '[HIDDEN]'));
-    
     try {
+      // Step 1: Check if API key exists
+      console.log('Step 1: Checking API key...');
+      const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
+      console.log('Google API Key present:', !!googleApiKey);
+      console.log('API Key length:', googleApiKey ? googleApiKey.length : 0);
+      
+      if (!googleApiKey) {
+        console.log('API key missing - returning error response');
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Google API key not configured',
+          test_status: 'API_KEY_MISSING',
+          message: 'GOOGLE_SEARCH_API_KEY environment variable is missing'
+        }), {
+          status: 200, // Change to 200 to avoid FunctionsHttpError
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      console.log('Step 2: Preparing search URL...');
+      // Step 2: Test a single search engine ID
+      const searchEngineId = '017576662512468239146:omuauf_lfve';
+      const encodedQuery = encodeURIComponent(query);
+      console.log('Encoded query:', encodedQuery);
+      
+      const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodedQuery}&num=3&safe=active`;
+      console.log('Search URL prepared (length):', googleSearchUrl.length);
+      
+      console.log('Step 3: Making fetch request...');
       const searchResponse = await fetch(googleSearchUrl, {
         method: 'GET',
         headers: {
@@ -87,9 +93,12 @@ serve(async (req) => {
         }
       });
       
+      console.log('Step 4: Processing response...');
       console.log('Google API response status:', searchResponse.status);
+      console.log('Response headers:', Object.fromEntries(searchResponse.headers.entries()));
       
       if (!searchResponse.ok) {
+        console.log('Response not OK, reading error text...');
         const errorText = await searchResponse.text();
         console.log('Google API error response:', errorText);
         
@@ -98,22 +107,26 @@ serve(async (req) => {
           error: `Google API returned status ${searchResponse.status}`,
           api_error: errorText,
           test_status: 'GOOGLE_API_ERROR',
-          query: query
+          query: query,
+          status_code: searchResponse.status
         }), {
-          status: 500,
+          status: 200, // Return 200 to avoid FunctionsHttpError
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
+      console.log('Step 5: Parsing JSON response...');
       const searchData = await searchResponse.json();
-      console.log('Search data received, items count:', searchData.items?.length || 0);
+      console.log('Search data keys:', Object.keys(searchData));
+      console.log('Items count:', searchData.items?.length || 0);
       
       if (searchData.items && searchData.items.length > 0) {
-        const results = searchData.items.map((item: any) => ({
-          title: item.title,
-          snippet: item.snippet,
-          link: item.link,
-          source: item.displayLink
+        console.log('Success! Processing results...');
+        const results = searchData.items.slice(0, 3).map((item: any) => ({
+          title: item.title?.substring(0, 100) || 'No title',
+          snippet: item.snippet?.substring(0, 200) || 'No snippet',
+          link: item.link || '#',
+          source: item.displayLink || 'Unknown'
         }));
         
         return new Response(JSON.stringify({
@@ -128,32 +141,38 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } else {
+        console.log('No results found');
         return new Response(JSON.stringify({
           success: false,
           error: 'No search results returned',
-          raw_response: searchData,
           test_status: 'NO_RESULTS',
-          query: query
+          query: query,
+          raw_keys: Object.keys(searchData)
         }), {
-          status: 200, // Not an error, just no results
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-    } catch (fetchError) {
-      const errorName = fetchError instanceof Error ? fetchError.name : 'UnknownFetchError';
-      const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError);
+    } catch (apiError) {
+      console.error('=== API ERROR CAUGHT ===');
+      const errorName = apiError instanceof Error ? apiError.name : 'UnknownAPIError';
+      const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
+      const errorStack = apiError instanceof Error ? apiError.stack : undefined;
       
-      console.error('Fetch error:', errorMessage);
+      console.error('API Error name:', errorName);
+      console.error('API Error message:', errorMessage);
+      console.error('API Error stack:', errorStack);
       
       return new Response(JSON.stringify({
         success: false,
         error: errorMessage,
         error_name: errorName,
-        test_status: 'FETCH_ERROR',
+        error_stack: errorStack?.substring(0, 500),
+        test_status: 'API_EXCEPTION',
         query: query
       }), {
-        status: 500,
+        status: 200, // Return 200 to avoid FunctionsHttpError
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
