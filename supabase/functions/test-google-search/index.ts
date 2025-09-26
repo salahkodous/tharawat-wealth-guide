@@ -62,6 +62,10 @@ serve(async (req) => {
       const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
       console.log('Google API Key present:', !!googleApiKey);
       console.log('API Key length:', googleApiKey ? googleApiKey.length : 0);
+      if (googleApiKey) {
+        console.log('API Key starts with:', googleApiKey.substring(0, 10) + '...');
+        console.log('API Key ends with:', '...' + googleApiKey.substring(googleApiKey.length - 5));
+      }
       
       if (!googleApiKey) {
         console.log('API key missing - returning error response');
