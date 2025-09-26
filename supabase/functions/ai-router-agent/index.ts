@@ -37,7 +37,6 @@ async function classifyQuery(message: string, groqApiKey: string) {
 
 QUERY TYPES:
 - greeting: Simple greetings, hellos, casual conversation
-- stock_lookup: Asking about specific stocks/companies (prices, info, performance)
 - quick_value: Asking for specific numbers (income, net worth, balance, etc.)
 - portfolio_analysis: Holdings, performance, diversification questions
 - debt_management: Debt strategy, payments, consolidation questions  
@@ -46,7 +45,7 @@ QUERY TYPES:
 - goal_tracking: Financial goals progress and planning
 - expense_analysis: Spending patterns, budgeting advice
 - income_optimization: Income strategies, tax efficiency
-- market_research: Market trends, economic analysis
+- market_research: Market trends, economic analysis, stock/company information
 - risk_assessment: Risk evaluation, insurance planning
 - general_financial: General financial advice and education
 
@@ -59,8 +58,7 @@ RESPONSE TYPES:
 - detailed: Comprehensive analysis with full insights (800-1500 tokens)
 
 TOOLS NEEDED:
-- web_search: For market research, investment opportunities, economic trends, latest news
-- stock_lookup: For specific stock/company information from database
+- web_search: For market research, investment opportunities, economic trends, latest news, stock/company information
 - portfolio_analysis: For detailed portfolio insights and recommendations
 - goal_planning: For long-term financial planning and projections
 - risk_analysis: For risk assessment and insurance planning
@@ -76,9 +74,9 @@ Return ONLY this JSON format:
 
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "سهم جهينة" → {"type":"stock_lookup","context":["assets"],"priority":"medium","responseType":"medium","toolsNeeded":["stock_lookup"]}
-- "معلومات عن سهم CIB" → {"type":"stock_lookup","context":["assets"],"priority":"medium","responseType":"medium","toolsNeeded":["stock_lookup"]}
-- "Apple stock price" → {"type":"stock_lookup","context":["assets"],"priority":"medium","responseType":"medium","toolsNeeded":["stock_lookup"]}
+- "سهم جهينة" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "معلومات عن سهم CIB" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "Apple stock information" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}
 - "What are good investment opportunities now?" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "اخر اخبار السهم" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
@@ -135,11 +133,15 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
         case 'web_search':
           // Geographic and context-aware search
           let searchQuery = '';
-          if (message.toLowerCase().includes('business') || message.toLowerCase().includes('invest') || message.toLowerCase().includes('opportunity')) {
+          if (message.toLowerCase().includes('سهم') || message.toLowerCase().includes('stock') || 
+              message.toLowerCase().includes('شركة') || message.toLowerCase().includes('company')) {
+            // Stock/company specific search
+            searchQuery = `${message} company information stock analysis news ${userCountry} market`;
+          } else if (message.toLowerCase().includes('business') || message.toLowerCase().includes('invest') || message.toLowerCase().includes('opportunity')) {
             searchQuery = `${userCountry} business investment opportunities ${currentYear} ${userCurrency} market economy industry trends`;
           } else if (message.toLowerCase().includes('real estate') || message.toLowerCase().includes('property')) {
             searchQuery = `${userCountry} real estate market ${currentYear} property investment ${userCurrency} trends`;
-          } else if (message.toLowerCase().includes('stock') || message.toLowerCase().includes('trading')) {
+          } else if (message.toLowerCase().includes('trading')) {
             searchQuery = `${userCountry} stock market ${currentYear} ${userCurrency} trading opportunities local stocks`;
           } else {
             searchQuery = `${userCountry} financial market ${currentYear} investment opportunities ${userCurrency} economy`;
@@ -254,117 +256,6 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
                 note: 'Using cached market intelligence due to search service unavailability'
               };
             }
-          }
-          break;
-          
-        case 'stock_lookup':
-          // Search for specific stock information in the database
-          console.log('Searching for stock information in database');
-          
-          // Extract stock name or symbol from the message
-          let stockQuery = message.toLowerCase().trim();
-          
-          try {
-            const supabaseUrl = Deno.env.get('SUPABASE_URL');
-            const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-            const supabase = createClient(supabaseUrl!, supabaseKey!);
-            
-            let stockResults: any[] = [];
-            
-            // Search Egypt stocks first (most common for Arabic users)
-            console.log('Searching Egypt stocks for:', stockQuery);
-            const egyptStocks = await supabase
-              .from('egypt_stocks')
-              .select('*')
-              .or(`name.ilike.%${stockQuery}%,symbol.ilike.%${stockQuery}%`)
-              .limit(5);
-            
-            if (egyptStocks.data?.length) {
-              stockResults = stockResults.concat(egyptStocks.data.map((stock: any) => ({
-                ...stock,
-                market: 'EGX',
-                country: 'Egypt'
-              })));
-            }
-            
-            // Also search Saudi stocks if no Egypt results
-            if (stockResults.length === 0) {
-              console.log('Searching Saudi stocks for:', stockQuery);
-              const saudiStocks = await supabase
-                .from('saudi_stocks')
-                .select('*')
-                .or(`name.ilike.%${stockQuery}%,name_ar.ilike.%${stockQuery}%,symbol.ilike.%${stockQuery}%`)
-                .limit(5);
-              
-              if (saudiStocks.data?.length) {
-                stockResults = stockResults.concat(saudiStocks.data.map((stock: any) => ({
-                  ...stock,
-                  market: 'TADAWUL',
-                  country: 'Saudi Arabia'
-                })));
-              }
-            }
-            
-            // Also search UAE stocks if still no results
-            if (stockResults.length === 0) {
-              console.log('Searching UAE stocks for:', stockQuery);
-              const uaeStocks = await supabase
-                .from('uae_stocks')
-                .select('*')
-                .or(`name.ilike.%${stockQuery}%,name_ar.ilike.%${stockQuery}%,symbol.ilike.%${stockQuery}%`)
-                .limit(5);
-              
-              if (uaeStocks.data?.length) {
-                stockResults = stockResults.concat(uaeStocks.data.map((stock: any) => ({
-                  ...stock,
-                  market: 'ADX/DFM',
-                  country: 'UAE'
-                })));
-              }
-            }
-            
-            if (stockResults.length > 0) {
-              const topStock = stockResults[0];
-              toolResults.stock_lookup = {
-                query: stockQuery,
-                found: true,
-                stock_info: topStock,
-                additional_matches: stockResults.slice(1),
-                search_status: 'success',
-                market: topStock.market,
-                country: topStock.country,
-                current_price: topStock.price,
-                currency: topStock.currency || (topStock.country === 'Egypt' ? 'EGP' : topStock.country === 'Saudi Arabia' ? 'SAR' : 'AED'),
-                change: topStock.change,
-                change_percent: topStock.change_percent,
-                volume: topStock.volume,
-                market_cap: topStock.market_cap,
-                last_updated: topStock.last_updated || topStock.updated_at
-              };
-              console.log('Stock found:', topStock.name || topStock.symbol);
-            } else {
-              toolResults.stock_lookup = {
-                query: stockQuery,
-                found: false,
-                search_status: 'no_results',
-                message: `لم أتمكن من العثور على سهم "${stockQuery}" في قاعدة البيانات. قد يكون الاسم غير صحيح أو السهم غير متاح في الأسواق المحلية (مصر، السعودية، الإمارات). يرجى التأكد من اسم الشركة أو رمز السهم.`,
-                suggestions: [
-                  'تأكد من كتابة اسم الشركة أو رمز السهم بشكل صحيح',
-                  'جرب البحث باستخدام الاسم الإنجليزي للشركة',
-                  'تأكد أن السهم مدرج في إحدى البورصات المحلية'
-                ]
-              };
-              console.log('No stock found for query:', stockQuery);
-            }
-          } catch (error) {
-            console.error('Stock lookup error:', error);
-            toolResults.stock_lookup = {
-              query: stockQuery,
-              found: false,
-              search_status: 'error',
-              message: 'حدث خطأ أثناء البحث عن معلومات السهم. يرجى المحاولة مرة أخرى.',
-              error: error instanceof Error ? error.message : 'Unknown error'
-            };
           }
           break;
           
@@ -526,32 +417,22 @@ function generateSpecializedPrompt(queryType: string, responseType: string, tool
     
     quick_value: `You are Anakin. Provide the exact value requested in ${userCurrency} with minimal context. Be precise and concise.`,
     
-    stock_lookup: `You are Anakin, a stock information specialist. When providing stock information:
-
-1. If stock data is found (search_status: 'success'):
-   - Present the stock's current price, change, and key metrics clearly
-   - Include market and currency information
-   - Provide context about the company and its performance
-   - Use the actual data from the database, never make up information
-
-2. If stock is not found (search_status: 'no_results'):
-   - Clearly state that the stock was not found in the database
-   - Explain possible reasons (incorrect name, not listed in local markets)
-   - Provide helpful suggestions for finding the correct stock
-   - Never fabricate stock information
-
-3. If there's an error (search_status: 'error'):
-   - Acknowledge the technical issue
-   - Suggest trying again later
-   - Never provide made-up stock data
-
-Always be honest about what information is available and never create fictional stock data.`,
-    
     portfolio_analysis: `You are Anakin, a portfolio analysis specialist for ${userCountry} market. Provide insights about holdings, performance, and diversification considering ${userCountry} economic conditions and ${userCurrency} implications.`,
 
     debt_management: `You are Anakin, a debt management expert specializing in ${userCountry} financial systems. Analyze debt strategy considering local ${userCurrency} interest rates and ${userCountry} banking practices.`,
 
     investment_advice: `You are Anakin, an investment advisor specializing in ${userCountry} markets. Provide personalized investment recommendations considering ${userCountry} economic climate, ${userCurrency} stability, and local investment opportunities.`,
+
+    market_research: `You are Anakin, a market research specialist. When users ask about specific stocks, companies, or market information:
+
+1. Use web search results to provide accurate, current information about the company/stock
+2. If web search succeeded: Analyze the company's business, recent news, market position, and performance
+3. If web search failed: Be honest about limitations and suggest reliable financial websites
+4. Never fabricate company information, stock prices, or market data
+5. Focus on factual information from reliable sources, not speculation
+6. Include relevant market context for ${userCountry} investors when applicable
+
+Always base your response on actual search results, not assumptions.`,
 
     news_analysis: `You are Anakin, a financial news analyst. When a user asks about specific stock news:
 
@@ -604,15 +485,6 @@ For news queries: If web search failed, replace the standard structure with a cl
     } else {
       prompt += `\n\nIMPORTANT: Include current ${userCountry} market trends, local investment opportunities, and ${userCurrency} market conditions based on recent regional economic developments.`;
     }
-  }
-  
-  if (toolsNeeded.includes('stock_lookup')) {
-    prompt += `\n\nFor stock lookup queries:
-- Use the EXACT stock information from the database tool results
-- Never fabricate or guess stock prices or company information
-- If stock is found: Present accurate data including price, change, currency, and market
-- If stock is not found: Be honest and provide helpful search suggestions
-- Always specify the market (EGX, TADAWUL, ADX) and currency (EGP, SAR, AED)`;
   }
   
   if (toolsNeeded.includes('portfolio_analysis')) {
