@@ -6,6 +6,7 @@ import DashboardFinanceOverview from '@/components/DashboardFinanceOverview';
 import AIFinancialAgent from '@/components/AIFinancialAgent';
 import { GoogleSearchTest } from '@/components/GoogleSearchTest';
 import { TestGoogleAPI } from '@/components/TestGoogleAPI';
+import { EgyptianMarketNews } from '@/components/EgyptianMarketNews';
 
 const Dashboard = () => {
   return (
@@ -23,6 +24,8 @@ const Dashboard = () => {
             </div>
             
             <AIFinancialAgent />
+            
+            <EgyptianMarketNews />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <TestGoogleAPI />

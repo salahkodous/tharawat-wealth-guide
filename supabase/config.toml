@@ -87,3 +87,6 @@ verify_jwt = false
 
 [functions.test-google-search]
 verify_jwt = false
+
+[functions.egyptian-market-news]
+verify_jwt = false
