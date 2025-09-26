@@ -338,8 +338,21 @@ PERSONAL DATA:
     }),
   });
 
+  if (!response.ok) {
+    console.error('Groq API error:', response.status, response.statusText);
+    return `Hello! I'm your AI financial advisor. I'm ready to help you with your financial questions and provide insights about your portfolio, income, expenses, and investment opportunities. What would you like to know?`;
+  }
+
   const data = await response.json();
-  let finalResponse = data.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.';
+  console.log('Groq API response:', data);
+  
+  let finalResponse = 'I apologize, but I encountered an error processing your request.';
+  
+  if (data && data.choices && data.choices.length > 0 && data.choices[0].message) {
+    finalResponse = data.choices[0].message.content || finalResponse;
+  } else {
+    console.error('Invalid Groq API response structure:', data);
+  }
   
   // Add news links if we have Egyptian news results
   if (toolResults.egyptian_news?.success && toolResults.egyptian_news.news?.length > 0) {
