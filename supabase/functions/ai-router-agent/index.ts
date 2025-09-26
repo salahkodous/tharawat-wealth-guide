@@ -140,15 +140,36 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
           console.log('Performing Google search for:', searchQuery);
           
           try {
-            // Google Custom Search API integration
             const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
-            const searchEngineId = '017576662512468239146:omuauf_lfve'; // Generic search engine ID
             
             if (googleApiKey) {
-              const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=5`;
+              // Use a working custom search engine ID for general web search
+              const searchEngineId = 'f1e0e1a6f93e14704'; // Generic programmable search engine
+              const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=8&safe=active`;
               
-              const searchResponse = await fetch(googleSearchUrl);
+              console.log('Making request to Google Search API...');
+              const searchResponse = await fetch(googleSearchUrl, {
+                method: 'GET',
+                headers: {
+                  'Accept': 'application/json',
+                }
+              });
+              
+              console.log('Search response status:', searchResponse.status);
+              
+              if (!searchResponse.ok) {
+                const errorText = await searchResponse.text();
+                console.error('Google API error response:', errorText);
+                throw new Error(`Google API returned ${searchResponse.status}: ${errorText}`);
+              }
+              
               const searchData = await searchResponse.json();
+              console.log('Search data received, items count:', searchData.items?.length || 0);
+              
+              if (searchData.error) {
+                console.error('Google API error:', searchData.error);
+                throw new Error(`Google API error: ${searchData.error.message}`);
+              }
               
               if (searchData.items && searchData.items.length > 0) {
                 const searchResults = searchData.items.map((item: any) => ({
@@ -167,16 +188,19 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
                   query: searchQuery,
                   results: searchResults,
                   summary: `Recent ${userCountry} market analysis based on current web sources`,
-                  key_insights: insights.substring(0, 500) + '...',
-                  sources: searchResults.map((r: any) => r.source).slice(0, 3),
-                  last_updated: new Date().toISOString()
+                  key_insights: insights.substring(0, 800) + (insights.length > 800 ? '...' : ''),
+                  sources: searchResults.map((r: any) => r.source).slice(0, 5),
+                  last_updated: new Date().toISOString(),
+                  total_results: searchData.searchInformation?.totalResults || 'unknown'
                 };
                 
-                console.log('Google search completed with', searchResults.length, 'results');
+                console.log('Google search completed successfully with', searchResults.length, 'results');
               } else {
-                throw new Error('No search results found');
+                console.log('No search results found in response');
+                throw new Error('No search results found for the query');
               }
             } else {
+              console.log('Google API key not found in environment');
               throw new Error('Google API key not configured');
             }
           } catch (error) {
