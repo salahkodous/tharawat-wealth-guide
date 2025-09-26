@@ -416,7 +416,16 @@ function generateSpecializedPrompt(queryType: string, responseType: string, tool
 
     investment_advice: `You are Anakin, an investment advisor specializing in ${userCountry} markets. Provide personalized investment recommendations considering ${userCountry} economic climate, ${userCurrency} stability, and local investment opportunities.`,
 
-    news_analysis: `You are Anakin, a financial news analyst focused on ${userCountry} markets. Analyze how recent ${userCountry} and regional news impacts the user's portfolio, considering ${userCurrency} market dynamics.`,
+    news_analysis: `You are Anakin, a financial news analyst. When a user asks about specific stock news:
+
+1. If web search data is available, analyze the specific news and its impact
+2. If web search failed or no specific news found, be direct and honest:
+   - Acknowledge you couldn't access current news sources
+   - Explain that your database only contains stock prices, not news
+   - Suggest specific financial news websites they can check
+   - If they asked about a specific stock, provide basic info from your database if available
+
+Always be clear about your limitations and provide actionable alternatives. Avoid generic financial advice unless specifically requested.`,
 
     goal_tracking: `You are Anakin, a goal tracking specialist for ${userCountry} residents. Monitor progress considering local ${userCountry} inflation rates, ${userCurrency} purchasing power, and regional economic factors.`,
 
@@ -429,7 +438,9 @@ function generateSpecializedPrompt(queryType: string, responseType: string, tool
     medium: `Structure your response with geographic context for ${userCountry}:
 **💡 KEY INSIGHT** (${userCountry} specific)
 **📊 ANALYSIS** (considering ${userCurrency} and local market)
-**⚡ ACTION** (actionable for ${userCountry} resident)`,
+**⚡ ACTION** (actionable for ${userCountry} resident)
+
+For news queries: If web search failed, replace the standard structure with a clear explanation of limitations and practical alternatives.`,
     detailed: `Structure your response with comprehensive ${userCountry} context:
 **📊 OVERVIEW** (${userCountry} market perspective)
 **🎯 KEY INSIGHTS** (local ${userCurrency} implications)
@@ -447,7 +458,15 @@ function generateSpecializedPrompt(queryType: string, responseType: string, tool
 
   // Add tool-specific instructions with geographic context
   if (toolsNeeded.includes('web_search')) {
-    prompt += `\n\nIMPORTANT: Include current ${userCountry} market trends, local investment opportunities, and ${userCurrency} market conditions based on recent regional economic developments.`;
+    if (queryType === 'news_analysis') {
+      prompt += `\n\nFor stock news queries:
+- If web search succeeded: Analyze the specific news found
+- If web search failed (search_status: 'failed'): Clearly state you cannot access current news, explain database limitations, and provide helpful alternatives
+- Never provide generic financial advice as a substitute for specific news requests
+- Be direct and honest about limitations`;
+    } else {
+      prompt += `\n\nIMPORTANT: Include current ${userCountry} market trends, local investment opportunities, and ${userCurrency} market conditions based on recent regional economic developments.`;
+    }
   }
   
   if (toolsNeeded.includes('portfolio_analysis')) {
