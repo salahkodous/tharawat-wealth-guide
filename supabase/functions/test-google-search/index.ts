@@ -77,10 +77,26 @@ serve(async (req) => {
       }
       
       console.log('Step 2: Preparing search URL...');
-      // Step 2: Test a single search engine ID
-      const searchEngineId = '017576662512468239146:omuauf_lfve';
+      // Step 2: Get custom search engine ID from environment
+      const searchEngineId = Deno.env.get('GOOGLE_SEARCH_ENGINE_ID');
+      console.log('Search Engine ID present:', !!searchEngineId);
+      
+      if (!searchEngineId) {
+        console.log('Search Engine ID missing - returning error response');
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Google Search Engine ID not configured',
+          test_status: 'SEARCH_ENGINE_ID_MISSING',
+          message: 'GOOGLE_SEARCH_ENGINE_ID environment variable is missing'
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       const encodedQuery = encodeURIComponent(query);
       console.log('Encoded query:', encodedQuery);
+      console.log('Using Search Engine ID:', searchEngineId);
       
       const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodedQuery}&num=3&safe=active`;
       console.log('Search URL prepared (length):', googleSearchUrl.length);
