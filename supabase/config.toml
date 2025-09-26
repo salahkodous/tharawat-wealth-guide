@@ -84,3 +84,6 @@ verify_jwt = false
 
 [functions.ai-router-agent]
 verify_jwt = false
+
+[functions.test-google-search]
+verify_jwt = false

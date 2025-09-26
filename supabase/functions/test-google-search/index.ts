@@ -7,13 +7,41 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('=== Test Google Search Function Started ===');
+  console.log('Request method:', req.method);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { query = "EFG Hermes Egypt stock analysis" } = await req.json().catch(() => ({}));
+    console.log('Attempting to parse request body...');
+    let requestBody;
+    try {
+      requestBody = await req.json();
+      console.log('Request body parsed successfully:', requestBody);
+    } catch (bodyError) {
+      console.log('Failed to parse request body, using defaults:', bodyError);
+      requestBody = {};
+    }
+    
+    const { query = "EFG Hermes Egypt stock analysis", healthCheck = false } = requestBody;
+    
+    // Health check endpoint - return immediately without Google API call
+    if (healthCheck) {
+      console.log('Health check requested');
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Function is healthy and responding',
+        timestamp: new Date().toISOString(),
+        test_status: 'HEALTH_OK'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     console.log('Testing Google Search API with query:', query);
     

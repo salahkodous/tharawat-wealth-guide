@@ -8,37 +8,59 @@ export const TestGoogleAPI = () => {
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  const testAPI = async () => {
+  const testAPI = async (healthCheck = false) => {
     setTesting(true);
     setResult(null);
     
     try {
-      console.log('Testing Google Search API...');
+      console.log('=== Client: Starting Google Search API Test ===');
+      console.log('Health check mode:', healthCheck);
+      console.log('Invoking test-google-search function...');
       
       const { data, error } = await supabase.functions.invoke('test-google-search', {
-        body: { query: "EFG Hermes Egypt financial analysis" }
+        body: { 
+          query: "EFG Hermes Egypt financial analysis",
+          healthCheck: healthCheck
+        }
       });
 
-      console.log('Test response:', { data, error });
+      console.log('=== Client: Function Response ===');
+      console.log('Data:', data);
+      console.log('Error:', error);
+      console.log('Error details:', error ? JSON.stringify(error, null, 2) : 'No error');
 
       if (error) {
-        console.error('Function error:', error);
-        setResult({ success: false, error: JSON.stringify(error), type: 'function_error' });
-        toast.error('Function call failed');
+        console.error('Function invocation error:', error);
+        setResult({ 
+          success: false, 
+          error: JSON.stringify(error, null, 2), 
+          type: 'function_error',
+          error_name: error.name,
+          error_message: error.message,
+          error_context: error.context,
+          raw_error: error
+        });
+        toast.error('Function call failed: ' + (error.message || 'Unknown error'));
         return;
       }
 
+      console.log('Function call successful, data received:', data);
       setResult(data);
       
       if (data?.success) {
         toast.success('Google Search API working!');
       } else {
-        toast.error('Google Search API failed');
+        toast.error('Google Search API failed: ' + (data?.message || 'Unknown reason'));
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
-      setResult({ success: false, error: (err as Error).message, type: 'unexpected_error' });
-      toast.error('Unexpected error occurred');
+      console.error('=== Client: Unexpected error ===', err);
+      setResult({ 
+        success: false, 
+        error: (err as Error).message, 
+        type: 'unexpected_error',
+        stack: (err as Error).stack
+      });
+      toast.error('Unexpected error: ' + (err as Error).message);
     } finally {
       setTesting(false);
     }
@@ -50,13 +72,23 @@ export const TestGoogleAPI = () => {
         <CardTitle>🔧 Quick Google API Test</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button 
-          onClick={testAPI} 
-          disabled={testing}
-          className="w-full"
-        >
-          {testing ? 'Testing...' : 'Test Google Search API'}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => testAPI(true)} 
+            disabled={testing}
+            variant="outline"
+            className="flex-1"
+          >
+            {testing ? 'Testing...' : 'Health Check'}
+          </Button>
+          <Button 
+            onClick={() => testAPI(false)} 
+            disabled={testing}
+            className="flex-1"
+          >
+            {testing ? 'Testing...' : 'Full API Test'}
+          </Button>
+        </div>
 
         {result && (
           <div className="p-4 bg-muted rounded-lg">
