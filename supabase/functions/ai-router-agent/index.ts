@@ -322,6 +322,12 @@ PERSONAL DATA:
     { role: 'user', content: `${classification.type === 'greeting' ? 'Hello' : userData.originalMessage}` }
   ];
 
+  console.log('Making Groq API call with:', {
+    model: 'llama-3.1-8b-instant',
+    messageCount: messages.length,
+    systemPromptLength: messages[0].content.length
+  });
+
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -329,22 +335,30 @@ PERSONAL DATA:
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       messages,
       max_tokens: classification.responseType === 'brief' ? 150 : 
                    classification.responseType === 'value' ? 50 :
                    classification.responseType === 'medium' ? 500 : 800,
-      temperature: 0.3
+      temperature: 0.7
     }),
   });
 
   if (!response.ok) {
-    console.error('Groq API error:', response.status, response.statusText);
-    return `Hello! I'm your AI financial advisor. I'm ready to help you with your financial questions and provide insights about your portfolio, income, expenses, and investment opportunities. What would you like to know?`;
+    const errorText = await response.text();
+    console.error('Groq API error:', response.status, response.statusText, errorText);
+    
+    // Simple direct response based on query type
+    if (classification.type === 'quick_value' && userData.originalMessage.toLowerCase().includes('income')) {
+      const totalIncome = userData.income_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0;
+      return `Your total monthly income is ${totalIncome} ${userCurrency}.`;
+    }
+    
+    return `I apologize, but I'm experiencing technical difficulties. Let me try to help you directly: ${userData.originalMessage}`;
   }
 
   const data = await response.json();
-  console.log('Groq API response:', data);
+  console.log('Groq API response success:', !!data.choices?.[0]?.message?.content);
   
   let finalResponse = 'I apologize, but I encountered an error processing your request.';
   
