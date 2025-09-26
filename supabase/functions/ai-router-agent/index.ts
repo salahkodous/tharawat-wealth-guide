@@ -75,8 +75,12 @@ Return ONLY this JSON format:
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
 - "سهم جهينة" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "اخر ارقام للشركه" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "آخر أرقام الشركة" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "معلومات عن سهم CIB" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "Apple stock information" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "latest company financials" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "company earnings" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}
 - "What are good investment opportunities now?" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "اخر اخبار السهم" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
