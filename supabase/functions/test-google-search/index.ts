@@ -65,6 +65,9 @@ serve(async (req) => {
       if (googleApiKey) {
         console.log('API Key starts with:', googleApiKey.substring(0, 10) + '...');
         console.log('API Key ends with:', '...' + googleApiKey.substring(googleApiKey.length - 5));
+        // Test direct URL construction
+        const testUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=f64781891fca543e8&q=test`;
+        console.log('Test URL (first 100 chars):', testUrl.substring(0, 100));
       }
       
       if (!googleApiKey) {
