@@ -47,7 +47,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currency, setCurrency] = useState('USD');
 
   useEffect(() => {
-    // Priority order: settings > user metadata
+    // Prefer settings context over user metadata
     if (settings.currency) {
       setCurrency(settings.currency);
     } else if (user?.user_metadata?.currency) {

@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useCurrency } from '@/hooks/useCurrency';
-import { useUserCountry } from '@/hooks/useUserCountry';
 
 interface AssetBrowserProps {
   onAssetSelect: (asset: any, type: string) => void;
@@ -29,10 +28,6 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState(selectedAssetType || 'stocks');
   const { formatAmount } = useCurrency();
-  const { userCountry } = useUserCountry();
-  
-  console.log('🔍 AssetBrowser - userCountry:', userCountry?.code, userCountry?.name);
-  console.log('🔍 AssetBrowser - Calling useMarketData with:', userCountry?.code);
   
   const {
     stocks,
@@ -44,11 +39,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
     currencyRates,
     bankProducts,
     loading
-  } = useMarketData(userCountry?.code);
-  
-  console.log('🏦 AssetBrowser: Current stocks count:', stocks.length, 'for country:', userCountry?.code);
-  console.log('🏦 AssetBrowser: Loading state:', loading);
-  console.log('🏦 AssetBrowser: First 3 stocks:', stocks.slice(0, 3).map(s => s.symbol));
+  } = useMarketData();
 
   const formatPrice = (price: number | null, currency?: string) => {
     if (price === null || price === undefined) return 'N/A';
