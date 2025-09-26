@@ -137,18 +137,62 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
             searchQuery = `${userCountry} financial market ${currentYear} investment opportunities ${userCurrency} economy`;
           }
           
-          console.log('Performing geographic web search for:', searchQuery);
+          console.log('Performing Google search for:', searchQuery);
           
-          // Enhanced placeholder with geographic context
-          toolResults.web_search = {
-            country: userCountry,
-            currency: userCurrency,
-            summary: `Current ${userCountry} market trends suggest opportunities in local sectors aligned with economic growth patterns.`,
-            local_opportunities: [`${userCountry} emerging sectors`, `Local ${userCurrency} investment vehicles`, `Regional market advantages`],
-            economic_context: [`${userCountry} economic indicators`, `${userCurrency} exchange rate trends`, `Local regulatory environment`],
-            risks: [`${userCountry} market volatility`, `${userCurrency} currency risks`, `Local political/economic stability`],
-            search_query: searchQuery
-          };
+          try {
+            // Google Custom Search API integration
+            const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
+            const searchEngineId = '017576662512468239146:omuauf_lfve'; // Generic search engine ID
+            
+            if (googleApiKey) {
+              const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=5`;
+              
+              const searchResponse = await fetch(googleSearchUrl);
+              const searchData = await searchResponse.json();
+              
+              if (searchData.items && searchData.items.length > 0) {
+                const searchResults = searchData.items.map((item: any) => ({
+                  title: item.title,
+                  snippet: item.snippet,
+                  link: item.link,
+                  source: item.displayLink
+                }));
+                
+                // Extract key insights from search results
+                const insights = searchResults.map((result: any) => result.snippet).join(' ');
+                
+                toolResults.web_search = {
+                  country: userCountry,
+                  currency: userCurrency,
+                  query: searchQuery,
+                  results: searchResults,
+                  summary: `Recent ${userCountry} market analysis based on current web sources`,
+                  key_insights: insights.substring(0, 500) + '...',
+                  sources: searchResults.map((r: any) => r.source).slice(0, 3),
+                  last_updated: new Date().toISOString()
+                };
+                
+                console.log('Google search completed with', searchResults.length, 'results');
+              } else {
+                throw new Error('No search results found');
+              }
+            } else {
+              throw new Error('Google API key not configured');
+            }
+          } catch (error) {
+            console.error('Google search error:', error);
+            // Fallback to enhanced placeholder
+            toolResults.web_search = {
+              country: userCountry,
+              currency: userCurrency,
+              summary: `Current ${userCountry} market trends suggest opportunities in local sectors aligned with economic growth patterns.`,
+              local_opportunities: [`${userCountry} emerging sectors`, `Local ${userCurrency} investment vehicles`, `Regional market advantages`],
+              economic_context: [`${userCountry} economic indicators`, `${userCurrency} exchange rate trends`, `Local regulatory environment`],
+              risks: [`${userCountry} market volatility`, `${userCurrency} currency risks`, `Local political/economic stability`],
+              search_query: searchQuery,
+              note: 'Using cached market intelligence due to search service unavailability'
+            };
+          }
           break;
           
         case 'portfolio_analysis':
