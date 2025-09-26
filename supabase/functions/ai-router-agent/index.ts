@@ -37,11 +37,12 @@ async function classifyQuery(message: string, groqApiKey: string) {
 
 QUERY TYPES:
 - greeting: Simple greetings, hellos, casual conversation
+- stock_lookup: Asking about specific stocks/companies (prices, info, performance)
 - quick_value: Asking for specific numbers (income, net worth, balance, etc.)
 - portfolio_analysis: Holdings, performance, diversification questions
 - debt_management: Debt strategy, payments, consolidation questions  
 - investment_advice: Buying/selling, asset allocation recommendations
-- news_analysis: Market news impact on portfolio
+- news_analysis: Market news impact on portfolio, latest news requests
 - goal_tracking: Financial goals progress and planning
 - expense_analysis: Spending patterns, budgeting advice
 - income_optimization: Income strategies, tax efficiency
@@ -58,7 +59,8 @@ RESPONSE TYPES:
 - detailed: Comprehensive analysis with full insights (800-1500 tokens)
 
 TOOLS NEEDED:
-- web_search: For market research, investment opportunities, economic trends
+- web_search: For market research, investment opportunities, economic trends, latest news
+- stock_lookup: For specific stock/company information from database
 - portfolio_analysis: For detailed portfolio insights and recommendations
 - goal_planning: For long-term financial planning and projections
 - risk_analysis: For risk assessment and insurance planning
@@ -74,6 +76,9 @@ Return ONLY this JSON format:
 
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "سهم جهينة" → {"type":"stock_lookup","context":["assets"],"priority":"medium","responseType":"medium","toolsNeeded":["stock_lookup"]}
+- "معلومات عن سهم CIB" → {"type":"stock_lookup","context":["assets"],"priority":"medium","responseType":"medium","toolsNeeded":["stock_lookup"]}
+- "Apple stock price" → {"type":"stock_lookup","context":["assets"],"priority":"medium","responseType":"medium","toolsNeeded":["stock_lookup"]}
 - "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}
 - "What are good investment opportunities now?" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "اخر اخبار السهم" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
@@ -252,6 +257,117 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
           }
           break;
           
+        case 'stock_lookup':
+          // Search for specific stock information in the database
+          console.log('Searching for stock information in database');
+          
+          // Extract stock name or symbol from the message
+          let stockQuery = message.toLowerCase().trim();
+          
+          try {
+            const supabaseUrl = Deno.env.get('SUPABASE_URL');
+            const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+            const supabase = createClient(supabaseUrl!, supabaseKey!);
+            
+            let stockResults: any[] = [];
+            
+            // Search Egypt stocks first (most common for Arabic users)
+            console.log('Searching Egypt stocks for:', stockQuery);
+            const egyptStocks = await supabase
+              .from('egypt_stocks')
+              .select('*')
+              .or(`name.ilike.%${stockQuery}%,symbol.ilike.%${stockQuery}%`)
+              .limit(5);
+            
+            if (egyptStocks.data?.length) {
+              stockResults = stockResults.concat(egyptStocks.data.map((stock: any) => ({
+                ...stock,
+                market: 'EGX',
+                country: 'Egypt'
+              })));
+            }
+            
+            // Also search Saudi stocks if no Egypt results
+            if (stockResults.length === 0) {
+              console.log('Searching Saudi stocks for:', stockQuery);
+              const saudiStocks = await supabase
+                .from('saudi_stocks')
+                .select('*')
+                .or(`name.ilike.%${stockQuery}%,name_ar.ilike.%${stockQuery}%,symbol.ilike.%${stockQuery}%`)
+                .limit(5);
+              
+              if (saudiStocks.data?.length) {
+                stockResults = stockResults.concat(saudiStocks.data.map((stock: any) => ({
+                  ...stock,
+                  market: 'TADAWUL',
+                  country: 'Saudi Arabia'
+                })));
+              }
+            }
+            
+            // Also search UAE stocks if still no results
+            if (stockResults.length === 0) {
+              console.log('Searching UAE stocks for:', stockQuery);
+              const uaeStocks = await supabase
+                .from('uae_stocks')
+                .select('*')
+                .or(`name.ilike.%${stockQuery}%,name_ar.ilike.%${stockQuery}%,symbol.ilike.%${stockQuery}%`)
+                .limit(5);
+              
+              if (uaeStocks.data?.length) {
+                stockResults = stockResults.concat(uaeStocks.data.map((stock: any) => ({
+                  ...stock,
+                  market: 'ADX/DFM',
+                  country: 'UAE'
+                })));
+              }
+            }
+            
+            if (stockResults.length > 0) {
+              const topStock = stockResults[0];
+              toolResults.stock_lookup = {
+                query: stockQuery,
+                found: true,
+                stock_info: topStock,
+                additional_matches: stockResults.slice(1),
+                search_status: 'success',
+                market: topStock.market,
+                country: topStock.country,
+                current_price: topStock.price,
+                currency: topStock.currency || (topStock.country === 'Egypt' ? 'EGP' : topStock.country === 'Saudi Arabia' ? 'SAR' : 'AED'),
+                change: topStock.change,
+                change_percent: topStock.change_percent,
+                volume: topStock.volume,
+                market_cap: topStock.market_cap,
+                last_updated: topStock.last_updated || topStock.updated_at
+              };
+              console.log('Stock found:', topStock.name || topStock.symbol);
+            } else {
+              toolResults.stock_lookup = {
+                query: stockQuery,
+                found: false,
+                search_status: 'no_results',
+                message: `لم أتمكن من العثور على سهم "${stockQuery}" في قاعدة البيانات. قد يكون الاسم غير صحيح أو السهم غير متاح في الأسواق المحلية (مصر، السعودية، الإمارات). يرجى التأكد من اسم الشركة أو رمز السهم.`,
+                suggestions: [
+                  'تأكد من كتابة اسم الشركة أو رمز السهم بشكل صحيح',
+                  'جرب البحث باستخدام الاسم الإنجليزي للشركة',
+                  'تأكد أن السهم مدرج في إحدى البورصات المحلية'
+                ]
+              };
+              console.log('No stock found for query:', stockQuery);
+            }
+          } catch (error) {
+            console.error('Stock lookup error:', error);
+            toolResults.stock_lookup = {
+              query: stockQuery,
+              found: false,
+              search_status: 'error',
+              message: 'حدث خطأ أثناء البحث عن معلومات السهم. يرجى المحاولة مرة أخرى.',
+              error: error instanceof Error ? error.message : 'Unknown error'
+            };
+          }
+          break;
+          
         case 'portfolio_analysis':
           // Enhanced geographic portfolio analysis
           if (userData.assets) {
@@ -410,6 +526,27 @@ function generateSpecializedPrompt(queryType: string, responseType: string, tool
     
     quick_value: `You are Anakin. Provide the exact value requested in ${userCurrency} with minimal context. Be precise and concise.`,
     
+    stock_lookup: `You are Anakin, a stock information specialist. When providing stock information:
+
+1. If stock data is found (search_status: 'success'):
+   - Present the stock's current price, change, and key metrics clearly
+   - Include market and currency information
+   - Provide context about the company and its performance
+   - Use the actual data from the database, never make up information
+
+2. If stock is not found (search_status: 'no_results'):
+   - Clearly state that the stock was not found in the database
+   - Explain possible reasons (incorrect name, not listed in local markets)
+   - Provide helpful suggestions for finding the correct stock
+   - Never fabricate stock information
+
+3. If there's an error (search_status: 'error'):
+   - Acknowledge the technical issue
+   - Suggest trying again later
+   - Never provide made-up stock data
+
+Always be honest about what information is available and never create fictional stock data.`,
+    
     portfolio_analysis: `You are Anakin, a portfolio analysis specialist for ${userCountry} market. Provide insights about holdings, performance, and diversification considering ${userCountry} economic conditions and ${userCurrency} implications.`,
 
     debt_management: `You are Anakin, a debt management expert specializing in ${userCountry} financial systems. Analyze debt strategy considering local ${userCurrency} interest rates and ${userCountry} banking practices.`,
@@ -467,6 +604,15 @@ For news queries: If web search failed, replace the standard structure with a cl
     } else {
       prompt += `\n\nIMPORTANT: Include current ${userCountry} market trends, local investment opportunities, and ${userCurrency} market conditions based on recent regional economic developments.`;
     }
+  }
+  
+  if (toolsNeeded.includes('stock_lookup')) {
+    prompt += `\n\nFor stock lookup queries:
+- Use the EXACT stock information from the database tool results
+- Never fabricate or guess stock prices or company information
+- If stock is found: Present accurate data including price, change, currency, and market
+- If stock is not found: Be honest and provide helpful search suggestions
+- Always specify the market (EGX, TADAWUL, ADX) and currency (EGP, SAR, AED)`;
   }
   
   if (toolsNeeded.includes('portfolio_analysis')) {
