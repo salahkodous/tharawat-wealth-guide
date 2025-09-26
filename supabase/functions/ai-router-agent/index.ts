@@ -220,8 +220,12 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
         case 'portfolio_analysis':
           if (userData.assets && userData.assets.length > 0) {
             const assets = userData.assets.map((asset: any) => {
-              const currentValue = (asset.current_price || 0) * (asset.quantity || 0);
-              const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
+              const quantity = parseFloat(asset.quantity || 0);
+              const currentPrice = parseFloat(asset.current_price || 0);
+              const purchasePrice = parseFloat(asset.purchase_price || 0);
+              
+              const currentValue = currentPrice * quantity;
+              const purchaseValue = purchasePrice * quantity;
               const gainLoss = currentValue - purchaseValue;
               const gainLossPercent = purchaseValue > 0 ? (gainLoss / purchaseValue) * 100 : 0;
               
@@ -230,21 +234,21 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
                 symbol: asset.symbol,
                 type: asset.asset_type,
                 country: asset.country,
-                quantity: asset.quantity,
-                purchase_price: asset.purchase_price,
-                current_price: asset.current_price,
-                current_value: currentValue,
-                purchase_value: purchaseValue,
-                gain_loss: gainLoss,
-                gain_loss_percent: gainLossPercent,
+                quantity: quantity,
+                purchase_price: purchasePrice,
+                current_price: currentPrice,
+                current_value: parseFloat(currentValue.toFixed(2)),
+                purchase_value: parseFloat(purchaseValue.toFixed(2)),
+                gain_loss: parseFloat(gainLoss.toFixed(2)),
+                gain_loss_percent: parseFloat(gainLossPercent.toFixed(2)),
                 purchase_date: asset.purchase_date
               };
             });
             
-            const totalValue = assets.reduce((sum: number, asset: any) => sum + asset.current_value, 0);
-            const totalPurchaseValue = assets.reduce((sum: number, asset: any) => sum + asset.purchase_value, 0);
-            const totalGainLoss = totalValue - totalPurchaseValue;
-            const totalGainLossPercent = totalPurchaseValue > 0 ? (totalGainLoss / totalPurchaseValue) * 100 : 0;
+            const totalValue = parseFloat(assets.reduce((sum: number, asset: any) => sum + asset.current_value, 0).toFixed(2));
+            const totalPurchaseValue = parseFloat(assets.reduce((sum: number, asset: any) => sum + asset.purchase_value, 0).toFixed(2));
+            const totalGainLoss = parseFloat((totalValue - totalPurchaseValue).toFixed(2));
+            const totalGainLossPercent = totalPurchaseValue > 0 ? parseFloat(((totalGainLoss / totalPurchaseValue) * 100).toFixed(2)) : 0;
             
             toolResults.portfolio_analysis = {
               total_value: totalValue,
@@ -307,14 +311,15 @@ Current context:
 - Response length: ${classification.responseType}
 
 CRITICAL GUIDELINES:
-- Use ONLY the actual user data provided below
+- Use ONLY the actual user data provided below - no calculations, no modifications
 - NEVER make up or hallucinate companies, stocks, prices, or portfolio holdings
-- If portfolio analysis is requested, analyze ONLY the real assets shown in the data
+- If portfolio analysis is requested, analyze ONLY the real assets with the EXACT values provided
+- DO NOT recalculate any values - use the provided current_value, gain_loss, and percentages as-is
 - Be concise and practical
-- Use specific numbers when available
+- Use specific numbers when available from the data
 - Include currency (${userCurrency}) in financial figures
 - Consider ${userCountry} market conditions
-- Provide actionable advice
+- Provide actionable advice based on the actual portfolio composition
 - If you have news/search results, incorporate key insights naturally`;
 
   if (classification.responseType === 'brief') {
@@ -348,15 +353,21 @@ Asset Count: ${portfolio.asset_count}
 Asset Types: ${portfolio.asset_types?.join(', ')}
 Countries: ${portfolio.countries?.join(', ')}
 
-INDIVIDUAL ASSETS:
+INDIVIDUAL ASSETS (CALCULATION: Quantity × Current Price = Current Value):
 ${portfolio.assets?.map((asset: any) => 
-  `- ${asset.name} (${asset.symbol}): ${asset.quantity} shares @ ${asset.current_price} ${userCurrency} each
-    Current Value: ${asset.current_value} ${userCurrency}
-    Gain/Loss: ${asset.gain_loss} ${userCurrency} (${asset.gain_loss_percent?.toFixed(2)}%)
-    Type: ${asset.type}, Country: ${asset.country}`
-).join('\n') || 'No assets found'}
+  `- ${asset.name} (${asset.symbol}):
+    * Asset Type: ${asset.type}
+    * Country: ${asset.country}
+    * Quantity: ${asset.quantity}
+    * Current Price: ${asset.current_price} ${userCurrency} per unit
+    * Current Value: ${asset.quantity} × ${asset.current_price} = ${asset.current_value} ${userCurrency}
+    * Purchase Price: ${asset.purchase_price} ${userCurrency} per unit
+    * Purchase Value: ${asset.quantity} × ${asset.purchase_price} = ${asset.purchase_value} ${userCurrency}
+    * Gain/Loss: ${asset.gain_loss} ${userCurrency} (${asset.gain_loss_percent}%)
+    * Purchase Date: ${asset.purchase_date}`
+).join('\n\n') || 'No assets found'}
 
-IMPORTANT: Use ONLY this actual portfolio data. Do NOT make up or hallucinate any companies, prices, or financial metrics.`;
+CRITICAL: These are the EXACT calculations. Do NOT recalculate or modify these numbers.`;
   }
 
   const userDataContext = `
