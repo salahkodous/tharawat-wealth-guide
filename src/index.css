@@ -161,6 +161,61 @@
   }
 }
 
+/* Typography Hierarchy - Consistent font weights and sizes */
+@layer components {
+  /* Main headings */
+  .heading-primary {
+    @apply text-4xl md:text-5xl font-bold text-foreground leading-tight;
+  }
+  
+  .heading-secondary {
+    @apply text-3xl md:text-4xl font-semibold text-foreground leading-snug;
+  }
+  
+  .heading-tertiary {
+    @apply text-2xl md:text-3xl font-semibold text-foreground leading-snug;
+  }
+  
+  /* Subtitles and section headers */
+  .subtitle-large {
+    @apply text-xl md:text-2xl font-medium text-muted-foreground leading-relaxed;
+  }
+  
+  .subtitle-medium {
+    @apply text-lg md:text-xl font-medium text-muted-foreground leading-relaxed;
+  }
+  
+  .subtitle-small {
+    @apply text-base md:text-lg font-medium text-muted-foreground leading-relaxed;
+  }
+  
+  /* Body text */
+  .body-large {
+    @apply text-lg font-normal text-foreground leading-relaxed;
+  }
+  
+  .body-medium {
+    @apply text-base font-normal text-foreground leading-relaxed;
+  }
+  
+  .body-small {
+    @apply text-sm font-normal text-muted-foreground leading-relaxed;
+  }
+  
+  /* Labels and captions */
+  .label-bold {
+    @apply text-sm font-semibold text-foreground uppercase tracking-wide;
+  }
+  
+  .label-medium {
+    @apply text-sm font-medium text-foreground;
+  }
+  
+  .caption {
+    @apply text-xs font-normal text-muted-foreground leading-normal;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

@@ -97,6 +97,20 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			fontFamily: {
+				'sans': ['Inter', 'system-ui', 'sans-serif'],
+				'display': ['Inter', 'system-ui', 'sans-serif'],
+				'body': ['Inter', 'system-ui', 'sans-serif']
+			},
+			fontWeight: {
+				'light': '300',
+				'normal': '400',
+				'medium': '500',
+				'semibold': '600',
+				'bold': '700',
+				'extrabold': '800',
+				'black': '900'
 			}
 		}
 	},
