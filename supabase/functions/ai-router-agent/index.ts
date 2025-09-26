@@ -75,7 +75,10 @@ Return ONLY this JSON format:
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
 - "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}
-- "What are good investment opportunities now?" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}`
+- "What are good investment opportunities now?" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "اخر اخبار السهم" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "آخر أخبار البورصة" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
+- "What's the latest news about Apple stock?" → {"type":"news_analysis","context":["news","assets"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}`
       }, {
         role: 'user', 
         content: message
@@ -143,42 +146,52 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
             const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
             
             if (googleApiKey) {
-              // Use a working custom search engine ID for general web search
-              const searchEngineId = 'f1e0e1a6f93e14704'; // Generic programmable search engine
-              const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=8&safe=active`;
+              // Try multiple search approaches for better reliability
+              let searchSuccess = false;
+              let searchResults: any[] = [];
               
-              console.log('Making request to Google Search API...');
-              const searchResponse = await fetch(googleSearchUrl, {
-                method: 'GET',
-                headers: {
-                  'Accept': 'application/json',
-                }
-              });
+              // Approach 1: Use a general web search engine ID
+              const searchEngineIds = [
+                'a12ac54d856bf4e8e', // General web search
+                '017576662512468239146:omuauf_lfve', // Alternative
+                'f1e0e1a6f93e14704' // Third option
+              ];
               
-              console.log('Search response status:', searchResponse.status);
-              
-              if (!searchResponse.ok) {
-                const errorText = await searchResponse.text();
-                console.error('Google API error response:', errorText);
-                throw new Error(`Google API returned ${searchResponse.status}: ${errorText}`);
-              }
-              
-              const searchData = await searchResponse.json();
-              console.log('Search data received, items count:', searchData.items?.length || 0);
-              
-              if (searchData.error) {
-                console.error('Google API error:', searchData.error);
-                throw new Error(`Google API error: ${searchData.error.message}`);
-              }
-              
-              if (searchData.items && searchData.items.length > 0) {
-                const searchResults = searchData.items.map((item: any) => ({
-                  title: item.title,
-                  snippet: item.snippet,
-                  link: item.link,
-                  source: item.displayLink
-                }));
+              for (const searchEngineId of searchEngineIds) {
+                if (searchSuccess) break;
                 
+                try {
+                  const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=8&safe=active`;
+                  
+                  console.log(`Attempting search with engine ${searchEngineId}...`);
+                  const searchResponse = await fetch(googleSearchUrl, {
+                    method: 'GET',
+                    headers: {
+                      'Accept': 'application/json',
+                    }
+                  });
+                  
+                  if (searchResponse.ok) {
+                    const searchData = await searchResponse.json();
+                    
+                    if (searchData.items && searchData.items.length > 0) {
+                      searchResults = searchData.items.map((item: any) => ({
+                        title: item.title,
+                        snippet: item.snippet,
+                        link: item.link,
+                        source: item.displayLink
+                      }));
+                      searchSuccess = true;
+                      console.log(`Search successful with engine ${searchEngineId}, found ${searchResults.length} results`);
+                    }
+                  }
+                } catch (engineError) {
+                  console.log(`Search engine ${searchEngineId} failed:`, engineError);
+                  continue;
+                }
+              }
+              
+              if (searchSuccess && searchResults.length > 0) {
                 // Extract key insights from search results
                 const insights = searchResults.map((result: any) => result.snippet).join(' ');
                 
@@ -187,17 +200,17 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
                   currency: userCurrency,
                   query: searchQuery,
                   results: searchResults,
-                  summary: `Recent ${userCountry} market analysis based on current web sources`,
-                  key_insights: insights.substring(0, 800) + (insights.length > 800 ? '...' : ''),
+                  summary: `Real-time web search results for ${searchQuery}`,
+                  key_insights: insights.substring(0, 1000) + (insights.length > 1000 ? '...' : ''),
                   sources: searchResults.map((r: any) => r.source).slice(0, 5),
                   last_updated: new Date().toISOString(),
-                  total_results: searchData.searchInformation?.totalResults || 'unknown'
+                  total_results: searchResults.length.toString(),
+                  search_status: 'success'
                 };
                 
                 console.log('Google search completed successfully with', searchResults.length, 'results');
               } else {
-                console.log('No search results found in response');
-                throw new Error('No search results found for the query');
+                throw new Error('No search engines returned results');
               }
             } else {
               console.log('Google API key not found in environment');
@@ -205,17 +218,37 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
             }
           } catch (error) {
             console.error('Google search error:', error);
-            // Fallback to enhanced placeholder
-            toolResults.web_search = {
-              country: userCountry,
-              currency: userCurrency,
-              summary: `Current ${userCountry} market trends suggest opportunities in local sectors aligned with economic growth patterns.`,
-              local_opportunities: [`${userCountry} emerging sectors`, `Local ${userCurrency} investment vehicles`, `Regional market advantages`],
-              economic_context: [`${userCountry} economic indicators`, `${userCurrency} exchange rate trends`, `Local regulatory environment`],
-              risks: [`${userCountry} market volatility`, `${userCurrency} currency risks`, `Local political/economic stability`],
-              search_query: searchQuery,
-              note: 'Using cached market intelligence due to search service unavailability'
-            };
+            
+            // For news queries specifically, provide a clear message about web search failure
+            if (message.toLowerCase().includes('اخبار') || message.toLowerCase().includes('news') || 
+                message.toLowerCase().includes('خبر') || message.toLowerCase().includes('أخبار')) {
+              toolResults.web_search = {
+                country: userCountry,
+                currency: userCurrency,
+                query: searchQuery,
+                search_status: 'failed',
+                message: `حاولت البحث عن أحدث الأخبار في المواقع الإخبارية ولكن لم أتمكن من الوصول إلى نتائج البحث حالياً. قاعدة البيانات لدينا تحتوي فقط على أسعار الأسهم وليس الأخبار. أنصحك بزيارة المواقع الإخبارية المالية مثل موقع معلومات مباشر أو موقع البورصة المصرية للحصول على آخر الأخبار.`,
+                summary: `Web search temporarily unavailable - our database contains only stock prices, not news updates`,
+                note: 'تعذر الوصول للبحث في المواقع الإخبارية حالياً',
+                suggestions: [
+                  'زيارة موقع معلومات مباشر (mubasher.info)',
+                  'موقع البورصة المصرية الرسمي',
+                  'مواقع الأخبار المالية المحلية'
+                ]
+              };
+            } else {
+              // For other queries, use the general fallback
+              toolResults.web_search = {
+                country: userCountry,
+                currency: userCurrency,
+                summary: `Current ${userCountry} market trends suggest opportunities in local sectors aligned with economic growth patterns.`,
+                local_opportunities: [`${userCountry} emerging sectors`, `Local ${userCurrency} investment vehicles`, `Regional market advantages`],
+                economic_context: [`${userCountry} economic indicators`, `${userCurrency} exchange rate trends`, `Local regulatory environment`],
+                risks: [`${userCountry} market volatility`, `${userCurrency} currency risks`, `Local political/economic stability`],
+                search_query: searchQuery,
+                note: 'Using cached market intelligence due to search service unavailability'
+              };
+            }
           }
           break;
           
