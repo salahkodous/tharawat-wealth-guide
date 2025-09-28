@@ -384,12 +384,14 @@ CRITICAL GUIDELINES:
 - Provide actionable advice based on the actual portfolio composition
 
 WEB SEARCH INTEGRATION REQUIREMENTS:
-- When web search results are available, SEAMLESSLY integrate key market insights into your response
-- Reference specific market trends, news, or data points from the search results
-- Use phrases like "According to current market analysis..." or "Recent market insights suggest..."
-- Provide context on how current market conditions affect the user's situation
-- Merge web findings with your financial expertise to give comprehensive, timely advice
-- Always cite or reference the sources when using specific data points from search results`;
+- NEVER show web search results as raw links or list format
+- EXTRACT and ANALYZE the actual content from search results to answer the user's question
+- Provide specific data, prices, trends, or insights found in the search results
+- Synthesize information from multiple sources to give a comprehensive answer
+- Use phrases like "Current market data shows..." or "Based on latest analysis..."
+- Include specific numbers, percentages, or trends from the search findings
+- Reference sources naturally within the text, not as a list of links
+- TRANSFORM the search findings into a proper financial analysis or answer`;
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
@@ -409,22 +411,18 @@ WEB SEARCH INTEGRATION REQUIREMENTS:
   }
   
   if (toolResults.web_search?.success) {
-    toolContext += `\n\nLATEST MARKET INSIGHTS FROM WEB SEARCH:
-Query: ${toolResults.web_search.search_queries?.[0] || 'Market Analysis'}
-Topics Covered: ${toolResults.web_search.market_topics?.join(', ') || 'General Market'}
+    toolContext += `\n\nCURRENT MARKET DATA FROM WEB SEARCH:
+IMPORTANT: Use this information to ANSWER the user's question directly. Do NOT show links.
 
-KEY INSIGHTS TO INTEGRATE:
-${toolResults.web_search.key_insights}
-
-DETAILED SEARCH RESULTS:
+SEARCH FINDINGS TO ANALYZE:
 ${toolResults.web_search.results.map((r: any) => 
-  `• ${r.title}
-    Source: ${r.source}
-    Insight: ${r.snippet}
-    Reference: ${r.link}`
-).join('\n\n')}
+  `SOURCE: ${r.source}
+TITLE: ${r.title}  
+CONTENT: ${r.snippet}
+---`
+).join('\n')}
 
-IMPORTANT: Merge these current market insights naturally into your analysis. Reference specific findings from these sources when relevant to provide timely, accurate market context.`;
+INSTRUCTION: Extract specific prices, trends, market data, or insights from the above content to provide a direct answer to the user's question about "${userData.originalMessage}". Present this as professional financial analysis, not as a list of search results.`;
   }
   
   if (toolResults.portfolio_analysis) {
