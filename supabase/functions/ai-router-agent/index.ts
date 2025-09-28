@@ -384,14 +384,15 @@ CRITICAL GUIDELINES:
 - Provide actionable advice based on the actual portfolio composition
 
 WEB SEARCH INTEGRATION REQUIREMENTS:
-- STRICTLY FORBIDDEN: Do NOT include any links, URLs, or source lists in your response
-- EXTRACT specific data, prices, and information from search results
-- Present ONLY the factual information as a direct answer
-- Use current market data to provide exact prices, percentages, or trends
-- Format as professional financial information without any source references
-- NEVER format responses with bullet points of links or "Latest News Sources" sections
-- Simply state the facts: "Current gold price in Egypt is X EGP per gram" with any relevant context
-- Focus on answering the user's question with extracted data, not referencing where it came from`;
+- CRITICAL: Use ONLY current, real-time data from web search results
+- NEVER use generic, cached, or outdated market information
+- If web search provides current EGX 30 index value, use that EXACT number
+- If web search provides current EGP/USD rate, use that EXACT rate
+- VERIFY data freshness - only use information dated within the last 24-48 hours
+- If search results show conflicting data, mention the range or most recent figure
+- MANDATORY: Cross-reference multiple search results for accuracy
+- State clearly if data is unavailable rather than providing generic estimates
+- Focus on answering the user's question with VERIFIED current data only`;
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
