@@ -168,44 +168,106 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
           break;
           
         case 'web_search':
-          console.log('Performing general web search...');
+          console.log('Performing enhanced web search...');
           try {
             const googleApiKey = Deno.env.get('GOOGLE_SEARCH_API_KEY');
             const searchEngineId = Deno.env.get('GOOGLE_SEARCH_ENGINE_ID');
             
             if (googleApiKey && searchEngineId) {
-              let searchQuery = `${message} financial market analysis investment`;
-              if (userCountry !== 'Egypt') {
-                searchQuery += ` ${userCountry}`;
+              // Enhanced search queries for better results
+              let searchQueries = [];
+              
+              // Primary search based on user message
+              let primaryQuery = `${message} financial market analysis investment news ${userCountry} ${userCurrency}`;
+              searchQueries.push(primaryQuery);
+              
+              // Additional specific searches based on keywords
+              if (message.toLowerCase().includes('stock') || message.toLowerCase().includes('equity')) {
+                searchQueries.push(`stock market trends ${userCountry} latest news analysis`);
+              }
+              if (message.toLowerCase().includes('crypto') || message.toLowerCase().includes('bitcoin')) {
+                searchQueries.push(`cryptocurrency market analysis ${userCountry} regulation news`);
+              }
+              if (message.toLowerCase().includes('real estate') || message.toLowerCase().includes('property')) {
+                searchQueries.push(`real estate market trends ${userCountry} property investment`);
               }
               
-              const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&num=5&safe=active`;
+              const allResults: any[] = [];
               
-              const searchResponse = await fetch(googleSearchUrl);
-              
-              if (searchResponse.ok) {
-                const searchData = await searchResponse.json();
+              // Execute multiple searches for comprehensive results
+              for (const query of searchQueries.slice(0, 2)) { // Limit to 2 searches to avoid rate limits
+                const googleSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=5&safe=active`;
                 
-                if (searchData.items && searchData.items.length > 0) {
-                  toolResults.web_search = {
-                    success: true,
-                    results: searchData.items.slice(0, 3).map((item: any) => ({
-                      title: item.title,
-                      snippet: item.snippet,
-                      link: item.link,
-                      source: item.displayLink
-                    })),
-                    summary: `Found ${searchData.items.length} relevant search results`,
-                    query: searchQuery
-                  };
-                } else {
-                  throw new Error('No search results found');
+                try {
+                  const searchResponse = await fetch(googleSearchUrl);
+                  
+                  if (searchResponse.ok) {
+                    const searchData = await searchResponse.json();
+                    
+                    if (searchData.items && searchData.items.length > 0) {
+                      allResults.push(...searchData.items.map((item: any) => ({
+                        title: item.title,
+                        snippet: item.snippet,
+                        link: item.link,
+                        source: item.displayLink,
+                        query: query
+                      })));
+                    }
+                  }
+                } catch (searchError) {
+                  console.error('Individual search error:', searchError);
                 }
+              }
+              
+              if (allResults.length > 0) {
+                // Remove duplicates and select best results
+                const uniqueResults = allResults.filter((item, index, self) => 
+                  index === self.findIndex(t => t.link === item.link)
+                ).slice(0, 5);
+                
+                // Extract key insights and topics
+                const keyInsights = uniqueResults.map(item => 
+                  `${item.title}: ${item.snippet}`
+                ).join('\n\n');
+                
+                const marketTopics = uniqueResults.map(item => {
+                  const title = item.title.toLowerCase();
+                  const snippet = item.snippet.toLowerCase();
+                  const topics = [];
+                  
+                  if (title.includes('stock') || snippet.includes('stock')) topics.push('Stock Market');
+                  if (title.includes('crypto') || snippet.includes('crypto')) topics.push('Cryptocurrency');
+                  if (title.includes('real estate') || snippet.includes('property')) topics.push('Real Estate');
+                  if (title.includes('bond') || snippet.includes('bond')) topics.push('Bonds');
+                  if (title.includes('economy') || snippet.includes('economic')) topics.push('Economic Outlook');
+                  
+                  return topics;
+                }).flat();
+                
+                const uniqueTopics = [...new Set(marketTopics)];
+                
+                toolResults.web_search = {
+                  success: true,
+                  results: uniqueResults,
+                  summary: `Found ${uniqueResults.length} comprehensive market insights covering ${uniqueTopics.join(', ')}`,
+                  key_insights: keyInsights,
+                  market_topics: uniqueTopics,
+                  sources: uniqueResults.map(item => item.source),
+                  search_queries: searchQueries
+                };
               } else {
-                throw new Error('Search service error');
+                toolResults.web_search = {
+                  success: false,
+                  error: 'No relevant search results found',
+                  message: `No current market information found for: ${message}`
+                };
               }
             } else {
-              throw new Error('Search API not configured');
+              toolResults.web_search = {
+                success: false,
+                error: 'Search API not configured',
+                message: 'Web search service is not available - Google API credentials missing'
+              };
             }
           } catch (error) {
             console.error('Web search error:', error);
@@ -320,7 +382,14 @@ CRITICAL GUIDELINES:
 - Include currency (${userCurrency}) in financial figures
 - Consider ${userCountry} market conditions
 - Provide actionable advice based on the actual portfolio composition
-- If you have news/search results, incorporate key insights naturally`;
+
+WEB SEARCH INTEGRATION REQUIREMENTS:
+- When web search results are available, SEAMLESSLY integrate key market insights into your response
+- Reference specific market trends, news, or data points from the search results
+- Use phrases like "According to current market analysis..." or "Recent market insights suggest..."
+- Provide context on how current market conditions affect the user's situation
+- Merge web findings with your financial expertise to give comprehensive, timely advice
+- Always cite or reference the sources when using specific data points from search results`;
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
@@ -340,7 +409,22 @@ CRITICAL GUIDELINES:
   }
   
   if (toolResults.web_search?.success) {
-    toolContext += `\n\nRELEVANT SEARCH RESULTS:\n${toolResults.web_search.results.map((r: any) => `${r.title}: ${r.snippet}`).join('\n')}`;
+    toolContext += `\n\nLATEST MARKET INSIGHTS FROM WEB SEARCH:
+Query: ${toolResults.web_search.search_queries?.[0] || 'Market Analysis'}
+Topics Covered: ${toolResults.web_search.market_topics?.join(', ') || 'General Market'}
+
+KEY INSIGHTS TO INTEGRATE:
+${toolResults.web_search.key_insights}
+
+DETAILED SEARCH RESULTS:
+${toolResults.web_search.results.map((r: any) => 
+  `• ${r.title}
+    Source: ${r.source}
+    Insight: ${r.snippet}
+    Reference: ${r.link}`
+).join('\n\n')}
+
+IMPORTANT: Merge these current market insights naturally into your analysis. Reference specific findings from these sources when relevant to provide timely, accurate market context.`;
   }
   
   if (toolResults.portfolio_analysis) {
