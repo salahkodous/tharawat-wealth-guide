@@ -384,14 +384,14 @@ CRITICAL GUIDELINES:
 - Provide actionable advice based on the actual portfolio composition
 
 WEB SEARCH INTEGRATION REQUIREMENTS:
-- NEVER show web search results as raw links or list format
-- EXTRACT and ANALYZE the actual content from search results to answer the user's question
-- Provide specific data, prices, trends, or insights found in the search results
-- Synthesize information from multiple sources to give a comprehensive answer
-- Use phrases like "Current market data shows..." or "Based on latest analysis..."
-- Include specific numbers, percentages, or trends from the search findings
-- Reference sources naturally within the text, not as a list of links
-- TRANSFORM the search findings into a proper financial analysis or answer`;
+- STRICTLY FORBIDDEN: Do NOT include any links, URLs, or source lists in your response
+- EXTRACT specific data, prices, and information from search results
+- Present ONLY the factual information as a direct answer
+- Use current market data to provide exact prices, percentages, or trends
+- Format as professional financial information without any source references
+- NEVER format responses with bullet points of links or "Latest News Sources" sections
+- Simply state the facts: "Current gold price in Egypt is X EGP per gram" with any relevant context
+- Focus on answering the user's question with extracted data, not referencing where it came from`;
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
@@ -402,6 +402,8 @@ WEB SEARCH INTEGRATION REQUIREMENTS:
   } else {
     systemPrompt += '\n\nProvide comprehensive 500-800 word analysis with detailed insights.';
   }
+
+  systemPrompt += '\n\nCRITICAL: If you have web search data, NEVER include links, URLs, or source references. Extract and present only the factual information as a clean, professional answer.';
 
   // Add tool results context
   let toolContext = '';
