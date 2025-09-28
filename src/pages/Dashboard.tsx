@@ -4,8 +4,6 @@ import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import DashboardFinanceOverview from '@/components/DashboardFinanceOverview';
 import AIFinancialAgent from '@/components/AIFinancialAgent';
-import { GoogleSearchTest } from '@/components/GoogleSearchTest';
-import { TestGoogleAPI } from '@/components/TestGoogleAPI';
 
 const Dashboard = () => {
   return (
@@ -23,11 +21,6 @@ const Dashboard = () => {
             </div>
             
             <AIFinancialAgent />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <TestGoogleAPI />
-              <GoogleSearchTest />
-            </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <PortfolioSummary />
