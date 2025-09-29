@@ -37,7 +37,7 @@ async function classifyQuery(message: string, groqApiKey: string) {
 
 QUERY TYPES:
 - greeting: Simple greetings, hellos, casual conversation
-- quick_value: Asking for specific numbers (income, net worth, balance, etc.)
+- quick_value: Asking for specific numbers (income, net worth, balance, gold prices, currency rates, stock prices)
 - portfolio_analysis: Holdings, performance, diversification questions
 - debt_management: Debt strategy, payments, consolidation questions  
 - investment_advice: Buying/selling, asset allocation recommendations
@@ -45,7 +45,7 @@ QUERY TYPES:
 - goal_tracking: Financial goals progress and planning
 - expense_analysis: Spending patterns, budgeting advice
 - income_optimization: Income strategies, tax efficiency
-- market_research: Market trends, economic analysis, stock/company information
+- market_research: Market trends, economic analysis, company/industry information
 - risk_assessment: Risk evaluation, insurance planning
 - general_financial: General financial advice and education
 
@@ -58,11 +58,16 @@ RESPONSE TYPES:
 - detailed: Comprehensive analysis with full insights (800-1500 tokens)
 
 TOOLS NEEDED:
-- web_search: For market research, investment opportunities, economic trends, latest news, stock/company information
+- web_search: ONLY for market research about companies, investment opportunities, economic trends that are NOT in our database
 - egyptian_news: For Egyptian stock market news specifically
 - portfolio_analysis: For detailed portfolio insights and recommendations
 - goal_planning: For long-term financial planning and projections
 - risk_analysis: For risk assessment and insurance planning
+
+CRITICAL TOOL RULES:
+- DO NOT use web_search for: gold prices, currency rates, stock prices, indices - these are in our database
+- ONLY use web_search for: company research, economic analysis, investment opportunities not in database
+- For queries about "gold price", "currency rate", "stock price", "EGX index" → toolsNeeded: []
 
 Return ONLY this JSON format:
 {
@@ -75,11 +80,11 @@ Return ONLY this JSON format:
 
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "24 karat gold price" → {"type":"quick_value","context":["assets"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "USD to EGP rate" → {"type":"quick_value","context":["assets"],"priority":"low","responseType":"value","toolsNeeded":[]}
 - "Egyptian stock market news" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
-- "اخر اخبار البورصة" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
-- "latest EGX news" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
 - "Apple stock information" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search","portfolio_analysis"]}`
+- "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["portfolio_analysis"]}`
       }, {
         role: 'user', 
         content: message
@@ -157,29 +162,36 @@ async function fetchMarketData(classification: any, userCountry: string) {
       }
     }
 
-    // Fetch gold prices - prioritize user's country
-    const { data: goldPrices } = await supabase
+    // Fetch gold prices - try country-specific first, then fallback
+    let goldPricesData = null;
+    
+    // Try exact country match first
+    const { data: countryGold } = await supabase
       .from('gold_prices')
       .select('*')
-      .eq('country', userCountry)
-      .order('last_updated', { ascending: false })
-      .limit(30);
+      .ilike('country', `%${userCountry}%`)
+      .order('last_updated', { ascending: false });
     
-    if (goldPrices && goldPrices.length > 0) {
-      marketData.gold_prices = goldPrices;
-      console.log(`Fetched ${goldPrices.length} gold prices for ${userCountry}`);
+    if (countryGold && countryGold.length > 0) {
+      goldPricesData = countryGold;
+      console.log(`Fetched ${countryGold.length} gold prices for ${userCountry} (exact match)`);
     } else {
-      // Fallback to all gold prices if country-specific not found
-      const { data: allGoldPrices } = await supabase
+      // Fallback to all gold prices and let AI filter
+      const { data: allGold } = await supabase
         .from('gold_prices')
         .select('*')
         .order('last_updated', { ascending: false })
-        .limit(20);
+        .limit(30);
       
-      if (allGoldPrices && allGoldPrices.length > 0) {
-        marketData.gold_prices = allGoldPrices;
-        console.log(`Fetched ${allGoldPrices.length} gold prices (all countries)`);
+      if (allGold && allGold.length > 0) {
+        goldPricesData = allGold;
+        console.log(`Fetched ${allGold.length} gold prices (all countries). Available countries:`, 
+          [...new Set(allGold.map((g: any) => g.country))]);
       }
+    }
+    
+    if (goldPricesData) {
+      marketData.gold_prices = goldPricesData;
     }
 
     // Fetch currency rates
@@ -524,16 +536,23 @@ ${Object.keys(marketData).map(key => `- ${key}: ${marketData[key].length} record
 
 GOLD PRICES DATA STRUCTURE:
 ${marketData.gold_prices ? `
-Gold prices for ${userCountry}:
-${JSON.stringify(marketData.gold_prices.filter((g: any) => g.country === userCountry).slice(0, 8), null, 2)}
+ALL AVAILABLE GOLD PRICES IN DATABASE:
+${JSON.stringify(marketData.gold_prices, null, 2)}
 
-CRITICAL GOLD PRICE INSTRUCTIONS:
-- User's country is: ${userCountry}
+CRITICAL GOLD PRICE EXTRACTION INSTRUCTIONS:
+- User wants gold price for: ${userCountry}
+- User's currency: ${userCurrency}
+- Available countries in database: ${[...new Set(marketData.gold_prices.map((g: any) => g.country))].join(', ')}
 - Available karats: ${[...new Set(marketData.gold_prices.map((g: any) => g.karat))].join(', ')}
-- To answer "24 karat gold price": Find entry where karat=24 AND country="${userCountry}"
-- Use the EXACT price_per_gram value from that entry
-- Include the currency field value (should be ${userCurrency})
-- Example: "As of [last_updated], 24-karat gold in ${userCountry} is [price_per_gram] [currency] per gram"
+
+STEP-BY-STEP EXTRACTION:
+1. Look for entries where country matches "${userCountry}" (case-insensitive, may contain the word)
+2. Filter for karat=24 (or requested karat)
+3. Use the price_per_gram value
+4. Use the currency from that entry
+5. Format: "As of [last_updated], 24-karat gold in ${userCountry} is [price_per_gram] [currency] per gram"
+
+If no exact match for ${userCountry}, check if any entry mentions ${userCountry} in the name or country field.
 ` : 'No gold prices in database'}
 
 CURRENCY RATES DATA:
