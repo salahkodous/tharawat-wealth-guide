@@ -106,6 +106,137 @@ Examples:
   }
 }
 
+// Helper function to fetch market data from Supabase
+async function fetchMarketData(classification: any, userCountry: string) {
+  const marketData: Record<string, any> = {};
+  const context = classification.context || [];
+  
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase credentials for market data');
+      return marketData;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch Egyptian stocks
+    if (context.includes('assets') || context.includes('news') || classification.type === 'market_research') {
+      const { data: egyptStocks } = await supabase
+        .from('egypt_stocks')
+        .select('*')
+        .order('market_cap', { ascending: false })
+        .limit(15);
+      
+      if (egyptStocks && egyptStocks.length > 0) {
+        marketData.egypt_stocks = egyptStocks;
+      }
+
+      // Fetch Saudi stocks
+      const { data: saudiStocks } = await supabase
+        .from('saudi_stocks')
+        .select('*')
+        .order('market_cap', { ascending: false })
+        .limit(15);
+      
+      if (saudiStocks && saudiStocks.length > 0) {
+        marketData.saudi_stocks = saudiStocks;
+      }
+
+      // Fetch UAE stocks
+      const { data: uaeStocks } = await supabase
+        .from('uae_stocks')
+        .select('*')
+        .order('market_cap', { ascending: false })
+        .limit(15);
+      
+      if (uaeStocks && uaeStocks.length > 0) {
+        marketData.uae_stocks = uaeStocks;
+      }
+    }
+
+    // Fetch gold prices
+    const { data: goldPrices } = await supabase
+      .from('gold_prices')
+      .select('*')
+      .order('last_updated', { ascending: false })
+      .limit(20);
+    
+    if (goldPrices && goldPrices.length > 0) {
+      marketData.gold_prices = goldPrices;
+    }
+
+    // Fetch currency rates
+    const { data: currencyRates } = await supabase
+      .from('currency_rates')
+      .select('*')
+      .order('last_updated', { ascending: false })
+      .limit(30);
+    
+    if (currencyRates && currencyRates.length > 0) {
+      marketData.currency_rates = currencyRates;
+    }
+
+    // Fetch cryptocurrencies
+    if (context.includes('crypto') || classification.type === 'market_research') {
+      const { data: cryptos } = await supabase
+        .from('cryptocurrencies')
+        .select('*')
+        .order('market_cap', { ascending: false })
+        .limit(15);
+      
+      if (cryptos && cryptos.length > 0) {
+        marketData.cryptocurrencies = cryptos;
+      }
+    }
+
+    // Fetch international indices
+    const { data: indices } = await supabase
+      .from('international_indices')
+      .select('*')
+      .order('last_updated', { ascending: false })
+      .limit(20);
+    
+    if (indices && indices.length > 0) {
+      marketData.international_indices = indices;
+    }
+
+    // Fetch real estate data
+    if (context.includes('real_estate') || context.includes('property')) {
+      const { data: realEstate } = await supabase
+        .from('real_estate')
+        .select('*')
+        .eq('country', userCountry)
+        .limit(15);
+      
+      if (realEstate && realEstate.length > 0) {
+        marketData.real_estate = realEstate;
+      }
+    }
+
+    // Fetch bank products
+    if (context.includes('bank') || context.includes('savings')) {
+      const { data: bankProducts } = await supabase
+        .from('bank_products')
+        .select('*')
+        .eq('is_active', true)
+        .limit(15);
+      
+      if (bankProducts && bankProducts.length > 0) {
+        marketData.bank_products = bankProducts;
+      }
+    }
+
+    console.log('Market data fetched:', Object.keys(marketData));
+  } catch (error) {
+    console.error('Error fetching market data:', error);
+  }
+
+  return marketData;
+}
+
 async function executeTools(toolsNeeded: string[], message: string, userData: any): Promise<any> {
   console.log('Executing tools:', toolsNeeded);
   const toolResults: any = {};
@@ -358,7 +489,7 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
   return toolResults;
 }
 
-async function generateResponse(classification: any, userData: any, toolResults: any, groqApiKey: string) {
+async function generateResponse(classification: any, userData: any, toolResults: any, marketData: any, groqApiKey: string) {
   console.log('Generating response for type:', classification.type);
   
   const userCountry = userData.personal_finances?.country || userData.user_country || 'Egypt';
@@ -372,6 +503,17 @@ Current context:
 - Query type: ${classification.type}
 - Response length: ${classification.responseType}
 
+DATABASE MARKET DATA (PRIORITY #1 - USE THIS FIRST):
+${Object.keys(marketData).length > 0 ? JSON.stringify(marketData, null, 2) : 'No database market data available'}
+
+CRITICAL DATA PRIORITY RULES:
+1. ALWAYS check database market data FIRST (above section)
+2. Database contains real-time data for: stocks (Egypt/Saudi/UAE), gold prices, currency rates, cryptocurrencies, indices, real estate, bank products
+3. When database has the information, use those EXACT values (prices, change %, last_updated timestamps)
+4. ONLY use web search results if database doesn't have the specific data requested
+5. Database data is verified and timestamped - it's your PRIMARY SOURCE
+6. Example: If user asks "gold price in Egypt", check gold_prices array for Egypt entries and use those exact values
+
 CRITICAL GUIDELINES:
 - Use ONLY the actual user data provided below - no calculations, no modifications
 - NEVER make up or hallucinate companies, stocks, prices, or portfolio holdings
@@ -383,16 +525,13 @@ CRITICAL GUIDELINES:
 - Consider ${userCountry} market conditions
 - Provide actionable advice based on the actual portfolio composition
 
-WEB SEARCH INTEGRATION REQUIREMENTS:
-- CRITICAL: Use ONLY current, real-time data from web search results
+WEB SEARCH INTEGRATION (FALLBACK - USE ONLY IF DATABASE LACKS DATA):
+- Use current, real-time data from web search results ONLY when database doesn't have it
 - NEVER use generic, cached, or outdated market information
-- If web search provides current EGX 30 index value, use that EXACT number
-- If web search provides current EGP/USD rate, use that EXACT rate
 - VERIFY data freshness - only use information dated within the last 24-48 hours
 - If search results show conflicting data, mention the range or most recent figure
 - MANDATORY: Cross-reference multiple search results for accuracy
-- State clearly if data is unavailable rather than providing generic estimates
-- Focus on answering the user's question with VERIFIED current data only`;
+- State clearly if data is unavailable rather than providing generic estimates`;
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
@@ -603,12 +742,16 @@ serve(async (req) => {
     const classification = await classifyQuery(message, groqApiKey);
     console.log('Query classified as:', classification);
 
+    // Fetch market data from database
+    const marketData = await fetchMarketData(classification, userData.user_country);
+    console.log('Market data retrieved:', Object.keys(marketData));
+
     // Execute required tools
     const toolResults = await executeTools(classification.toolsNeeded || [], message, userData);
     console.log('Tool results:', Object.keys(toolResults));
 
     // Generate response
-    const response = await generateResponse(classification, userData, toolResults, groqApiKey);
+    const response = await generateResponse(classification, userData, toolResults, marketData, groqApiKey);
 
     return new Response(JSON.stringify({ 
       response,
