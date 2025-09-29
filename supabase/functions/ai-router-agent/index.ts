@@ -157,15 +157,29 @@ async function fetchMarketData(classification: any, userCountry: string) {
       }
     }
 
-    // Fetch gold prices
+    // Fetch gold prices - prioritize user's country
     const { data: goldPrices } = await supabase
       .from('gold_prices')
       .select('*')
+      .eq('country', userCountry)
       .order('last_updated', { ascending: false })
-      .limit(20);
+      .limit(30);
     
     if (goldPrices && goldPrices.length > 0) {
       marketData.gold_prices = goldPrices;
+      console.log(`Fetched ${goldPrices.length} gold prices for ${userCountry}`);
+    } else {
+      // Fallback to all gold prices if country-specific not found
+      const { data: allGoldPrices } = await supabase
+        .from('gold_prices')
+        .select('*')
+        .order('last_updated', { ascending: false })
+        .limit(20);
+      
+      if (allGoldPrices && allGoldPrices.length > 0) {
+        marketData.gold_prices = allGoldPrices;
+        console.log(`Fetched ${allGoldPrices.length} gold prices (all countries)`);
+      }
     }
 
     // Fetch currency rates
@@ -510,10 +524,16 @@ ${Object.keys(marketData).map(key => `- ${key}: ${marketData[key].length} record
 
 GOLD PRICES DATA STRUCTURE:
 ${marketData.gold_prices ? `
-Gold prices available for different karats and countries:
-${JSON.stringify(marketData.gold_prices.slice(0, 5), null, 2)}
-Key fields: name, karat (21, 22, 24), price_per_gram, currency, country, last_updated, change_percent
-TO ANSWER: Find entries where karat=24 and country matches user's country, use the price_per_gram value
+Gold prices for ${userCountry}:
+${JSON.stringify(marketData.gold_prices.filter((g: any) => g.country === userCountry).slice(0, 8), null, 2)}
+
+CRITICAL GOLD PRICE INSTRUCTIONS:
+- User's country is: ${userCountry}
+- Available karats: ${[...new Set(marketData.gold_prices.map((g: any) => g.karat))].join(', ')}
+- To answer "24 karat gold price": Find entry where karat=24 AND country="${userCountry}"
+- Use the EXACT price_per_gram value from that entry
+- Include the currency field value (should be ${userCurrency})
+- Example: "As of [last_updated], 24-karat gold in ${userCountry} is [price_per_gram] [currency] per gram"
 ` : 'No gold prices in database'}
 
 CURRENCY RATES DATA:
