@@ -504,34 +504,56 @@ Current context:
 - Response length: ${classification.responseType}
 
 DATABASE MARKET DATA (PRIORITY #1 - USE THIS FIRST):
-${Object.keys(marketData).length > 0 ? JSON.stringify(marketData, null, 2) : 'No database market data available'}
+${Object.keys(marketData).length > 0 ? `
+AVAILABLE DATA SOURCES:
+${Object.keys(marketData).map(key => `- ${key}: ${marketData[key].length} records`).join('\n')}
 
-CRITICAL DATA PRIORITY RULES:
+GOLD PRICES DATA STRUCTURE:
+${marketData.gold_prices ? `
+Gold prices available for different karats and countries:
+${JSON.stringify(marketData.gold_prices.slice(0, 5), null, 2)}
+Key fields: name, karat (21, 22, 24), price_per_gram, currency, country, last_updated, change_percent
+TO ANSWER: Find entries where karat=24 and country matches user's country, use the price_per_gram value
+` : 'No gold prices in database'}
+
+CURRENCY RATES DATA:
+${marketData.currency_rates ? `
+${JSON.stringify(marketData.currency_rates.slice(0, 3), null, 2)}
+Key fields: base_currency, target_currency, exchange_rate, last_updated
+` : 'No currency rates in database'}
+
+EGYPT STOCKS DATA:
+${marketData.egypt_stocks ? `
+Top Egyptian stocks by market cap:
+${JSON.stringify(marketData.egypt_stocks.slice(0, 3), null, 2)}
+Key fields: name, symbol, price, change_percent, market_cap, last_updated
+` : 'No Egypt stocks in database'}
+
+INTERNATIONAL INDICES:
+${marketData.international_indices ? `
+${JSON.stringify(marketData.international_indices.slice(0, 3), null, 2)}
+Key fields: name, value, change_percent, country, last_updated
+` : 'No international indices in database'}
+` : 'No database market data available'}
+
+CRITICAL DATA EXTRACTION RULES:
 1. ALWAYS check database market data FIRST (above section)
-2. Database contains real-time data for: stocks (Egypt/Saudi/UAE), gold prices, currency rates, cryptocurrencies, indices, real estate, bank products
-3. When database has the information, use those EXACT values (prices, change %, last_updated timestamps)
-4. ONLY use web search results if database doesn't have the specific data requested
-5. Database data is verified and timestamped - it's your PRIMARY SOURCE
-6. Example: If user asks "gold price in Egypt", check gold_prices array for Egypt entries and use those exact values
+2. For GOLD PRICES: Filter by karat (21, 22, 24) and country, use price_per_gram field
+3. For CURRENCY: Find matching base_currency and target_currency pair, use exchange_rate
+4. For STOCKS: Use exact price, change_percent, and last_updated from database
+5. For INDICES: Use exact value and change_percent from database
+6. When database has the data, cite the last_updated timestamp to show freshness
+7. Format answer professionally: "As of [date], 24-karat gold in Egypt is [price] EGP per gram"
+8. ONLY use web search if database completely lacks the requested information
 
 CRITICAL GUIDELINES:
-- Use ONLY the actual user data provided below - no calculations, no modifications
-- NEVER make up or hallucinate companies, stocks, prices, or portfolio holdings
-- If portfolio analysis is requested, analyze ONLY the real assets with the EXACT values provided
-- DO NOT recalculate any values - use the provided current_value, gain_loss, and percentages as-is
-- Be concise and practical
-- Use specific numbers when available from the data
-- Include currency (${userCurrency}) in financial figures
-- Consider ${userCountry} market conditions
-- Provide actionable advice based on the actual portfolio composition
-
-WEB SEARCH INTEGRATION (FALLBACK - USE ONLY IF DATABASE LACKS DATA):
-- Use current, real-time data from web search results ONLY when database doesn't have it
-- NEVER use generic, cached, or outdated market information
-- VERIFY data freshness - only use information dated within the last 24-48 hours
-- If search results show conflicting data, mention the range or most recent figure
-- MANDATORY: Cross-reference multiple search results for accuracy
-- State clearly if data is unavailable rather than providing generic estimates`;
+- Use ONLY the actual data provided - no calculations, no modifications
+- NEVER make up prices or data
+- Extract exact values from database arrays above
+- Include last_updated timestamp when available to show data freshness
+- Be concise and direct
+- Include currency in all financial figures
+- If data is missing from database AND web search, clearly state "Data not currently available"`;
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
