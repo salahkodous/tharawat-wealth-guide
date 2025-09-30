@@ -242,8 +242,9 @@ async function fetchMarketData(classification: any, userCountry: string) {
       }
     }
 
-    // Fetch ETFs
-    if (context.includes('etf') || context.includes('fund') || context.includes('egx')) {
+    // Fetch ETFs - check case-insensitively
+    const contextLower = context.map((c: string) => c.toLowerCase());
+    if (contextLower.some((c: string) => c.includes('etf') || c.includes('fund') || c.includes('egx'))) {
       const { data: etfs } = await supabase
         .from('etfs')
         .select('*')
@@ -598,8 +599,8 @@ async function generateResponse(classification: any, userData: any, toolResults:
       });
     }
     
-    // ETFs - if query mentions etf
-    if ((lowerQuery.includes('etf') || lowerQuery.includes('fund')) && data.etfs) {
+    // ETFs - if query mentions etf/fund/egx
+    if ((lowerQuery.includes('etf') || lowerQuery.includes('fund') || lowerQuery.includes('egx')) && data.etfs) {
       summary += `\n🔸 ETFs:\n`;
       data.etfs.slice(0, 3).forEach((e: any) => {
         summary += `- ${e.name} (${e.symbol}): ${e.price}, NAV: ${e.nav}, ${e.change_percent >= 0 ? '+' : ''}${e.change_percent}%\n`;
