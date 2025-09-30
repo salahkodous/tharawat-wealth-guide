@@ -521,223 +521,112 @@ async function generateResponse(classification: any, userData: any, toolResults:
   const userCountry = userData.personal_finances?.country || userData.user_country || 'Egypt';
   const userCurrency = userData.personal_finances?.currency || 'EGP';
   
+  // Helper function to build compact market data summary based on query
+  const buildMarketDataSummary = (query: string, data: any) => {
+    const lowerQuery = query.toLowerCase();
+    let summary = '';
+    
+    // Gold prices - only if query mentions gold
+    if ((lowerQuery.includes('gold') || lowerQuery.includes('ذهب')) && data.gold_prices) {
+      const goldData = data.gold_prices.filter((g: any) => 
+        g.country.toLowerCase().includes(userCountry.toLowerCase())
+      );
+      summary += `\n🔸 GOLD PRICES (${userCountry}):\n`;
+      goldData.slice(0, 3).forEach((g: any) => {
+        summary += `- ${g.karat}K: ${g.price_per_gram} ${g.currency}/gram (${g.last_updated})\n`;
+      });
+    }
+    
+    // Currency rates - only if query mentions currency/exchange/forex
+    if ((lowerQuery.includes('currency') || lowerQuery.includes('exchange') || lowerQuery.includes('usd') || lowerQuery.includes('eur') || lowerQuery.includes('عملة')) && data.currency_rates) {
+      summary += `\n🔸 CURRENCY RATES:\n`;
+      data.currency_rates.slice(0, 5).forEach((r: any) => {
+        summary += `- ${r.base_currency}/${r.target_currency}: ${r.exchange_rate} (${r.last_updated?.split('T')[0]})\n`;
+      });
+    }
+    
+    // Egypt stocks - if query mentions stock/egx/egyptian company
+    if ((lowerQuery.includes('stock') || lowerQuery.includes('egx') || lowerQuery.includes('سهم')) && data.egypt_stocks) {
+      summary += `\n🔸 EGYPT STOCKS (Top 5):\n`;
+      data.egypt_stocks.slice(0, 5).forEach((s: any) => {
+        summary += `- ${s.name} (${s.symbol}): ${s.price} ${s.currency}, ${s.change_percent >= 0 ? '+' : ''}${s.change_percent}%\n`;
+      });
+    }
+    
+    // Saudi stocks - if query mentions saudi/tadawul
+    if ((lowerQuery.includes('saudi') || lowerQuery.includes('tadawul') || lowerQuery.includes('سعودي')) && data.saudi_stocks) {
+      summary += `\n🔸 SAUDI STOCKS (Top 3):\n`;
+      data.saudi_stocks.slice(0, 3).forEach((s: any) => {
+        summary += `- ${s.name} (${s.symbol}): ${s.price} SAR, ${s.change_percent >= 0 ? '+' : ''}${s.change_percent}%\n`;
+      });
+    }
+    
+    // UAE stocks - if query mentions uae/dubai/abu dhabi
+    if ((lowerQuery.includes('uae') || lowerQuery.includes('dubai') || lowerQuery.includes('abu dhabi') || lowerQuery.includes('إمارات')) && data.uae_stocks) {
+      summary += `\n🔸 UAE STOCKS (Top 3):\n`;
+      data.uae_stocks.slice(0, 3).forEach((s: any) => {
+        summary += `- ${s.name} (${s.symbol}): ${s.price} AED, ${s.change_percent >= 0 ? '+' : ''}${s.change_percent}%\n`;
+      });
+    }
+    
+    // Crypto - if query mentions crypto/bitcoin/ethereum
+    if ((lowerQuery.includes('crypto') || lowerQuery.includes('bitcoin') || lowerQuery.includes('btc') || lowerQuery.includes('eth') || lowerQuery.includes('عملة رقمية')) && data.cryptocurrencies) {
+      summary += `\n🔸 CRYPTOCURRENCIES (Top 5):\n`;
+      data.cryptocurrencies.slice(0, 5).forEach((c: any) => {
+        summary += `- ${c.name} (${c.symbol}): $${c.price_usd} (${c.price_egp} EGP), ${c.change_percentage_24h >= 0 ? '+' : ''}${c.change_percentage_24h}%\n`;
+      });
+    }
+    
+    // Indices - if query mentions index/s&p/nasdaq/dow
+    if ((lowerQuery.includes('index') || lowerQuery.includes('indices') || lowerQuery.includes('s&p') || lowerQuery.includes('nasdaq') || lowerQuery.includes('مؤشر')) && data.international_indices) {
+      summary += `\n🔸 MARKET INDICES (Top 5):\n`;
+      data.international_indices.slice(0, 5).forEach((i: any) => {
+        summary += `- ${i.name} (${i.country}): ${i.value} pts, ${i.change_percent >= 0 ? '+' : ''}${i.change_percent}%\n`;
+      });
+    }
+    
+    // ETFs - if query mentions etf
+    if ((lowerQuery.includes('etf') || lowerQuery.includes('fund')) && data.etfs) {
+      summary += `\n🔸 ETFs:\n`;
+      data.etfs.slice(0, 3).forEach((e: any) => {
+        summary += `- ${e.name} (${e.symbol}): ${e.price}, NAV: ${e.nav}, ${e.change_percent >= 0 ? '+' : ''}${e.change_percent}%\n`;
+      });
+    }
+    
+    // Real estate - if query mentions real estate/property
+    if ((lowerQuery.includes('real estate') || lowerQuery.includes('property') || lowerQuery.includes('عقار')) && data.real_estate) {
+      summary += `\n🔸 REAL ESTATE (${userCountry}):\n`;
+      data.real_estate.slice(0, 3).forEach((r: any) => {
+        summary += `- ${r.property_type} in ${r.area_name}, ${r.city}: ${r.price_per_sqm} ${r.currency}/sqm\n`;
+      });
+    }
+    
+    // Bank products - if query mentions bank/savings/deposit
+    if ((lowerQuery.includes('bank') || lowerQuery.includes('savings') || lowerQuery.includes('deposit') || lowerQuery.includes('بنك')) && data.bank_products) {
+      summary += `\n🔸 BANK PRODUCTS:\n`;
+      data.bank_products.slice(0, 3).forEach((b: any) => {
+        summary += `- ${b.bank_name} ${b.product_name}: ${b.interest_rate}% interest, min: ${b.minimum_amount} ${b.currency}\n`;
+      });
+    }
+    
+    return summary;
+  };
+
+  const marketDataSummary = buildMarketDataSummary(userData.originalMessage, marketData);
+  
   let systemPrompt = `You are an expert financial advisor assistant with deep knowledge of ${userCountry} markets and ${userCurrency} currency. Provide helpful, accurate financial guidance.
 
-Current context:
-- User location: ${userCountry}
-- User currency: ${userCurrency}
-- Query type: ${classification.type}
-- Response length: ${classification.responseType}
+Context: ${userCountry} | ${userCurrency} | Query: ${classification.type}
 
-DATABASE MARKET DATA (PRIORITY #1 - USE THIS FIRST):
-${Object.keys(marketData).length > 0 ? `
-AVAILABLE DATA SOURCES:
-${Object.keys(marketData).map(key => `- ${key}: ${marketData[key].length} records`).join('\n')}
+DATABASE MARKET DATA:${marketDataSummary || '\nNo relevant market data available for this query.'}
 
-═══════════════════════════════════════════════════════════════
-GOLD PRICES DATA:
-${marketData.gold_prices ? `
-ALL AVAILABLE GOLD PRICES IN DATABASE:
-${JSON.stringify(marketData.gold_prices, null, 2)}
-
-🔸 CRITICAL GOLD PRICE EXTRACTION INSTRUCTIONS:
-- User wants gold price for: ${userCountry}
-- User's currency: ${userCurrency}
-- Available countries: ${[...new Set(marketData.gold_prices.map((g: any) => g.country))].join(', ')}
-- Available karats: ${[...new Set(marketData.gold_prices.map((g: any) => g.karat))].join(', ')}
-
-STEP-BY-STEP EXTRACTION:
-1. Filter by country = "${userCountry}" (case-insensitive)
-2. Filter by karat (24, 22, 21, or as requested)
-3. Extract: price_per_gram, currency, last_updated
-4. Format: "As of [last_updated], [karat]-karat gold in ${userCountry} is [price_per_gram] [currency] per gram"
-` : 'No gold prices in database'}
-
-═══════════════════════════════════════════════════════════════
-CURRENCY RATES DATA:
-${marketData.currency_rates ? `
-ALL AVAILABLE CURRENCY RATES:
-${JSON.stringify(marketData.currency_rates, null, 2)}
-
-🔸 CRITICAL CURRENCY RATE EXTRACTION INSTRUCTIONS:
-- User's base currency: ${userCurrency}
-- Available pairs: ${marketData.currency_rates.map((r: any) => `${r.base_currency}/${r.target_currency}`).join(', ')}
-
-STEP-BY-STEP EXTRACTION:
-1. Find entry where base_currency matches user's query (e.g., "USD")
-2. Match target_currency (e.g., "EGP")
-3. Extract: exchange_rate, last_updated, bid_rate, ask_rate
-4. Format: "As of [last_updated], 1 [base_currency] = [exchange_rate] [target_currency]"
-5. Include high_24h, low_24h if available
-` : 'No currency rates in database'}
-
-═══════════════════════════════════════════════════════════════
-STOCKS DATA:
-${marketData.egypt_stocks ? `
-EGYPT STOCKS (Top by market cap):
-${JSON.stringify(marketData.egypt_stocks.slice(0, 5), null, 2)}
-
-🔸 CRITICAL EGYPT STOCK EXTRACTION INSTRUCTIONS:
-- Available stocks: ${marketData.egypt_stocks.length} stocks
-- Key fields: name, symbol, price, change_percent, volume, market_cap, currency, last_updated
-
-STEP-BY-STEP EXTRACTION:
-1. Match stock by symbol or name (case-insensitive)
-2. Extract: price, change_percent, volume, market_cap, currency
-3. Format: "[name] ([symbol]) is trading at [price] [currency], [change_percent >= 0 ? 'up' : 'down'] [change_percent]% as of [last_updated]"
-` : 'No Egypt stocks in database'}
-
-${marketData.saudi_stocks ? `
-SAUDI STOCKS (Top by market cap):
-${JSON.stringify(marketData.saudi_stocks.slice(0, 5), null, 2)}
-
-🔸 CRITICAL SAUDI STOCK EXTRACTION INSTRUCTIONS:
-- Exchange: TADAWUL
-- Currency: SAR
-- Same extraction rules as Egypt stocks
-` : ''}
-
-${marketData.uae_stocks ? `
-UAE STOCKS (Top by market cap):
-${JSON.stringify(marketData.uae_stocks.slice(0, 5), null, 2)}
-
-🔸 CRITICAL UAE STOCK EXTRACTION INSTRUCTIONS:
-- Exchange: ADX/DFM
-- Currency: AED
-- Same extraction rules as Egypt stocks
-` : ''}
-
-═══════════════════════════════════════════════════════════════
-CRYPTOCURRENCIES DATA:
-${marketData.cryptocurrencies ? `
-TOP CRYPTOCURRENCIES:
-${JSON.stringify(marketData.cryptocurrencies.slice(0, 5), null, 2)}
-
-🔸 CRITICAL CRYPTO EXTRACTION INSTRUCTIONS:
-- Available cryptos: ${marketData.cryptocurrencies.length} cryptocurrencies
-- Key fields: name, symbol, price_usd, price_egp, change_percentage_24h, market_cap, volume_24h
-
-STEP-BY-STEP EXTRACTION:
-1. Match crypto by symbol (BTC, ETH) or name (Bitcoin, Ethereum)
-2. Use price_usd for international, price_egp for Egypt
-3. Extract: price, change_percentage_24h, market_cap, volume_24h, rank
-4. Format: "[name] ([symbol]) is trading at $[price_usd] ([price_egp] EGP), [change_percentage_24h >= 0 ? 'up' : 'down'] [change_percentage_24h]% as of [last_updated]"
-` : 'No cryptocurrencies in database'}
-
-═══════════════════════════════════════════════════════════════
-INTERNATIONAL INDICES DATA:
-${marketData.international_indices ? `
-GLOBAL MARKET INDICES:
-${JSON.stringify(marketData.international_indices.slice(0, 5), null, 2)}
-
-🔸 CRITICAL INDICES EXTRACTION INSTRUCTIONS:
-- Available indices: ${marketData.international_indices.length} indices
-- Key fields: name, symbol, value, change_percent, country, region
-
-STEP-BY-STEP EXTRACTION:
-1. Match index by name (S&P 500, NASDAQ) or symbol
-2. Extract: value, change, change_percent, country, region
-3. Format: "[name] ([symbol]) is at [value] points, [change_percent >= 0 ? 'up' : 'down'] [change_percent]% as of [last_updated]"
-` : 'No international indices in database'}
-
-═══════════════════════════════════════════════════════════════
-BONDS DATA:
-${marketData.bonds ? `
-AVAILABLE BONDS:
-${JSON.stringify(marketData.bonds.slice(0, 3), null, 2)}
-
-🔸 CRITICAL BOND EXTRACTION INSTRUCTIONS:
-- Key fields: name, symbol, price, yield, coupon_rate, maturity, rating, currency
-
-STEP-BY-STEP EXTRACTION:
-1. Match bond by name or symbol
-2. Extract: price, yield, coupon_rate, maturity, rating
-3. Format: "[name] bond is priced at [price] [currency] with a [yield]% yield, rated [rating]"
-` : 'No bonds in database'}
-
-═══════════════════════════════════════════════════════════════
-ETFs DATA:
-${marketData.etfs ? `
-AVAILABLE ETFs:
-${JSON.stringify(marketData.etfs.slice(0, 3), null, 2)}
-
-🔸 CRITICAL ETF EXTRACTION INSTRUCTIONS:
-- Key fields: name, symbol, price, nav, change_percent, expense_ratio, dividend_yield
-
-STEP-BY-STEP EXTRACTION:
-1. Match ETF by symbol or name
-2. Extract: price, nav, change_percent, volume, market_cap
-3. Format: "[name] ([symbol]) ETF is at [price], [change_percent >= 0 ? 'up' : 'down'] [change_percent]%, NAV: [nav]"
-` : 'No ETFs in database'}
-
-═══════════════════════════════════════════════════════════════
-REAL ESTATE DATA:
-${marketData.real_estate ? `
-REAL ESTATE PRICES:
-${JSON.stringify(marketData.real_estate.slice(0, 3), null, 2)}
-
-🔸 CRITICAL REAL ESTATE EXTRACTION INSTRUCTIONS:
-- User's country: ${userCountry}
-- Key fields: area_name, city, price_per_sqm, property_type, avg_total_price, currency
-
-STEP-BY-STEP EXTRACTION:
-1. Match by area_name, city, or property_type
-2. Extract: price_per_sqm, property_type, currency, monthly_change_percent
-3. Format: "[property_type] in [area_name], [city] is [price_per_sqm] [currency]/sqm, average price [avg_total_price] [currency]"
-` : 'No real estate data in database'}
-
-═══════════════════════════════════════════════════════════════
-BANK PRODUCTS DATA:
-${marketData.bank_products ? `
-AVAILABLE BANK PRODUCTS:
-${JSON.stringify(marketData.bank_products.slice(0, 3), null, 2)}
-
-🔸 CRITICAL BANK PRODUCT EXTRACTION INSTRUCTIONS:
-- Key fields: bank_name, product_name, product_type, interest_rate, minimum_amount, term_months, currency
-
-STEP-BY-STEP EXTRACTION:
-1. Match by bank_name, product_type (savings, cd, checking)
-2. Extract: interest_rate, minimum_amount, term_months, features
-3. Format: "[bank_name] offers [product_name] ([product_type]) at [interest_rate]% interest, minimum [minimum_amount] [currency], term: [term_months] months"
-` : 'No bank products in database'}
-
-═══════════════════════════════════════════════════════════════
-` : 'No database market data available'}
-
-═══════════════════════════════════════════════════════════════
-🔸 CRITICAL DATA EXTRACTION RULES:
-═══════════════════════════════════════════════════════════════
-
-1. ✅ ALWAYS check database market data FIRST (above sections)
-2. ✅ Extract EXACT values from database - NO calculations, NO modifications
-3. ✅ Use the specific currency from each record (EGP, USD, SAR, AED, etc.)
-4. ✅ ALWAYS cite last_updated timestamp to show data freshness
-5. ✅ Format professionally with units and context
-
-ASSET-SPECIFIC RULES:
-• GOLD: Filter by karat + country → use price_per_gram + currency
-• CURRENCY: Match base_currency + target_currency → use exchange_rate
-• STOCKS: Match symbol/name → use price + change_percent + currency
-• CRYPTO: Match symbol → use price_usd/price_egp + change_percentage_24h
-• INDICES: Match name → use value + change_percent
-• BONDS: Match symbol → use price + yield + rating
-• ETFs: Match symbol → use price + nav + change_percent
-• REAL ESTATE: Match area/city → use price_per_sqm + currency
-• BANK PRODUCTS: Match bank/type → use interest_rate + terms
-
-6. ❌ NEVER make up prices or data
-7. ❌ NEVER modify or recalculate database values
-8. ❌ ONLY use web search if database completely lacks the information
-9. ✅ If data missing from both database AND web: state "Data not currently available"
-
-CRITICAL GUIDELINES:
-- Use ONLY the actual data provided - no calculations, no modifications
-- NEVER make up prices or data
-- Extract exact values from database arrays above
-- Include last_updated timestamp when available to show data freshness
-- Be concise and direct
-- Include currency in all financial figures
-- If data is missing from database AND web search, clearly state "Data not currently available"`;
+🔸 EXTRACTION RULES:
+1. Use EXACT values from database - NO calculations or modifications
+2. Always include currency (EGP, USD, SAR, AED, etc.)
+3. Cite date when available (e.g., "As of 2025-09-24...")
+4. Format: "[Asset] is [price] [currency], [+/-]X% [timeframe]"
+5. If data missing: state "Data not currently available"
+6. NEVER make up prices or data`;
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
