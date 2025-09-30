@@ -242,6 +242,19 @@ async function fetchMarketData(classification: any, userCountry: string) {
       }
     }
 
+    // Fetch ETFs
+    if (context.includes('etf') || context.includes('fund') || context.includes('egx')) {
+      const { data: etfs } = await supabase
+        .from('etfs')
+        .select('*')
+        .order('market_cap', { ascending: false })
+        .limit(15);
+      
+      if (etfs && etfs.length > 0) {
+        marketData.etfs = etfs;
+      }
+    }
+
     // Fetch bank products
     if (context.includes('bank') || context.includes('savings')) {
       const { data: bankProducts } = await supabase
