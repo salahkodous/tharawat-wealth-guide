@@ -762,6 +762,7 @@ PERSONAL DATA:
   
   if (data && data.choices && data.choices.length > 0 && data.choices[0].message) {
     finalResponse = data.choices[0].message.content || finalResponse;
+    console.log('Groq returned response:', finalResponse);
   } else {
     console.error('Invalid Groq API response structure:', data);
   }
