@@ -80,8 +80,9 @@ Return ONLY this JSON format:
 
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "24 karat gold price" → {"type":"quick_value","context":["assets"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "USD to EGP rate" → {"type":"quick_value","context":["assets"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "24 karat gold price" → {"type":"quick_value","context":["assets","gold"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "ETF EGX30 price" → {"type":"quick_value","context":["assets","EGX30","etf"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "USD to EGP rate" → {"type":"quick_value","context":["assets","currency"],"priority":"low","responseType":"value","toolsNeeded":[]}
 - "Egyptian stock market news" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
 - "Apple stock information" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
 - "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["portfolio_analysis"]}`
