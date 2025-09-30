@@ -41,8 +41,8 @@ const AIFinancialAgent = () => {
       return <span className="text-base">{cleanContent}</span>;
     }
     
-    // Split into logical sections (by periods, colons, or numbered points)
-    const sections = cleanContent.split(/(?:\d+\.|•|\n\n|:\s)/).filter(section => section.trim());
+    // Split into logical sections - only split on list numbers (1. 2. etc) not decimals (26.06)
+    const sections = cleanContent.split(/(?:\d+\.\s|•|\n\n|:\s)/).filter(section => section.trim());
     
     return sections.map((section, index) => {
       const trimmedSection = section.trim();
