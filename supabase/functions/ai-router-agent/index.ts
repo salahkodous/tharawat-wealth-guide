@@ -554,9 +554,10 @@ async function generateResponse(classification: any, userData: any, toolResults:
         g.country.toLowerCase().includes(userCountry.toLowerCase())
       );
       summary += `\n🔸 GOLD PRICES (${userCountry}):\n`;
-      goldData.slice(0, 3).forEach((g: any) => {
-        summary += `- ${g.karat}K: ${g.price_per_gram} ${g.currency}/gram (${g.last_updated})\n`;
+      goldData.slice(0, 4).forEach((g: any) => {
+        summary += `- ${g.karat}K gold: ${g.price_per_gram} ${g.currency}/gram (updated: ${g.last_updated?.split('T')[0]})\n`;
       });
+      console.log('Gold price summary sent to AI:', summary);
     }
     
     // Currency rates - only if query mentions currency/exchange/forex
@@ -652,7 +653,9 @@ DATABASE MARKET DATA:${marketDataSummary || '\nNo relevant market data available
 4. Format: "[Asset] is [price] [currency], [+/-]X% [timeframe]"
 5. If data missing: state "Data not currently available"
 6. NEVER make up prices or data
-7. For ETFs: Use the "price" field (NOT nav) - extract the COMPLETE number including all digits before and after the decimal point (e.g., "26.06" NOT ".06")`;
+7. For ETFs: Use the "price" field (NOT nav) - extract the COMPLETE number including all digits before and after the decimal point (e.g., "26.06" NOT ".06")
+8. For GOLD: The price_per_gram field contains the full price (e.g., "5070.00" NOT "21.62"). Extract ALL digits as shown in the data.`;
+
 
 
   if (classification.responseType === 'brief') {
