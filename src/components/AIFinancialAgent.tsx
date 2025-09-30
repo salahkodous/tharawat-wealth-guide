@@ -32,12 +32,8 @@ const AIFinancialAgent = () => {
     // Clean up any markdown formatting that might be causing issues
     const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
     
-    // Check if it's a simple greeting or short response
-    if (cleanContent.length < 100 && (
-      cleanContent.toLowerCase().includes('hello') || 
-      cleanContent.toLowerCase().includes('hi') ||
-      cleanContent.toLowerCase().includes('welcome')
-    )) {
+    // For short responses (like price queries), return as-is without splitting
+    if (cleanContent.length < 150) {
       return <span className="text-base">{cleanContent}</span>;
     }
     
