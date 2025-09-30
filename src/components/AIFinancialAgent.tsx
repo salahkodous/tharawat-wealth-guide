@@ -29,48 +29,11 @@ const AIFinancialAgent = () => {
   }, [messages]);
 
   const formatAgentResponse = (content: string) => {
-    // Clean up any markdown formatting that might be causing issues
+    // Clean up any markdown formatting
     const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
     
-    // For short responses (like price queries), return as-is without splitting
-    if (cleanContent.length < 150) {
-      return <span className="text-base">{cleanContent}</span>;
-    }
-    
-    // Split into logical sections - only split on list numbers (1. 2. etc) not decimals (26.06)
-    const sections = cleanContent.split(/(?:\d+\.\s|•|\n\n|:\s)/).filter(section => section.trim());
-    
-    return sections.map((section, index) => {
-      const trimmedSection = section.trim();
-      if (!trimmedSection) return null;
-      
-      const isTitle = index === 0 || trimmedSection.length < 50;
-      const isImportant = trimmedSection.toLowerCase().includes('recommend') || 
-                         trimmedSection.toLowerCase().includes('important') || 
-                         trimmedSection.toLowerCase().includes('alert') ||
-                         trimmedSection.toLowerCase().includes('warning');
-      const hasNumbers = /\$[\d,]+|\d+%|\d+\.\d+/.test(trimmedSection);
-      
-      let className = 'block ';
-      let marginClass = index > 0 ? 'mt-3 ' : '';
-      
-      if (isTitle && index === 0) {
-        className += 'text-lg font-bold text-foreground';
-      } else if (isImportant) {
-        className += 'text-base font-semibold text-primary';
-      } else if (hasNumbers) {
-        className += 'text-base font-medium text-success';
-      } else {
-        className += 'text-sm text-muted-foreground leading-relaxed';
-      }
-      
-      return (
-        <span key={index} className={className + marginClass}>
-          {index > 0 && !isTitle ? '• ' : ''}{trimmedSection}
-          {!trimmedSection.endsWith('.') && !trimmedSection.endsWith('?') && !trimmedSection.endsWith('!') ? '.' : ''}
-        </span>
-      );
-    }).filter(Boolean);
+    // Return all responses as-is with consistent formatting - no splitting
+    return <span className="text-base leading-relaxed">{cleanContent}</span>;
   };
 
   const sendMessage = async () => {
