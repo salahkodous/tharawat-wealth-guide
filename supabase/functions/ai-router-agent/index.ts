@@ -534,56 +534,201 @@ ${Object.keys(marketData).length > 0 ? `
 AVAILABLE DATA SOURCES:
 ${Object.keys(marketData).map(key => `- ${key}: ${marketData[key].length} records`).join('\n')}
 
-GOLD PRICES DATA STRUCTURE:
+═══════════════════════════════════════════════════════════════
+GOLD PRICES DATA:
 ${marketData.gold_prices ? `
 ALL AVAILABLE GOLD PRICES IN DATABASE:
 ${JSON.stringify(marketData.gold_prices, null, 2)}
 
-CRITICAL GOLD PRICE EXTRACTION INSTRUCTIONS:
+🔸 CRITICAL GOLD PRICE EXTRACTION INSTRUCTIONS:
 - User wants gold price for: ${userCountry}
 - User's currency: ${userCurrency}
-- Available countries in database: ${[...new Set(marketData.gold_prices.map((g: any) => g.country))].join(', ')}
+- Available countries: ${[...new Set(marketData.gold_prices.map((g: any) => g.country))].join(', ')}
 - Available karats: ${[...new Set(marketData.gold_prices.map((g: any) => g.karat))].join(', ')}
 
 STEP-BY-STEP EXTRACTION:
-1. Look for entries where country matches "${userCountry}" (case-insensitive, may contain the word)
-2. Filter for karat=24 (or requested karat)
-3. Use the price_per_gram value
-4. Use the currency from that entry
-5. Format: "As of [last_updated], 24-karat gold in ${userCountry} is [price_per_gram] [currency] per gram"
-
-If no exact match for ${userCountry}, check if any entry mentions ${userCountry} in the name or country field.
+1. Filter by country = "${userCountry}" (case-insensitive)
+2. Filter by karat (24, 22, 21, or as requested)
+3. Extract: price_per_gram, currency, last_updated
+4. Format: "As of [last_updated], [karat]-karat gold in ${userCountry} is [price_per_gram] [currency] per gram"
 ` : 'No gold prices in database'}
 
+═══════════════════════════════════════════════════════════════
 CURRENCY RATES DATA:
 ${marketData.currency_rates ? `
-${JSON.stringify(marketData.currency_rates.slice(0, 3), null, 2)}
-Key fields: base_currency, target_currency, exchange_rate, last_updated
+ALL AVAILABLE CURRENCY RATES:
+${JSON.stringify(marketData.currency_rates, null, 2)}
+
+🔸 CRITICAL CURRENCY RATE EXTRACTION INSTRUCTIONS:
+- User's base currency: ${userCurrency}
+- Available pairs: ${marketData.currency_rates.map((r: any) => `${r.base_currency}/${r.target_currency}`).join(', ')}
+
+STEP-BY-STEP EXTRACTION:
+1. Find entry where base_currency matches user's query (e.g., "USD")
+2. Match target_currency (e.g., "EGP")
+3. Extract: exchange_rate, last_updated, bid_rate, ask_rate
+4. Format: "As of [last_updated], 1 [base_currency] = [exchange_rate] [target_currency]"
+5. Include high_24h, low_24h if available
 ` : 'No currency rates in database'}
 
-EGYPT STOCKS DATA:
+═══════════════════════════════════════════════════════════════
+STOCKS DATA:
 ${marketData.egypt_stocks ? `
-Top Egyptian stocks by market cap:
-${JSON.stringify(marketData.egypt_stocks.slice(0, 3), null, 2)}
-Key fields: name, symbol, price, change_percent, market_cap, last_updated
+EGYPT STOCKS (Top by market cap):
+${JSON.stringify(marketData.egypt_stocks.slice(0, 5), null, 2)}
+
+🔸 CRITICAL EGYPT STOCK EXTRACTION INSTRUCTIONS:
+- Available stocks: ${marketData.egypt_stocks.length} stocks
+- Key fields: name, symbol, price, change_percent, volume, market_cap, currency, last_updated
+
+STEP-BY-STEP EXTRACTION:
+1. Match stock by symbol or name (case-insensitive)
+2. Extract: price, change_percent, volume, market_cap, currency
+3. Format: "[name] ([symbol]) is trading at [price] [currency], [change_percent >= 0 ? 'up' : 'down'] [change_percent]% as of [last_updated]"
 ` : 'No Egypt stocks in database'}
 
-INTERNATIONAL INDICES:
+${marketData.saudi_stocks ? `
+SAUDI STOCKS (Top by market cap):
+${JSON.stringify(marketData.saudi_stocks.slice(0, 5), null, 2)}
+
+🔸 CRITICAL SAUDI STOCK EXTRACTION INSTRUCTIONS:
+- Exchange: TADAWUL
+- Currency: SAR
+- Same extraction rules as Egypt stocks
+` : ''}
+
+${marketData.uae_stocks ? `
+UAE STOCKS (Top by market cap):
+${JSON.stringify(marketData.uae_stocks.slice(0, 5), null, 2)}
+
+🔸 CRITICAL UAE STOCK EXTRACTION INSTRUCTIONS:
+- Exchange: ADX/DFM
+- Currency: AED
+- Same extraction rules as Egypt stocks
+` : ''}
+
+═══════════════════════════════════════════════════════════════
+CRYPTOCURRENCIES DATA:
+${marketData.cryptocurrencies ? `
+TOP CRYPTOCURRENCIES:
+${JSON.stringify(marketData.cryptocurrencies.slice(0, 5), null, 2)}
+
+🔸 CRITICAL CRYPTO EXTRACTION INSTRUCTIONS:
+- Available cryptos: ${marketData.cryptocurrencies.length} cryptocurrencies
+- Key fields: name, symbol, price_usd, price_egp, change_percentage_24h, market_cap, volume_24h
+
+STEP-BY-STEP EXTRACTION:
+1. Match crypto by symbol (BTC, ETH) or name (Bitcoin, Ethereum)
+2. Use price_usd for international, price_egp for Egypt
+3. Extract: price, change_percentage_24h, market_cap, volume_24h, rank
+4. Format: "[name] ([symbol]) is trading at $[price_usd] ([price_egp] EGP), [change_percentage_24h >= 0 ? 'up' : 'down'] [change_percentage_24h]% as of [last_updated]"
+` : 'No cryptocurrencies in database'}
+
+═══════════════════════════════════════════════════════════════
+INTERNATIONAL INDICES DATA:
 ${marketData.international_indices ? `
-${JSON.stringify(marketData.international_indices.slice(0, 3), null, 2)}
-Key fields: name, value, change_percent, country, last_updated
+GLOBAL MARKET INDICES:
+${JSON.stringify(marketData.international_indices.slice(0, 5), null, 2)}
+
+🔸 CRITICAL INDICES EXTRACTION INSTRUCTIONS:
+- Available indices: ${marketData.international_indices.length} indices
+- Key fields: name, symbol, value, change_percent, country, region
+
+STEP-BY-STEP EXTRACTION:
+1. Match index by name (S&P 500, NASDAQ) or symbol
+2. Extract: value, change, change_percent, country, region
+3. Format: "[name] ([symbol]) is at [value] points, [change_percent >= 0 ? 'up' : 'down'] [change_percent]% as of [last_updated]"
 ` : 'No international indices in database'}
+
+═══════════════════════════════════════════════════════════════
+BONDS DATA:
+${marketData.bonds ? `
+AVAILABLE BONDS:
+${JSON.stringify(marketData.bonds.slice(0, 3), null, 2)}
+
+🔸 CRITICAL BOND EXTRACTION INSTRUCTIONS:
+- Key fields: name, symbol, price, yield, coupon_rate, maturity, rating, currency
+
+STEP-BY-STEP EXTRACTION:
+1. Match bond by name or symbol
+2. Extract: price, yield, coupon_rate, maturity, rating
+3. Format: "[name] bond is priced at [price] [currency] with a [yield]% yield, rated [rating]"
+` : 'No bonds in database'}
+
+═══════════════════════════════════════════════════════════════
+ETFs DATA:
+${marketData.etfs ? `
+AVAILABLE ETFs:
+${JSON.stringify(marketData.etfs.slice(0, 3), null, 2)}
+
+🔸 CRITICAL ETF EXTRACTION INSTRUCTIONS:
+- Key fields: name, symbol, price, nav, change_percent, expense_ratio, dividend_yield
+
+STEP-BY-STEP EXTRACTION:
+1. Match ETF by symbol or name
+2. Extract: price, nav, change_percent, volume, market_cap
+3. Format: "[name] ([symbol]) ETF is at [price], [change_percent >= 0 ? 'up' : 'down'] [change_percent]%, NAV: [nav]"
+` : 'No ETFs in database'}
+
+═══════════════════════════════════════════════════════════════
+REAL ESTATE DATA:
+${marketData.real_estate ? `
+REAL ESTATE PRICES:
+${JSON.stringify(marketData.real_estate.slice(0, 3), null, 2)}
+
+🔸 CRITICAL REAL ESTATE EXTRACTION INSTRUCTIONS:
+- User's country: ${userCountry}
+- Key fields: area_name, city, price_per_sqm, property_type, avg_total_price, currency
+
+STEP-BY-STEP EXTRACTION:
+1. Match by area_name, city, or property_type
+2. Extract: price_per_sqm, property_type, currency, monthly_change_percent
+3. Format: "[property_type] in [area_name], [city] is [price_per_sqm] [currency]/sqm, average price [avg_total_price] [currency]"
+` : 'No real estate data in database'}
+
+═══════════════════════════════════════════════════════════════
+BANK PRODUCTS DATA:
+${marketData.bank_products ? `
+AVAILABLE BANK PRODUCTS:
+${JSON.stringify(marketData.bank_products.slice(0, 3), null, 2)}
+
+🔸 CRITICAL BANK PRODUCT EXTRACTION INSTRUCTIONS:
+- Key fields: bank_name, product_name, product_type, interest_rate, minimum_amount, term_months, currency
+
+STEP-BY-STEP EXTRACTION:
+1. Match by bank_name, product_type (savings, cd, checking)
+2. Extract: interest_rate, minimum_amount, term_months, features
+3. Format: "[bank_name] offers [product_name] ([product_type]) at [interest_rate]% interest, minimum [minimum_amount] [currency], term: [term_months] months"
+` : 'No bank products in database'}
+
+═══════════════════════════════════════════════════════════════
 ` : 'No database market data available'}
 
-CRITICAL DATA EXTRACTION RULES:
-1. ALWAYS check database market data FIRST (above section)
-2. For GOLD PRICES: Filter by karat (21, 22, 24) and country, use price_per_gram field
-3. For CURRENCY: Find matching base_currency and target_currency pair, use exchange_rate
-4. For STOCKS: Use exact price, change_percent, and last_updated from database
-5. For INDICES: Use exact value and change_percent from database
-6. When database has the data, cite the last_updated timestamp to show freshness
-7. Format answer professionally: "As of [date], 24-karat gold in Egypt is [price] EGP per gram"
-8. ONLY use web search if database completely lacks the requested information
+═══════════════════════════════════════════════════════════════
+🔸 CRITICAL DATA EXTRACTION RULES:
+═══════════════════════════════════════════════════════════════
+
+1. ✅ ALWAYS check database market data FIRST (above sections)
+2. ✅ Extract EXACT values from database - NO calculations, NO modifications
+3. ✅ Use the specific currency from each record (EGP, USD, SAR, AED, etc.)
+4. ✅ ALWAYS cite last_updated timestamp to show data freshness
+5. ✅ Format professionally with units and context
+
+ASSET-SPECIFIC RULES:
+• GOLD: Filter by karat + country → use price_per_gram + currency
+• CURRENCY: Match base_currency + target_currency → use exchange_rate
+• STOCKS: Match symbol/name → use price + change_percent + currency
+• CRYPTO: Match symbol → use price_usd/price_egp + change_percentage_24h
+• INDICES: Match name → use value + change_percent
+• BONDS: Match symbol → use price + yield + rating
+• ETFs: Match symbol → use price + nav + change_percent
+• REAL ESTATE: Match area/city → use price_per_sqm + currency
+• BANK PRODUCTS: Match bank/type → use interest_rate + terms
+
+6. ❌ NEVER make up prices or data
+7. ❌ NEVER modify or recalculate database values
+8. ❌ ONLY use web search if database completely lacks the information
+9. ✅ If data missing from both database AND web: state "Data not currently available"
 
 CRITICAL GUIDELINES:
 - Use ONLY the actual data provided - no calculations, no modifications
