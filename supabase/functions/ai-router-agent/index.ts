@@ -603,7 +603,10 @@ async function generateResponse(classification: any, userData: any, toolResults:
     if ((lowerQuery.includes('etf') || lowerQuery.includes('fund') || lowerQuery.includes('egx')) && data.etfs) {
       summary += `\n🔸 ETFs:\n`;
       data.etfs.slice(0, 3).forEach((e: any) => {
-        summary += `- ${e.name} (${e.symbol}): ${e.price}, NAV: ${e.nav}, ${e.change_percent >= 0 ? '+' : ''}${e.change_percent}%\n`;
+        const priceStr = Number(e.price).toFixed(2);
+        const navStr = Number(e.nav).toFixed(2);
+        const changeStr = e.change_percent >= 0 ? `+${Number(e.change_percent).toFixed(2)}` : Number(e.change_percent).toFixed(2);
+        summary += `- ${e.name} (${e.symbol}): Price=${priceStr} EGP, NAV=${navStr}, Change=${changeStr}%\n`;
       });
     }
     
@@ -640,7 +643,9 @@ DATABASE MARKET DATA:${marketDataSummary || '\nNo relevant market data available
 3. Cite date when available (e.g., "As of 2025-09-24...")
 4. Format: "[Asset] is [price] [currency], [+/-]X% [timeframe]"
 5. If data missing: state "Data not currently available"
-6. NEVER make up prices or data`;
+6. NEVER make up prices or data
+7. For ETFs: Use the "price" field (NOT nav) - extract the COMPLETE number including all digits before and after the decimal point (e.g., "26.06" NOT ".06")`;
+
 
   if (classification.responseType === 'brief') {
     systemPrompt += '\n\nKeep response under 100 words.';
