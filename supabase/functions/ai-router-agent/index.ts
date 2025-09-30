@@ -244,7 +244,9 @@ async function fetchMarketData(classification: any, userCountry: string) {
 
     // Fetch ETFs - check case-insensitively
     const contextLower = context.map((c: string) => c.toLowerCase());
+    console.log('Checking ETF fetch condition. Context:', context, 'Context lower:', contextLower);
     if (contextLower.some((c: string) => c.includes('etf') || c.includes('fund') || c.includes('egx'))) {
+      console.log('Fetching ETFs...');
       const { data: etfs } = await supabase
         .from('etfs')
         .select('*')
@@ -252,8 +254,13 @@ async function fetchMarketData(classification: any, userCountry: string) {
         .limit(15);
       
       if (etfs && etfs.length > 0) {
+        console.log(`Fetched ${etfs.length} ETFs`);
         marketData.etfs = etfs;
+      } else {
+        console.log('No ETFs found in database');
       }
+    } else {
+      console.log('ETF fetch condition not met');
     }
 
     // Fetch bank products
