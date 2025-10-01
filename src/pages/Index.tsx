@@ -179,8 +179,30 @@ const Index = () => {
                   </Card>
                 ))}
               </div>
+              </div>
+
+              {/* CTA Section */}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gradient-electric">
+                    Start for Free
+                  </h3>
+                  <p className="text-lg text-muted-foreground">
+                    Take all features for free and transform your financial future today
+                  </p>
+                </div>
+
+                <Button 
+                  size="lg" 
+                  className="gradient-electric text-primary-foreground electric-pulse px-8 py-4 text-lg"
+                  onClick={() => navigate('/auth')}
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Sign Up / Login
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
             </div>
-          </div>
         </section>
 
         {/* Features Section */}
