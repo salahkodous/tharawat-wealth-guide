@@ -390,28 +390,7 @@ const Settings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="currency">{t('currency')}</Label>
-                    <Select value={preferences.currency} onValueChange={(value) => 
-                      updatePreferences({ ...preferences, currency: value })
-                    }>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">{t('usdDollar')}</SelectItem>
-                        <SelectItem value="AED">{t('aedDirham')}</SelectItem>
-                        <SelectItem value="SAR">{t('sarRiyal')}</SelectItem>
-                        <SelectItem value="QAR">{t('qarRiyal')}</SelectItem>
-                        <SelectItem value="KWD">{t('kwdDinar')}</SelectItem>
-                        <SelectItem value="BHD">{t('bhdDinar')}</SelectItem>
-                        <SelectItem value="OMR">{t('omrRial')}</SelectItem>
-                        <SelectItem value="JOD">{t('jodDinar')}</SelectItem>
-                        <SelectItem value="EGP">{t('egpPound')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <Label htmlFor="language">{t('language')}</Label>
                     <Select value={preferences.language} onValueChange={(value) => 
