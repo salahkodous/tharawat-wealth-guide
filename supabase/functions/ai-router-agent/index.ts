@@ -561,11 +561,14 @@ async function generateResponse(classification: any, userData: any, toolResults:
     }
     
     // Currency rates - only if query mentions currency/exchange/forex
-    if ((lowerQuery.includes('currency') || lowerQuery.includes('exchange') || lowerQuery.includes('usd') || lowerQuery.includes('eur') || lowerQuery.includes('عملة')) && data.currency_rates) {
+    if ((lowerQuery.includes('currency') || lowerQuery.includes('exchange') || lowerQuery.includes('usd') || lowerQuery.includes('eur') || lowerQuery.includes('عملة') || lowerQuery.includes('dollar') || lowerQuery.includes('دولار')) && data.currency_rates) {
       summary += `\n🔸 CURRENCY RATES:\n`;
-      data.currency_rates.slice(0, 5).forEach((r: any) => {
-        summary += `- ${r.base_currency}/${r.target_currency}: ${r.exchange_rate} (${r.last_updated?.split('T')[0]})\n`;
+      const currencyData = data.currency_rates || [];
+      console.log('Currency rates data fetched:', currencyData.length, 'rates');
+      currencyData.slice(0, 10).forEach((r: any) => {
+        summary += `- ${r.base_currency}/${r.target_currency}: ${r.exchange_rate} (updated: ${r.last_updated?.split('T')[0]})\n`;
       });
+      console.log('Currency summary sent to AI:', summary.substring(summary.indexOf('CURRENCY RATES')));
     }
     
     // Egypt stocks - if query mentions stock/egx/egyptian company
