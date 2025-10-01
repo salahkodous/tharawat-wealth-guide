@@ -15,6 +15,7 @@ import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
 import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
+import VerifyEmail from "./pages/VerifyEmail";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,7 @@ const AppRoutes = () => {
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/" element={<Index />} />
       <Route path="/about" element={<About />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />

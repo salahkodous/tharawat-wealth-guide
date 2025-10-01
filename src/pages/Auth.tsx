@@ -60,7 +60,8 @@ const Auth = () => {
     if (error) {
       setError(error.message);
     } else {
-      setError('Please check your email to confirm your account.');
+      // Redirect to verification page
+      navigate('/verify-email', { state: { email: formData.email } });
     }
     setAuthLoading(false);
   };
