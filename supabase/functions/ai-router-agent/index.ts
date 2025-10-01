@@ -563,8 +563,24 @@ async function generateResponse(classification: any, userData: any, toolResults:
     // Currency rates - only if query mentions currency/exchange/forex
     if ((lowerQuery.includes('currency') || lowerQuery.includes('exchange') || lowerQuery.includes('usd') || lowerQuery.includes('eur') || lowerQuery.includes('عملة') || lowerQuery.includes('dollar') || lowerQuery.includes('دولار')) && data.currency_rates) {
       summary += `\n🔸 CURRENCY RATES:\n`;
-      const currencyData = data.currency_rates || [];
+      let currencyData = data.currency_rates || [];
       console.log('Currency rates data fetched:', currencyData.length, 'rates');
+      
+      // Filter for relevant currency pairs based on query
+      if (lowerQuery.includes('dollar') || lowerQuery.includes('دولار') || lowerQuery.includes('usd')) {
+        // Prioritize USD pairs, especially USD/EGP for Egyptian users
+        currencyData = currencyData.filter((r: any) => 
+          r.base_currency === 'USD' || r.target_currency === 'USD'
+        ).sort((a: any, b: any) => {
+          // Put USD/EGP first
+          if (a.base_currency === 'USD' && a.target_currency === 'EGP') return -1;
+          if (b.base_currency === 'USD' && b.target_currency === 'EGP') return 1;
+          if (a.base_currency === 'EGP' && a.target_currency === 'USD') return -1;
+          if (b.base_currency === 'EGP' && b.target_currency === 'USD') return 1;
+          return 0;
+        });
+      }
+      
       currencyData.slice(0, 10).forEach((r: any) => {
         summary += `- ${r.base_currency}/${r.target_currency}: ${r.exchange_rate} (updated: ${r.last_updated?.split('T')[0]})\n`;
       });
