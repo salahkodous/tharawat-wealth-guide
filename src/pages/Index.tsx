@@ -121,12 +121,6 @@ const Index = () => {
                 </Button>
                 <Button variant="ghost" className="hover:text-primary">Features</Button>
                 <Button variant="ghost" className="hover:text-primary">Pricing</Button>
-                <Button 
-                  className="gradient-electric text-primary-foreground"
-                  onClick={() => navigate('/auth')}
-                >
-                  Get Started Free
-                </Button>
               </nav>
             </div>
           </div>
@@ -185,32 +179,6 @@ const Index = () => {
                   </Card>
                 ))}
               </div>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  className="gradient-electric text-primary-foreground electric-pulse px-8 py-4 text-lg"
-                  onClick={() => navigate('/auth')}
-                >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Start Free Trial
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-primary/30 hover:border-primary px-8 py-4 text-lg"
-                  onClick={() => setActiveTab('demo')}
-                >
-                  <BarChart3 className="w-5 h-5 mr-2" />
-                  View Demo
-                </Button>
-              </div>
-
-              <p className="text-sm text-muted-foreground">
-                ✨ No credit card required • 30-day free trial • Cancel anytime
-              </p>
             </div>
           </div>
         </section>
@@ -275,15 +243,6 @@ const Index = () => {
                     </div>
                   ))}
                 </div>
-
-                <Button 
-                  size="lg" 
-                  className="gradient-electric text-primary-foreground"
-                  onClick={() => navigate('/auth')}
-                >
-                  Start Your Free Trial
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
               </div>
 
               <div className="space-y-6">
@@ -359,61 +318,12 @@ const Index = () => {
                     <div className="text-center text-muted-foreground py-12">
                       <Calculator className="w-16 h-16 mx-auto mb-4 text-primary" />
                       <p>Track all your finances in one place</p>
-                      <Button 
-                        className="mt-4"
-                        onClick={() => navigate('/auth')}
-                      >
-                        Sign Up to Access Full Tracker
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
             </Tabs>
-
-            <div className="text-center mt-12">
-              <Button 
-                size="lg" 
-                className="gradient-electric text-primary-foreground px-8"
-                onClick={() => navigate('/auth')}
-              >
-                Get Full Access Now
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-primary/10 to-secondary/10">
-          <div className="container mx-auto px-4">
-            <div className="text-center space-y-8 max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold">
-                Ready to Transform Your{' '}
-                <span className="text-gradient-electric">Financial Future</span>?
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                Be among the first Egyptians to experience unified, AI-powered financial management. 
-                Track EGX, gold, real estate, and all your assets in one place with personalized Arabic guidance.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  className="gradient-electric text-primary-foreground px-8 py-4 text-lg"
-                  onClick={() => navigate('/auth')}
-                >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Start Free Trial
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </div>
-
-              <p className="text-sm text-muted-foreground">
-                🔒 Bank-level security • 🌟 30-day free trial • 🚫 No credit card required
-              </p>
-            </div>
           </div>
         </section>
 
