@@ -11,8 +11,6 @@ interface CountryInfo {
 
 const countryData: CountryInfo[] = [
   { code: 'EG', name: 'Egypt', currency: 'EGP', flag: '🇪🇬' },
-  { code: 'SA', name: 'Saudi Arabia', currency: 'SAR', flag: '🇸🇦' },
-  { code: 'AE', name: 'United Arab Emirates', currency: 'AED', flag: '🇦🇪' },
 ];
 
 export const useUserCountry = () => {

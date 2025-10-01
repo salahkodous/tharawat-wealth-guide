@@ -16,45 +16,11 @@ interface CurrencySymbolProps {
 }
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
-  AED: 'د.إ',
-  SAR: 'ر.س',
-  QAR: 'ر.ق',
-  KWD: 'د.ك',
-  BHD: 'د.ب',
-  OMR: 'ر.ع',
-  JOD: 'د.أ',
-  LBP: 'ل.ل',
   EGP: 'ج.م',
-  MAD: 'د.م',
-  TND: 'د.ت',
-  DZD: 'د.ج',
-  IQD: 'د.ع',
-  USD: '$',
-  GBP: '£',
-  EUR: '€',
-  INR: '₹',
-  CNY: '¥',
 };
 
 const CURRENCY_NAMES: Record<string, string> = {
-  AED: 'UAE Dirham',
-  SAR: 'Saudi Riyal',
-  QAR: 'Qatari Riyal',
-  KWD: 'Kuwaiti Dinar',
-  BHD: 'Bahraini Dinar',
-  OMR: 'Omani Rial',
-  JOD: 'Jordanian Dinar',
-  LBP: 'Lebanese Pound',
   EGP: 'Egyptian Pound',
-  MAD: 'Moroccan Dirham',
-  TND: 'Tunisian Dinar',
-  DZD: 'Algerian Dinar',
-  IQD: 'Iraqi Dinar',
-  USD: 'US Dollar',
-  GBP: 'British Pound',
-  EUR: 'Euro',
-  INR: 'Indian Rupee',
-  CNY: 'Chinese Yuan',
 };
 
 const CurrencySymbol: React.FC<CurrencySymbolProps> = memo(({ 
