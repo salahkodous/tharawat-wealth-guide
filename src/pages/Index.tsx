@@ -38,69 +38,69 @@ const Index = () => {
 
   const features = [
     {
+      icon: BarChart3,
+      title: 'All-in-One Financial View',
+      description: 'Track income, expenses, savings, debts, EGX stocks, gold, real estate, and crypto in a single unified dashboard - no more juggling apps'
+    },
+    {
       icon: Brain,
-      title: 'AI Financial Advisor',
-      description: 'Get personalized financial advice powered by AI in Arabic and English'
+      title: 'AI-Powered Financial Guidance',
+      description: 'Get tailored advice using local EGX data, gold prices, and real estate trends to help you save, invest, or pay debt at the right time'
     },
     {
-      icon: PiggyBank,
-      title: 'Smart Budgeting',
-      description: 'Automated expense tracking and intelligent budget recommendations'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Investment Management',
-      description: 'Professional portfolio management across Arab markets'
+      icon: Globe,
+      title: 'Simplified Financial News',
+      description: 'Complex Egyptian and global economic news translated into simple Arabic explanations tied to your personal portfolio'
     },
     {
       icon: Target,
-      title: 'Goal Planning',
-      description: 'Set and achieve financial goals with AI-powered strategies'
+      title: 'Localized Market Coverage',
+      description: 'Egyptian Stock Exchange (EGX), gold markets, and real estate price trends integrated for locally-relevant insights'
     },
     {
-      icon: CreditCard,
-      title: 'Debt Management',
-      description: 'Optimize debt payments and improve your credit score'
+      icon: Users,
+      title: 'Financial Literacy & Accessibility',
+      description: 'Arabic-first, mobile-friendly platform that empowers Egyptians to manage finances professionally, regardless of experience'
     },
     {
-      icon: BarChart3,
-      title: 'Financial Analytics',
-      description: 'Deep insights into your financial health and spending patterns'
+      icon: Sparkles,
+      title: 'Early-Market Advantage',
+      description: 'Be among the first Egyptians to access AI-driven unified financial management before others in the region'
     }
   ];
 
   const benefits = [
-    'Complete financial overview in one dashboard',
-    'AI-powered recommendations tailored to you',
-    'Multi-currency support for Arab markets',
-    'Automated expense categorization',
-    'Real-time portfolio tracking',
-    'Secure bank-level encryption'
+    'No more juggling banking apps, spreadsheets, gold shops, and brokerage accounts',
+    'AI Decision Agent provides guidance based on EGX, gold, and real estate data',
+    'Financial news simplified in Arabic - understand how it affects YOUR money',
+    'Egyptian Stock Exchange, gold, and property data built-in from day one',
+    'Built for Egyptians: Arabic-first interface, mobile-friendly design',
+    'First-mover advantage in Egyptian AI financial management'
   ];
 
   const testimonials = [
     {
       name: 'Ahmed Hassan',
       role: 'Entrepreneur, Cairo',
-      quote: 'Anakin helped me organize my finances and grow my investments by 40% in 6 months.',
+      quote: 'Finally, one place to see my bank accounts, EGX stocks, gold savings, and property value. Anakin made managing my finances so much easier.',
     },
     {
-      name: 'Sarah Al-Rashid',
-      role: 'Business Owner, Dubai',
-      quote: 'The AI assistant speaks both Arabic and English perfectly. It\'s like having a personal financial advisor.',
+      name: 'Mona Ibrahim',
+      role: 'Teacher, Alexandria',
+      quote: 'The AI explains financial news in simple Arabic. For the first time, I understand how global events affect my savings and what to do about it.',
     },
     {
-      name: 'Omar Abdullah',
-      role: 'Engineer, Riyadh',
-      quote: 'Finally, a financial app that understands Arab markets and Islamic finance principles.',
+      name: 'Omar Mahmoud',
+      role: 'Engineer, Giza',
+      quote: 'As someone with no financial background, Anakin teaches me while helping me invest. The EGX integration with AI guidance is incredible.',
     }
   ];
 
   const stats = [
-    { label: 'Active Users', value: '50K+', suffix: ' Investors' },
-    { label: 'Assets Managed', value: '$2.5B', suffix: ' Portfolio Value' },
-    { label: 'Success Rate', value: '94%', suffix: ' User Satisfaction' },
-    { label: 'AI Accuracy', value: '98%', suffix: ' Recommendation Score' }
+    { label: 'Egyptian Market', value: 'EGX', suffix: ' Integrated' },
+    { label: 'Live Data', value: 'Gold', suffix: ' Price Tracking' },
+    { label: 'AI-Powered', value: 'Arabic', suffix: ' Financial News' },
+    { label: 'All Assets', value: '1 App', suffix: ' Unified View' }
   ];
 
   return (
@@ -145,32 +145,31 @@ const Index = () => {
               <div className="space-y-6">
                 <h1 className="text-4xl md:text-6xl font-bold leading-tight">
                   Your{' '}
-                  <span className="text-gradient-electric">Super Personal</span>{' '}
-                  Financial Manager
+                  <span className="text-gradient-electric">AI Financial Command Center</span>{' '}
+                  for Egypt
                 </h1>
                 
                 <p className="text-xl text-muted-foreground max-w-3xl mx-auto" dir="auto">
-                  Take control of your financial future with AI-powered insights, automated tracking, 
-                  and personalized recommendations. Join 50,000+ users who trust Anakin to manage 
-                  their wealth across Arab markets.
+                  Manage all your finances in one intelligent platform. Track EGX stocks, gold, real estate, 
+                  bank accounts, debts, and crypto with AI-powered insights tailored to the Egyptian market.
                   <br />
                   <span className="text-lg mt-3 block text-primary/80">
-                    مديرك المالي الشخصي الذكي - خبير الأسواق العربية
+                    مركز القيادة المالية الذكي - مصمم خصيصاً للسوق المصري
                   </span>
                 </p>
 
                 <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-primary" />
-                    <span>Bank-level Security</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span>50K+ Active Users</span>
+                    <BarChart3 className="w-4 h-4 text-primary" />
+                    <span>EGX Integration</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4 text-primary" />
-                    <span>4 Arab Markets</span>
+                    <span>Arabic Financial News</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-primary" />
+                    <span>AI-Powered Guidance</span>
                   </div>
                 </div>
               </div>
@@ -222,13 +221,13 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="text-center space-y-4 mb-16">
               <h2 className="text-3xl md:text-4xl font-bold">
-                Complete{' '}
-                <span className="text-gradient-electric">Financial Management</span>{' '}
-                Suite
+                Why{' '}
+                <span className="text-gradient-electric">Egyptian Investors</span>{' '}
+                Choose Anakin
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Everything you need to take control of your finances, grow your wealth, 
-                and achieve your financial goals - all in one intelligent platform
+                The first AI-powered financial platform built specifically for the Egyptian market, 
+                bringing professional wealth management to everyone
               </p>
             </div>
 
@@ -260,12 +259,12 @@ const Index = () => {
               <div className="space-y-8">
                 <div className="space-y-4">
                   <h2 className="text-3xl md:text-4xl font-bold">
-                    Why Choose{' '}
-                    <span className="text-gradient-electric">Anakin</span>?
+                    Built for{' '}
+                    <span className="text-gradient-electric">Egypt</span>
                   </h2>
                   <p className="text-xl text-muted-foreground">
-                    Join thousands of successful investors who trust Anakin 
-                    as their personal financial manager
+                    Stop juggling multiple apps and spreadsheets. Anakin brings everything 
+                    together with AI insights that understand the Egyptian market
                   </p>
                 </div>
 
@@ -404,8 +403,8 @@ const Index = () => {
                 <span className="text-gradient-electric">Financial Future</span>?
               </h2>
               <p className="text-xl text-muted-foreground">
-                Join 50,000+ users who trust Anakin as their personal financial manager. 
-                Start your free trial today and experience the power of AI-driven financial management.
+                Be among the first Egyptians to experience unified, AI-powered financial management. 
+                Track EGX, gold, real estate, and all your assets in one place with personalized Arabic guidance.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
