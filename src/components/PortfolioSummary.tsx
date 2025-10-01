@@ -372,32 +372,6 @@ const PortfolioSummary = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-card-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-primary" />
-              Geographic Allocation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {geographicAllocation.length > 0 ? geographicAllocation.map((item) => (
-              <div key={item.country} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{item.flag}</span>
-                    <span className="text-sm font-medium">{item.country}</span>
-                  </div>
-                  <span className={`text-sm font-medium ${item.color}`}>{item.value.toFixed(1)}%</span>
-                </div>
-                <Progress value={item.value} className="h-2" />
-              </div>
-            )) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No assets to display geographic allocation
-              </p>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

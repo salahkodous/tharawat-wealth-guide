@@ -354,28 +354,6 @@ const EnhancedPortfolioOverview = () => {
               </CardContent>
             </Card>
 
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="w-5 h-5" />
-                  Geographic Diversification
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {geographicBreakdown.map((geo) => (
-                  <div key={geo.region} className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{geo.flag}</span>
-                      <div>
-                        <div className="font-medium">{geo.region}</div>
-                        <div className="text-sm text-muted-foreground">{geo.allocation.toFixed(1)}%</div>
-                      </div>
-                    </div>
-                    <div className="font-semibold">{formatAmount(geo.value)}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
 
@@ -398,25 +376,6 @@ const EnhancedPortfolioOverview = () => {
               </CardContent>
             </Card>
 
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Regional Distribution</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {geographicBreakdown.map((item) => (
-                  <div key={item.region} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <span>{item.flag}</span>
-                        <span className="text-sm font-medium">{item.region}</span>
-                      </div>
-                      <span className="text-sm font-medium text-primary">{item.allocation.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={item.allocation} className="h-2" />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
 
