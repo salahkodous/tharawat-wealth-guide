@@ -26,7 +26,6 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import AnakinLogo from '@/components/AnakinLogo';
 import VoiceSearchInput from '@/components/VoiceSearchInput';
 import PortfolioManager from '@/components/PortfolioManager';
-import AIRecommendations from '@/components/AIRecommendations';
 
 
 // Import hero background
@@ -325,11 +324,7 @@ const Index = () => {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="flex justify-center mb-8">
-                <TabsList className="grid w-full max-w-3xl grid-cols-4 bg-secondary/50">
-                  <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    <span className="hidden sm:inline">Dashboard</span>
-                  </TabsTrigger>
+                <TabsList className="grid w-full max-w-3xl grid-cols-3 bg-secondary/50">
                   <TabsTrigger value="demo" className="flex items-center gap-2">
                     <Brain className="w-4 h-4" />
                     <span className="hidden sm:inline">AI Assistant</span>
@@ -344,10 +339,6 @@ const Index = () => {
                   </TabsTrigger>
                 </TabsList>
               </div>
-
-              <TabsContent value="dashboard" className="space-y-8">
-                <AIRecommendations />
-              </TabsContent>
 
               <TabsContent value="demo" className="space-y-8">
                 <VoiceSearchInput />
