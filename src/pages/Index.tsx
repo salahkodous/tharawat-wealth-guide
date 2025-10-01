@@ -267,65 +267,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Interactive Demo Section */}
-        <section className="py-20 bg-secondary/10">
-          <div className="container mx-auto px-4">
-            <div className="text-center space-y-4 mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold">
-                Experience{' '}
-                <span className="text-gradient-electric">Anakin</span>{' '}
-                in Action
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                See how our AI-powered platform can transform your financial life
-              </p>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="flex justify-center mb-8">
-                <TabsList className="grid w-full max-w-3xl grid-cols-3 bg-secondary/50">
-                  <TabsTrigger value="demo" className="flex items-center gap-2">
-                    <Brain className="w-4 h-4" />
-                    <span className="hidden sm:inline">AI Assistant</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="portfolio" className="flex items-center gap-2">
-                    <Briefcase className="w-4 h-4" />
-                    <span className="hidden sm:inline">Portfolio</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="tracker" className="flex items-center gap-2">
-                    <Calculator className="w-4 h-4" />
-                    <span className="hidden sm:inline">Tracker</span>
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              <TabsContent value="demo" className="space-y-8">
-                <VoiceSearchInput />
-              </TabsContent>
-
-              <TabsContent value="portfolio" className="space-y-8">
-                <div className="flex justify-center">
-                  <PortfolioManager />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="tracker" className="space-y-8">
-                <Card className="max-w-4xl mx-auto">
-                  <CardHeader>
-                    <CardTitle className="text-center">Financial Tracker Demo</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center text-muted-foreground py-12">
-                      <Calculator className="w-16 h-16 mx-auto mb-4 text-primary" />
-                      <p>Track all your finances in one place</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-            </Tabs>
-          </div>
-        </section>
 
         {/* Footer */}
         <footer className="border-t border-border/20 py-12 bg-background/50">
