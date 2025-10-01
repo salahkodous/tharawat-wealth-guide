@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, Lock, User, Chrome } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import AnakinLogo from '@/components/AnakinLogo';
 
 const Auth = () => {
@@ -82,7 +81,6 @@ const Auth = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center">
-        <AnimatedBackground />
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -90,7 +88,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <AnimatedBackground />
       
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">

@@ -10,7 +10,6 @@ import { Clock, ExternalLink, TrendingUp, Globe, Filter, Search, AlertCircle } f
 import { useNewsArticles } from '@/hooks/useNewsArticles';
 import { useUserCountry } from '@/hooks/useUserCountry';
 import { useAuth } from '@/hooks/useAuth';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 
 const Analytics = () => {
@@ -96,7 +95,6 @@ const Analytics = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background relative overflow-hidden">
-        <AnimatedBackground />
         
         <div className="relative z-10">
           <Navigation />
@@ -147,7 +145,6 @@ const Analytics = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background relative overflow-hidden">
-        <AnimatedBackground />
         
         <div className="relative z-10">
           <Navigation />
@@ -169,7 +166,6 @@ const Analytics = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <AnimatedBackground />
       
       <div className="relative z-10">
         <Navigation />

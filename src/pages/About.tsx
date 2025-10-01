@@ -19,7 +19,6 @@ import {
   Briefcase
 } from 'lucide-react';
 import AnakinLogo from '@/components/AnakinLogo';
-import AnimatedBackground from '@/components/AnimatedBackground';
 
 const About = () => {
   const navigate = useNavigate();
@@ -110,7 +109,6 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <AnimatedBackground />
       
       <div className="relative z-10">
         {/* Header */}

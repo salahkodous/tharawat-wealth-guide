@@ -18,7 +18,6 @@ import {
   Loader2,
   AlertTriangle
 } from 'lucide-react';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioTable from '@/components/PortfolioTable';
 import PortfolioManager from '@/components/PortfolioManager';
@@ -291,7 +290,6 @@ const Portfolio = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background relative overflow-hidden">
-        <AnimatedBackground />
         <div className="relative z-10">
           <Navigation />
           <div className="flex items-center justify-center h-64">
@@ -308,7 +306,6 @@ const Portfolio = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-background relative overflow-hidden">
-        <AnimatedBackground />
         <div className="relative z-10">
           <Navigation />
           <div className="flex items-center justify-center h-64">
@@ -325,7 +322,6 @@ const Portfolio = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background relative overflow-hidden">
-        <AnimatedBackground />
         <div className="relative z-10">
           <Navigation />
           <div className="flex items-center justify-center h-64">
@@ -343,7 +339,6 @@ const Portfolio = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <AnimatedBackground />
       
       <div className="relative z-10">
         <Navigation />

@@ -6,7 +6,6 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import AnakinLogo from '@/components/AnakinLogo';
 
 export default function VerifyEmail() {
@@ -82,7 +81,6 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      <AnimatedBackground />
       
       <Card className="w-full max-w-md relative z-10">
         <CardHeader className="space-y-4 text-center">

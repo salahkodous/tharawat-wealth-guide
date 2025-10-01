@@ -1,5 +1,4 @@
 import React from 'react';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import DashboardFinanceOverview from '@/components/DashboardFinanceOverview';
@@ -8,7 +7,6 @@ import AIFinancialAgent from '@/components/AIFinancialAgent';
 const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <AnimatedBackground />
       
       <div className="relative z-10">
         <Navigation />

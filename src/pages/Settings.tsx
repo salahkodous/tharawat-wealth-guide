@@ -13,7 +13,6 @@ import { useSettings } from '@/hooks/useSettings';
 import { useTheme } from 'next-themes';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
-import AnimatedBackground from '@/components/AnimatedBackground';
 import Navigation from '@/components/Navigation';
 import { 
   User, 
@@ -327,7 +326,6 @@ const Settings = () => {
 
   return (
     <div className={`min-h-screen bg-background relative overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <AnimatedBackground />
       
       <div className="relative z-10">
         <Navigation />
