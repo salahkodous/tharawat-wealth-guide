@@ -723,14 +723,15 @@ Context: ${userCountry} | ${userCurrency} | Query: ${classification.type}
 DATABASE MARKET DATA:${marketDataSummary || '\nNo relevant market data available for this query.'}
 
 🔸 EXTRACTION RULES:
-1. Use EXACT values from database - NO calculations or modifications
+1. Use EXACT values from database - NO calculations or modifications EXCEPT for rule 9
 2. Always include currency (EGP, USD, SAR, AED, etc.)
 3. Cite date when available (e.g., "As of 2025-09-24...")
 4. Format: "[Asset] is [price] [currency], [+/-]X% [timeframe]"
 5. If data missing: state "Data not currently available"
 6. NEVER make up prices or data
 7. For ETFs: Use the "price" field (NOT nav) - extract the COMPLETE number including all digits before and after the decimal point (e.g., "26.06" NOT ".06")
-8. For GOLD: The price_per_gram field contains the full price (e.g., "5070.00" NOT "21.62"). Extract ALL digits as shown in the data.`;
+8. For GOLD: The price_per_gram field contains the full price (e.g., "5070.00" NOT "21.62"). Extract ALL digits as shown in the data.
+9. For REAL ESTATE: When user asks for a specific area size (e.g., "100 meters", "150 sqm"), CALCULATE the TOTAL PRICE by multiplying price_per_meter by the area. Example: If price is 65442 EGP/sqm and user asks for 100 meters, respond "A 100 sqm unit in El Zamalek costs 6,544,200 EGP (6.54 million EGP)"`;
 
 
 
