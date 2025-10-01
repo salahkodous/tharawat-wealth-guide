@@ -256,6 +256,18 @@ async function fetchMarketData(classification: any, userCountry: string) {
       if (realEstate && realEstate.length > 0) {
         marketData.real_estate = realEstate;
       }
+      
+      // Also fetch real estate prices (neighborhood-level data)
+      const { data: realEstatePrices } = await supabase
+        .from('real_estate_prices')
+        .select('*')
+        .order('last_updated', { ascending: false })
+        .limit(50);
+      
+      if (realEstatePrices && realEstatePrices.length > 0) {
+        marketData.real_estate_prices = realEstatePrices;
+        console.log(`Fetched ${realEstatePrices.length} real estate neighborhood prices`);
+      }
     }
 
     // Fetch ETFs - check case-insensitively
@@ -664,6 +676,31 @@ async function generateResponse(classification: any, userData: any, toolResults:
       data.real_estate.slice(0, 3).forEach((r: any) => {
         summary += `- ${r.property_type} in ${r.area_name}, ${r.city}: ${r.price_per_sqm} ${r.currency}/sqm\n`;
       });
+    }
+    
+    // Real estate prices (neighborhood-level) - if query mentions specific areas
+    if ((lowerQuery.includes('real estate') || lowerQuery.includes('property') || lowerQuery.includes('neighborhood') || 
+         lowerQuery.includes('zamalek') || lowerQuery.includes('maadi') || lowerQuery.includes('heliopolis') || 
+         lowerQuery.includes('عقار') || lowerQuery.includes('حي')) && data.real_estate_prices) {
+      summary += `\n🔸 REAL ESTATE PRICES (Neighborhoods):\n`;
+      
+      // Filter by neighborhood if specific area mentioned
+      let filteredPrices = data.real_estate_prices;
+      const areaKeywords = ['zamalek', 'maadi', 'heliopolis', 'new cairo', 'nasr city', 'dokki', 'mohandessin'];
+      const mentionedArea = areaKeywords.find(area => lowerQuery.includes(area));
+      
+      if (mentionedArea) {
+        filteredPrices = data.real_estate_prices.filter((p: any) => 
+          p.neighborhood_name?.toLowerCase().includes(mentionedArea) ||
+          p.neighborhood_slug?.toLowerCase().includes(mentionedArea)
+        );
+      }
+      
+      filteredPrices.slice(0, 5).forEach((p: any) => {
+        summary += `- ${p.neighborhood_name}, ${p.city_name}: ${p.price_per_meter} ${p.currency}/sqm (${p.property_type})\n`;
+      });
+      
+      console.log(`Real estate prices summary: Found ${filteredPrices.length} neighborhoods`);
     }
     
     // Bank products - if query mentions bank/savings/deposit
