@@ -117,6 +117,20 @@ async function fetchMarketData(classification: any, userCountry: string) {
   const marketData: Record<string, any> = {};
   const context = classification.context || [];
   
+  // Map country to currency code
+  const countryCurrencyMap: Record<string, string> = {
+    'Egypt': 'EGP',
+    'Saudi Arabia': 'SAR',
+    'UAE': 'AED',
+    'Kuwait': 'KWD',
+    'Bahrain': 'BHD',
+    'Oman': 'OMR',
+    'Qatar': 'QAR',
+    'Jordan': 'JOD',
+    'Lebanon': 'LBP'
+  };
+  const userCurrencyCode = countryCurrencyMap[userCountry] || 'EGP';
+  
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -195,12 +209,13 @@ async function fetchMarketData(classification: any, userCountry: string) {
       marketData.gold_prices = goldPricesData;
     }
 
-    // Fetch currency rates
+    // Fetch currency rates - prioritize USD and user's local currency
     const { data: currencyRates } = await supabase
       .from('currency_rates')
       .select('*')
+      .or(`base_currency.eq.USD,target_currency.eq.USD,base_currency.eq.${userCurrencyCode},target_currency.eq.${userCurrencyCode}`)
       .order('last_updated', { ascending: false })
-      .limit(30);
+      .limit(50);
     
     if (currencyRates && currencyRates.length > 0) {
       marketData.currency_rates = currencyRates;
