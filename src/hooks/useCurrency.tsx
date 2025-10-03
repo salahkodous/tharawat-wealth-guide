@@ -20,31 +20,14 @@ export const useCurrency = () => {
 };
 
 const currencySymbols: Record<string, string> = {
-  AED: 'د.إ',
-  SAR: 'ر.س',
-  QAR: 'ر.ق',
-  KWD: 'د.ك',
-  BHD: 'د.ب',
-  OMR: 'ر.ع',
-  JOD: 'د.أ',
-  LBP: 'ل.ل',
   EGP: 'ج.م',
-  MAD: 'د.م',
-  TND: 'د.ت',
-  DZD: 'د.ج',
-  IQD: 'د.ع',
-  USD: '$',
-  GBP: '£',
-  EUR: '€',
-  INR: '₹',
-  CNY: '¥',
 };
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { settings } = useSettings();
   const { convertCurrency, formatCurrency } = useCurrencyConversion();
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('EGP');
 
   useEffect(() => {
     // Prefer settings context over user metadata

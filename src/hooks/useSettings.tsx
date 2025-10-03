@@ -20,7 +20,7 @@ interface SettingsContextType {
 }
 
 const defaultSettings: UserSettings = {
-  currency: 'USD',
+  currency: 'EGP',
   language: 'en',
   theme: 'system',
   email_notifications: true,

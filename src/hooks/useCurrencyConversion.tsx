@@ -87,30 +87,13 @@ export const useCurrencyConversion = () => {
   }, [rateMap, settings.currency]);
 
   const formatCurrency = (amount: number, currency?: string): string => {
-    const targetCurrency = currency || settings.currency;
+    const targetCurrency = currency || settings.currency || 'EGP';
     
     const currencySymbols: Record<string, string> = {
-      AED: 'د.إ',
-      SAR: 'ر.س',
-      QAR: 'ر.ق',
-      KWD: 'د.ك',
-      BHD: 'د.ب',
-      OMR: 'ر.ع',
-      JOD: 'د.أ',
-      LBP: 'ل.ل',
       EGP: 'ج.م',
-      MAD: 'د.م',
-      TND: 'د.ت',
-      DZD: 'د.ج',
-      IQD: 'د.ع',
-      USD: '$',
-      GBP: '£',
-      EUR: '€',
-      INR: '₹',
-      CNY: '¥',
     };
 
-    const symbol = currencySymbols[targetCurrency] || targetCurrency;
+    const symbol = currencySymbols[targetCurrency] || 'ج.م';
     return `${symbol}${amount.toLocaleString()}`;
   };
 
