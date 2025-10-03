@@ -801,7 +801,10 @@ PERSONAL DATA:
 - Income: ${userData.income_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0} ${userCurrency}/month
 - Expenses: ${userData.expense_streams?.reduce((sum: number, stream: any) => sum + (stream.amount || 0), 0) || 0} ${userCurrency}/month
 - Assets: ${userData.assets?.length || 0} holdings
-- Debts: ${userData.debts?.length || 0} debts`;
+- Debts: ${userData.debts?.length || 0} debts
+${userData.debts && userData.debts.length > 0 ? '\n\nDEBT DETAILS:\n' + userData.debts.map((debt: any) => 
+  `• ${debt.name}: Total ${debt.total_amount} ${userCurrency}, Paid ${debt.paid_amount} ${userCurrency}, Remaining ${debt.total_amount - debt.paid_amount} ${userCurrency}, Monthly Payment ${debt.monthly_payment} ${userCurrency}, Interest Rate ${debt.interest_rate}%`
+).join('\n') : ''}`;
 
   const messages = [
     { role: 'system', content: systemPrompt + toolContext + userDataContext },
