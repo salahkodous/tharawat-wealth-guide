@@ -193,6 +193,116 @@ export type Database = {
         }
         Relationships: []
       }
+      bonds: {
+        Row: {
+          country: string
+          coupon_rate: number | null
+          created_at: string | null
+          currency: string
+          face_value: number | null
+          id: string
+          last_updated: string | null
+          maturity: string
+          name: string
+          price: number
+          rating: string | null
+          symbol: string
+          yield: number
+        }
+        Insert: {
+          country: string
+          coupon_rate?: number | null
+          created_at?: string | null
+          currency: string
+          face_value?: number | null
+          id?: string
+          last_updated?: string | null
+          maturity: string
+          name: string
+          price: number
+          rating?: string | null
+          symbol: string
+          yield: number
+        }
+        Update: {
+          country?: string
+          coupon_rate?: number | null
+          created_at?: string | null
+          currency?: string
+          face_value?: number | null
+          id?: string
+          last_updated?: string | null
+          maturity?: string
+          name?: string
+          price?: number
+          rating?: string | null
+          symbol?: string
+          yield?: number
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cities: {
         Row: {
           country: string | null
@@ -584,77 +694,56 @@ export type Database = {
       etfs: {
         Row: {
           benchmark: string | null
-          category: string | null
-          change: number | null
-          change_percentage: number | null
-          country: string | null
+          category: string
+          change_amount: number | null
+          change_percent: number | null
+          country: string
           created_at: string | null
-          currency: string | null
           dividend_yield: number | null
-          exchange: string | null
           expense_ratio: number | null
-          fund_manager: string | null
-          id: number
-          inception_date: string | null
+          id: string
           last_updated: string | null
           market_cap: number | null
           name: string
-          name_ar: string | null
           nav: number | null
-          premium_discount: number | null
-          price: number | null
+          price: number
           symbol: string
-          updated_at: string | null
           volume: number | null
         }
         Insert: {
           benchmark?: string | null
-          category?: string | null
-          change?: number | null
-          change_percentage?: number | null
-          country?: string | null
+          category: string
+          change_amount?: number | null
+          change_percent?: number | null
+          country: string
           created_at?: string | null
-          currency?: string | null
           dividend_yield?: number | null
-          exchange?: string | null
           expense_ratio?: number | null
-          fund_manager?: string | null
-          id?: number
-          inception_date?: string | null
+          id?: string
           last_updated?: string | null
           market_cap?: number | null
           name: string
-          name_ar?: string | null
           nav?: number | null
-          premium_discount?: number | null
-          price?: number | null
+          price: number
           symbol: string
-          updated_at?: string | null
           volume?: number | null
         }
         Update: {
           benchmark?: string | null
-          category?: string | null
-          change?: number | null
-          change_percentage?: number | null
-          country?: string | null
+          category?: string
+          change_amount?: number | null
+          change_percent?: number | null
+          country?: string
           created_at?: string | null
-          currency?: string | null
           dividend_yield?: number | null
-          exchange?: string | null
           expense_ratio?: number | null
-          fund_manager?: string | null
-          id?: number
-          inception_date?: string | null
+          id?: string
           last_updated?: string | null
           market_cap?: number | null
           name?: string
-          name_ar?: string | null
           nav?: number | null
-          premium_discount?: number | null
-          price?: number | null
+          price?: number
           symbol?: string
-          updated_at?: string | null
           volume?: number | null
         }
         Relationships: []
@@ -821,6 +910,60 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gold_prices: {
+        Row: {
+          change_amount: number | null
+          change_percent: number | null
+          country: string
+          created_at: string | null
+          currency: string
+          exchange_rate: number | null
+          global_gold_price_usd: number | null
+          id: string
+          karat: number
+          last_updated: string | null
+          market_premium: number | null
+          name: string
+          price_per_gram: number
+          purity: number
+          source: string | null
+        }
+        Insert: {
+          change_amount?: number | null
+          change_percent?: number | null
+          country: string
+          created_at?: string | null
+          currency: string
+          exchange_rate?: number | null
+          global_gold_price_usd?: number | null
+          id?: string
+          karat: number
+          last_updated?: string | null
+          market_premium?: number | null
+          name: string
+          price_per_gram: number
+          purity: number
+          source?: string | null
+        }
+        Update: {
+          change_amount?: number | null
+          change_percent?: number | null
+          country?: string
+          created_at?: string | null
+          currency?: string
+          exchange_rate?: number | null
+          global_gold_price_usd?: number | null
+          id?: string
+          karat?: number
+          last_updated?: string | null
+          market_premium?: number | null
+          name?: string
+          price_per_gram?: number
+          purity?: number
+          source?: string | null
         }
         Relationships: []
       }
@@ -1192,6 +1335,63 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      real_estate: {
+        Row: {
+          area_name: string
+          avg_property_size: number | null
+          avg_total_price: number | null
+          city: string
+          country: string
+          created_at: string | null
+          currency: string
+          id: string
+          last_updated: string | null
+          market_activity: string | null
+          monthly_change_percent: number | null
+          price_per_sqm: number
+          price_trend: string | null
+          property_type: string
+          rental_yield: number | null
+          tier: string
+        }
+        Insert: {
+          area_name: string
+          avg_property_size?: number | null
+          avg_total_price?: number | null
+          city: string
+          country: string
+          created_at?: string | null
+          currency: string
+          id?: string
+          last_updated?: string | null
+          market_activity?: string | null
+          monthly_change_percent?: number | null
+          price_per_sqm: number
+          price_trend?: string | null
+          property_type: string
+          rental_yield?: number | null
+          tier: string
+        }
+        Update: {
+          area_name?: string
+          avg_property_size?: number | null
+          avg_total_price?: number | null
+          city?: string
+          country?: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          last_updated?: string | null
+          market_activity?: string | null
+          monthly_change_percent?: number | null
+          price_per_sqm?: number
+          price_trend?: string | null
+          property_type?: string
+          rental_yield?: number | null
+          tier?: string
         }
         Relationships: []
       }

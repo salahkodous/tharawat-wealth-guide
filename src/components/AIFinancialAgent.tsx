@@ -4,7 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Bot, Send, User } from 'lucide-react';
+import { useChatHistory } from '@/hooks/useChatHistory';
+import { Bot, Send, User, MessageSquarePlus, History, Trash2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 interface Message {
   id: string;
@@ -19,6 +28,14 @@ const AIFinancialAgent = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const {
+    chats,
+    currentChatId,
+    createChat,
+    loadMessages,
+    deleteChat,
+    messages: historyMessages,
+  } = useChatHistory();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,6 +44,35 @@ const AIFinancialAgent = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load chat history when a chat is selected
+  useEffect(() => {
+    if (historyMessages.length > 0) {
+      const formattedMessages: Message[] = historyMessages.map(msg => ({
+        id: msg.id,
+        type: msg.role === 'user' ? 'user' : 'agent',
+        content: msg.content,
+        timestamp: new Date(msg.created_at),
+      }));
+      setMessages(formattedMessages);
+    }
+  }, [historyMessages]);
+
+  const handleNewChat = async () => {
+    const chatId = await createChat();
+    if (chatId) {
+      setMessages([]);
+    }
+  };
+
+  const handleLoadChat = async (chatId: string) => {
+    await loadMessages(chatId);
+  };
+
+  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteChat(chatId);
+  };
 
   const formatAgentResponse = (content: string) => {
     // Clean up any markdown formatting
@@ -38,6 +84,13 @@ const AIFinancialAgent = () => {
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading || !user) return;
+
+    // Create a new chat if none exists
+    let chatId = currentChatId;
+    if (!chatId) {
+      chatId = await createChat('New Chat');
+      if (!chatId) return;
+    }
 
     console.log('Sending message:', input);
     
@@ -57,7 +110,8 @@ const AIFinancialAgent = () => {
       const { data, error } = await supabase.functions.invoke('ai-router-agent', {
         body: {
           message: messageToSend,
-          userId: user.id
+          userId: user.id,
+          chatId: chatId
         }
       });
 
@@ -103,9 +157,66 @@ const AIFinancialAgent = () => {
   return (
     <Card className="h-[450px] flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5" />
-          AI Financial Agent
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            AI Financial Agent
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNewChat}
+              className="h-8 w-8 p-0"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+            </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <History className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Chat History</SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100vh-100px)] mt-4">
+                  <div className="space-y-2">
+                    {chats.map((chat) => (
+                      <div
+                        key={chat.id}
+                        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-accent ${
+                          currentChatId === chat.id ? 'bg-accent' : ''
+                        }`}
+                        onClick={() => handleLoadChat(chat.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{chat.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(chat.updated_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDeleteChat(chat.id, e)}
+                          className="h-8 w-8 p-0 ml-2"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                    {chats.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No chat history yet
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+          </div>
         </CardTitle>
       </CardHeader>
       

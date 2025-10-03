@@ -220,7 +220,24 @@ export const useMarketData = () => {
       .order('market_cap', { ascending: false });
     
     if (!error && data) {
-      setETFs(data as ETF[]);
+      // Map database fields to interface fields
+      const mappedData = data.map(etf => ({
+        id: etf.id as unknown as number,
+        symbol: etf.symbol,
+        name: etf.name,
+        price: etf.price,
+        change: etf.change_amount,
+        change_percentage: etf.change_percent,
+        volume: etf.volume,
+        market_cap: etf.market_cap,
+        nav: etf.nav,
+        expense_ratio: etf.expense_ratio,
+        currency: etf.country === 'Egypt' ? 'EGP' : 'USD', // Default currency based on country
+        country: etf.country,
+        exchange: 'N/A', // Not in database, set default
+        last_updated: etf.last_updated,
+      }));
+      setETFs(mappedData as ETF[]);
     }
   };
 

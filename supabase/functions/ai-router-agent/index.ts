@@ -890,7 +890,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, userId } = await req.json();
+    const { message, userId, chatId } = await req.json();
     
     if (!message?.trim()) {
       return new Response(JSON.stringify({ error: 'Message is required' }), {
@@ -972,6 +972,37 @@ serve(async (req) => {
 
     // Generate response
     const response = await generateResponse(classification, userData, toolResults, marketData, groqApiKey);
+
+    // Save messages to chat history if chatId is provided
+    if (chatId) {
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        // Save user message
+        await supabaseClient.from('chat_messages').insert({
+          chat_id: chatId,
+          user_id: userId,
+          role: 'user',
+          content: message,
+        });
+
+        // Save assistant response
+        await supabaseClient.from('chat_messages').insert({
+          chat_id: chatId,
+          user_id: userId,
+          role: 'assistant',
+          content: response,
+        });
+
+        console.log('Messages saved to chat history');
+      } catch (saveError) {
+        console.error('Error saving messages to history:', saveError);
+        // Don't fail the request if saving history fails
+      }
+    }
 
     return new Response(JSON.stringify({ 
       response,
