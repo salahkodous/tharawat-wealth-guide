@@ -4,6 +4,7 @@ import { DollarSign, CreditCard, TrendingUp, Banknote, AlertTriangle } from 'luc
 import EditableFinanceCard from '@/components/EditableFinanceCard';
 import IncomeStreamManager from '@/components/IncomeStreamManager';
 import ExpenseStreamManager from '@/components/ExpenseStreamManager';
+import DebtManager from '@/components/DebtManager';
 import { usePersonalFinances } from '@/hooks/usePersonalFinances';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -11,16 +12,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 const DashboardFinanceOverview = () => {
   const { 
     finances, 
+    debts,
     loading, 
     updateFinances, 
     updateMonthlyIncomeFromStreams,
     updateMonthlyExpensesFromStreams,
     getFreeMonthCash,
-    getTotalDebt
+    getTotalDebt,
+    addDebt,
+    updateDebt,
+    deleteDebt
   } = usePersonalFinances();
   const { formatAmount } = useCurrency();
   const [showIncomeManager, setShowIncomeManager] = React.useState(false);
   const [showExpenseManager, setShowExpenseManager] = React.useState(false);
+  const [showDebtManager, setShowDebtManager] = React.useState(false);
 
   if (loading) {
     return (
@@ -76,7 +82,7 @@ const DashboardFinanceOverview = () => {
       value: getTotalDebt(), 
       icon: AlertTriangle, 
       color: 'text-orange-500',
-      field: null
+      field: 'total_debt' as any
     }
   ];
 
@@ -111,6 +117,23 @@ const DashboardFinanceOverview = () => {
             if (stat.field === 'monthly_expenses') {
               return (
                 <Card key={index} className="glass-card cursor-pointer" onClick={() => setShowExpenseManager(true)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium text-muted-foreground">{stat.label}</div>
+                        <div className="text-2xl font-bold">{formatAmount(stat.value)}</div>
+                      </div>
+                      <stat.icon className={`w-8 h-8 ${stat.color}`} />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            // Special handling for total debt to show debt manager
+            if (stat.field === 'total_debt') {
+              return (
+                <Card key={index} className="glass-card cursor-pointer" onClick={() => setShowDebtManager(true)}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -169,6 +192,20 @@ const DashboardFinanceOverview = () => {
             <DialogTitle>Manage Expense Streams</DialogTitle>
           </DialogHeader>
           <ExpenseStreamManager onExpenseChange={updateMonthlyExpensesFromStreams} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDebtManager} onOpenChange={setShowDebtManager}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Debts</DialogTitle>
+          </DialogHeader>
+          <DebtManager 
+            debts={debts} 
+            onAddDebt={addDebt} 
+            onUpdateDebt={updateDebt} 
+            onDeleteDebt={deleteDebt} 
+          />
         </DialogContent>
       </Dialog>
     </div>
