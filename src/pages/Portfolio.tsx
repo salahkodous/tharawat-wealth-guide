@@ -28,6 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useAssetPriceUpdater } from '@/hooks/useAssetPriceUpdater';
 
 interface Asset {
   id: string;
@@ -69,6 +70,7 @@ const Portfolio = () => {
   const { formatAmount, convertAmount, currency } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { updateAssetPrices } = useAssetPriceUpdater();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
