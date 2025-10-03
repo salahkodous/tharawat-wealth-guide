@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, CreditCard, TrendingUp, Banknote } from 'lucide-react';
+import { DollarSign, CreditCard, TrendingUp, Banknote, AlertTriangle } from 'lucide-react';
 import EditableFinanceCard from '@/components/EditableFinanceCard';
 import IncomeStreamManager from '@/components/IncomeStreamManager';
 import ExpenseStreamManager from '@/components/ExpenseStreamManager';
@@ -15,7 +15,8 @@ const DashboardFinanceOverview = () => {
     updateFinances, 
     updateMonthlyIncomeFromStreams,
     updateMonthlyExpensesFromStreams,
-    getFreeMonthCash
+    getFreeMonthCash,
+    getTotalDebt
   } = usePersonalFinances();
   const { formatAmount } = useCurrency();
   const [showIncomeManager, setShowIncomeManager] = React.useState(false);
@@ -69,6 +70,13 @@ const DashboardFinanceOverview = () => {
       icon: Banknote, 
       color: 'text-teal-500',
       field: null
+    },
+    { 
+      label: 'Total Debt', 
+      value: getTotalDebt(), 
+      icon: AlertTriangle, 
+      color: 'text-orange-500',
+      field: null
     }
   ];
 
@@ -79,7 +87,7 @@ const DashboardFinanceOverview = () => {
         <h2 className="text-2xl font-bold">Personal Finances</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {financialStats.map((stat, index) => {
           if (stat.field) {
             // Special handling for monthly income to show income stream manager
