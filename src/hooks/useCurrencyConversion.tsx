@@ -90,11 +90,11 @@ export const useCurrencyConversion = () => {
     const targetCurrency = currency || settings.currency || 'EGP';
     
     const currencySymbols: Record<string, string> = {
-      EGP: 'ج.م',
+      EGP: 'EGP',
     };
 
-    const symbol = currencySymbols[targetCurrency] || 'ج.م';
-    return `${symbol}${amount.toLocaleString()}`;
+    const symbol = currencySymbols[targetCurrency] || 'EGP';
+    return `${symbol} ${amount.toLocaleString()}`;
   };
 
   const getAvailableCurrencies = useMemo((): string[] => {

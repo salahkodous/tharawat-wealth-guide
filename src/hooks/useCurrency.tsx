@@ -20,7 +20,7 @@ export const useCurrency = () => {
 };
 
 const currencySymbols: Record<string, string> = {
-  EGP: 'ج.م',
+  EGP: 'EGP',
 };
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
