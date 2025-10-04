@@ -79,7 +79,8 @@ const AIFinancialAgent = () => {
     // Parse content with source citations in format [SOURCE:Title|URL]
     const parts = [];
     let lastIndex = 0;
-    const sourceRegex = /\[SOURCE:(.*?)\|(.*?)\]/g;
+    // Updated regex to handle both [SOURCE:Title|URL] and [SOURCE: Title|URL] (with optional space)
+    const sourceRegex = /\[SOURCE:\s*(.*?)\|(.*?)\]/g;
     let match;
     let sourceIndex = 1;
 
