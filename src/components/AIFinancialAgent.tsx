@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { Bot, Send, User, MessageSquarePlus, History, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SourceChip } from '@/components/SourceChip';
 import {
   Sheet,
   SheetContent,
@@ -75,11 +76,44 @@ const AIFinancialAgent = () => {
   };
 
   const formatAgentResponse = (content: string) => {
-    // Clean up any markdown formatting
-    const cleanContent = content.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1');
-    
-    // Return all responses as-is with consistent formatting - no splitting
-    return <span className="text-base leading-relaxed">{cleanContent}</span>;
+    // Parse content with source citations in format [SOURCE:Title|URL]
+    const parts = [];
+    let lastIndex = 0;
+    const sourceRegex = /\[SOURCE:(.*?)\|(.*?)\]/g;
+    let match;
+    let sourceIndex = 1;
+
+    while ((match = sourceRegex.exec(content)) !== null) {
+      // Add text before the source
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`text-${lastIndex}`}>
+            {content.substring(lastIndex, match.index)}
+          </span>
+        );
+      }
+
+      // Add the source chip
+      const title = match[1];
+      const url = match[2];
+      parts.push(
+        <SourceChip key={`source-${match.index}`} title={title} url={url} index={sourceIndex} />
+      );
+      sourceIndex++;
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push(
+        <span key={`text-${lastIndex}`}>
+          {content.substring(lastIndex)}
+        </span>
+      );
+    }
+
+    return <div className="text-base leading-relaxed whitespace-pre-wrap">{parts}</div>;
   };
 
   const sendMessage = async () => {

@@ -745,7 +745,8 @@ Brief overview of what's happening (2-3 sentences)
 Present specific data and facts from your research. For each claim:
 - Use real data from the toolResults provided
 - Include specific numbers, dates, and metrics
-- Cite sources immediately: "According to [Source Name]([URL]), [fact]..."
+- Cite sources inline using this EXACT format: "According to Reuters [SOURCE:Reuters|https://example.com], inflation reached 5.2%"
+- Format is: [SOURCE:Source Title|Full URL]
 - NEVER make general statements without backing them with provided sources
 
 **Analysis**
@@ -766,10 +767,12 @@ List all sources cited in the format:
 
 🚨 CRITICAL CITATION RULES:
 - You MUST cite sources for ALL factual claims about current events, news, or market conditions
-- Use this format inline: "According to [Source]([URL]), [fact]"
+- Use this EXACT format: [SOURCE:Title|URL] - Example: "According to the report [SOURCE:Reuters|https://reuters.com/article], GDP grew by 3%"
+- The format MUST be [SOURCE:Title|URL] with the pipe character separating title and URL
 - Sources MUST come from the toolResults provided - do NOT make up sources
 - If no sources are available in toolResults, acknowledge the limitation
-- Never present research findings without proper attribution`;
+- Never present research findings without proper attribution
+- Put sources inline where the fact is mentioned, not at the end`;
 
 
 
