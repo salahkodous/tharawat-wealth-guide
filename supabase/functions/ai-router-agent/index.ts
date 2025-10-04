@@ -447,9 +447,69 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
                   source: r.source
                 })), null, 2));
                 
+                // Scrape actual content from top 2-3 results for news queries
+                const isNewsQuery = message.toLowerCase().includes('news') || 
+                                   message.toLowerCase().includes('latest') ||
+                                   classification.type === 'news_analysis';
+                
+                if (isNewsQuery && uniqueResults.length > 0) {
+                  const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
+                  if (firecrawlApiKey) {
+                    console.log('Scraping article content with Firecrawl...');
+                    const scrapedContent: any[] = [];
+                    
+                    // Scrape top 2 results
+                    for (const result of uniqueResults.slice(0, 2)) {
+                      try {
+                        const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${firecrawlApiKey}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            url: result.link,
+                            formats: ['markdown'],
+                            onlyMainContent: true,
+                            waitFor: 2000
+                          })
+                        });
+                        
+                        if (scrapeResponse.ok) {
+                          const scrapeData = await scrapeResponse.json();
+                          if (scrapeData.data?.markdown) {
+                            // Get first 2000 characters of content
+                            const content = scrapeData.data.markdown.substring(0, 2000);
+                            scrapedContent.push({
+                              title: result.title,
+                              url: result.link,
+                              content: content,
+                              snippet: result.snippet
+                            });
+                            console.log(`Scraped content from: ${result.link}`);
+                          }
+                        }
+                      } catch (scrapeError) {
+                        console.error(`Failed to scrape ${result.link}:`, scrapeError);
+                      }
+                    }
+                    
+                    // Add scraped content to results
+                    if (scrapedContent.length > 0) {
+                      uniqueResults.forEach((result: any) => {
+                        const scraped = scrapedContent.find(s => s.url === result.link);
+                        if (scraped) {
+                          result.fullContent = scraped.content;
+                        }
+                      });
+                      console.log(`Successfully scraped ${scrapedContent.length} articles`);
+                    }
+                  }
+                }
+                
                 // Extract key insights and topics
                 const keyInsights = uniqueResults.map(item => 
-                  `${item.title}: ${item.snippet}`
+                  item.fullContent ? `${item.title}:\n${item.fullContent.substring(0, 500)}...` : `${item.title}: ${item.snippet}`
                 ).join('\n\n');
                 
                 const marketTopics = uniqueResults.map(item => {
@@ -471,7 +531,7 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
                 toolResults.web_search = {
                   success: true,
                   results: uniqueResults,
-                  summary: `Found ${uniqueResults.length} comprehensive market insights covering ${uniqueTopics.join(', ')}`,
+                  summary: `Found ${uniqueResults.length} comprehensive insights${uniqueTopics.length > 0 ? ` covering ${uniqueTopics.join(', ')}` : ''}`,
                   key_insights: keyInsights,
                   market_topics: uniqueTopics,
                   sources: uniqueResults.map(item => item.source),
