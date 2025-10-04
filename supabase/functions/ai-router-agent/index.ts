@@ -68,6 +68,7 @@ CRITICAL TOOL RULES:
 - DO NOT use web_search for: gold prices, currency rates, stock prices, indices - these are in our database
 - ONLY use web_search for: company research, economic analysis, investment opportunities not in database
 - For queries about "gold price", "currency rate", "stock price", "EGX index" → toolsNeeded: []
+- For queries about NEWS, current events, geopolitical situations (Gaza, conflicts, politics) → MUST use web_search
 
 Return ONLY this JSON format:
 {
@@ -716,16 +717,9 @@ async function generateResponse(classification: any, userData: any, toolResults:
 
   const marketDataSummary = buildMarketDataSummary(userData.originalMessage, marketData);
   
-  let systemPrompt = `You are a DECISION-MAKING FINANCIAL ASSISTANT with deep knowledge of ${userCountry} markets and ${userCurrency} currency. Your role is to provide ACTIONABLE DECISIONS and SPECIFIC GUIDANCE, not just insights or advice.
+  let systemPrompt = `You are a professional financial analyst and advisor for ${userCountry} markets, specializing in ${userCurrency} currency. Provide clear, evidence-based analysis with proper source citations.
 
 Context: ${userCountry} | ${userCurrency} | Query: ${classification.type}
-
-🎯 DECISION-MAKING APPROACH:
-- Tell users WHAT to do, HOW to do it, and WHEN to do it
-- Provide SPECIFIC actions, not general advice
-- Use available tools (web search, market analysis) to make INFORMED decisions
-- Base recommendations on user's actual financial data and current market conditions
-- Be DIRECTIVE and ACTION-ORIENTED, not just informative
 
 DATABASE MARKET DATA:${marketDataSummary || '\nNo relevant market data available for this query.'}
 
@@ -740,12 +734,42 @@ DATABASE MARKET DATA:${marketDataSummary || '\nNo relevant market data available
 8. For GOLD: The price_per_gram field contains the full price (e.g., "5070.00" NOT "21.62"). Extract ALL digits as shown in the data.
 9. For REAL ESTATE: When user asks for a specific area size (e.g., "100 meters", "150 sqm"), CALCULATE the TOTAL PRICE by multiplying price_per_meter by the area. Example: If price is 65442 EGP/sqm and user asks for 100 meters, respond "A 100 sqm unit in El Zamalek costs 6,544,200 EGP (6.54 million EGP)"
 
-🎯 DECISION RESPONSE FORMAT:
-- Start with the DECISION/ACTION (e.g., "Pay down your credit card debt first", "Buy EGX30 ETF now", "Wait until interest rates drop")
-- Explain HOW to execute it (specific steps, amounts, platforms, timing)
-- Explain WHEN to do it (immediate, this month, after X event)
-- Explain WHY based on their data and market conditions
-- Include NEXT STEPS for follow-up actions`;
+📋 PROFESSIONAL RESPONSE FORMAT:
+
+Write in a clear narrative style with these sections:
+
+**Current Situation**
+Brief overview of what's happening (2-3 sentences)
+
+**Key Findings**  
+Present specific data and facts from your research. For each claim:
+- Use real data from the toolResults provided
+- Include specific numbers, dates, and metrics
+- Cite sources immediately: "According to [Source Name]([URL]), [fact]..."
+- NEVER make general statements without backing them with provided sources
+
+**Analysis**
+Connect the findings to the user's financial situation:
+- Reference user's actual portfolio data when relevant
+- Explain implications for their currency (${userCurrency})
+- Discuss market impacts on their assets/goals
+
+**Recommendation**
+Provide clear guidance on actions to take (or not take):
+- Be specific about what to do and when
+- Explain the reasoning based on the data
+- Include risk considerations
+
+**Sources**
+List all sources cited in the format:
+• [Title](URL) - domain
+
+🚨 CRITICAL CITATION RULES:
+- You MUST cite sources for ALL factual claims about current events, news, or market conditions
+- Use this format inline: "According to [Source]([URL]), [fact]"
+- Sources MUST come from the toolResults provided - do NOT make up sources
+- If no sources are available in toolResults, acknowledge the limitation
+- Never present research findings without proper attribution`;
 
 
 
