@@ -384,8 +384,16 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
               // Enhanced search queries for better results
               let searchQueries = [];
               
+              // Check if query is about general news/events (not financial markets)
+              const isGeneralNews = message.toLowerCase().includes('news') && 
+                                   !message.toLowerCase().includes('market') &&
+                                   !message.toLowerCase().includes('stock') &&
+                                   !message.toLowerCase().includes('price');
+              
               // Primary search based on user message
-              let primaryQuery = `${message} financial market analysis investment news ${userCountry} ${userCurrency}`;
+              let primaryQuery = isGeneralNews 
+                ? `${message} ${userCountry} latest updates` 
+                : `${message} financial market analysis investment news ${userCountry} ${userCurrency}`;
               searchQueries.push(primaryQuery);
               
               // Additional specific searches based on keywords
@@ -756,7 +764,22 @@ Present specific data and facts from your research. For EVERY factual claim abou
 - Use real data from the toolResults.web_search.results array provided
 - Each result has: title, link, snippet, source
 
-CRITICAL: When web_search results are provided in toolResults, you MUST use them and cite them properly.
+CRITICAL SOURCE CITATION REQUIREMENTS:
+${toolResults.web_search ? `
+YOU HAVE THESE SEARCH RESULTS - USE THEM:
+${JSON.stringify(toolResults.web_search.results.map((r: any) => ({
+  title: r.title,
+  url: r.link,
+  snippet: r.snippet
+})), null, 2)}
+
+MANDATORY RULES:
+1. ONLY cite information found in these actual search results above
+2. Use EXACT URLs from the results - DO NOT modify or fabricate URLs
+3. If these results don't answer the user's question, SAY SO - don't make up information
+4. Format: [SOURCE:Exact Title|Exact URL from above]
+5. DO NOT cite https://worldbank.org/q4 or any shortened/fabricated URL
+` : 'No search results available - acknowledge you cannot provide current news without sources'}
 
 **Analysis**
 Connect the findings to the user's financial situation:
