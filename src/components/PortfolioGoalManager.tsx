@@ -51,9 +51,10 @@ interface Asset {
 interface PortfolioGoalManagerProps {
   assets?: Asset[];
   totalValue?: number;
+  onGoalsChange?: () => void;
 }
 
-const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = [], totalValue = 0 }) => {
+const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = [], totalValue = 0, onGoalsChange }) => {
   const [goals, setGoals] = useState<PortfolioGoal[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [newGoal, setNewGoal] = useState({
@@ -139,6 +140,7 @@ const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = []
       });
       setIsDialogOpen(false);
       fetchGoals();
+      onGoalsChange?.();
     } catch (error) {
       console.error('Error creating goal:', error);
       toast({
@@ -228,6 +230,7 @@ const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = []
       setGoals(goals.map(g => 
         g.id === goalId ? { ...g, current_value: currentValue } : g
       ));
+      onGoalsChange?.();
     } catch (error) {
       console.error('Error updating goal:', error);
     }
@@ -246,6 +249,7 @@ const PortfolioGoalManager: React.FC<PortfolioGoalManagerProps> = ({ assets = []
       
       setGoals(goals.filter(g => g.id !== goalId));
       toast({ title: 'Deleted', description: 'Portfolio goal deleted successfully' });
+      onGoalsChange?.();
     } catch (error) {
       console.error('Error deleting goal:', error);
       toast({ title: 'Error', description: 'Failed to delete goal', variant: 'destructive' });

@@ -182,7 +182,11 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <PortfolioGoalManager assets={assets} totalValue={totalValue} />
+              <PortfolioGoalManager 
+                assets={assets} 
+                totalValue={totalValue}
+                onGoalsChange={fetchGoals}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -203,7 +207,11 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <PortfolioGoalManager assets={assets} totalValue={totalValue} />
+                <PortfolioGoalManager 
+                  assets={assets} 
+                  totalValue={totalValue}
+                  onGoalsChange={fetchGoals}
+                />
               </DialogContent>
             </Dialog>
           </div>
@@ -316,7 +324,11 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <PortfolioGoalManager assets={assets} totalValue={totalValue} />
+                    <PortfolioGoalManager 
+                      assets={assets} 
+                      totalValue={totalValue}
+                      onGoalsChange={fetchGoals}
+                    />
                   </DialogContent>
                 </Dialog>
               )}
