@@ -35,6 +35,7 @@ const AIFinancialAgent = () => {
     createChat,
     loadMessages,
     deleteChat,
+    updateChatTitle,
     messages: historyMessages,
   } = useChatHistory();
 
@@ -168,6 +169,14 @@ const AIFinancialAgent = () => {
       };
 
       setMessages(prev => [...prev, agentMessage]);
+
+      // If this is the first message exchange, generate a title from the user's message
+      if (messages.length === 1 && chatId) {
+        const title = messageToSend.length > 50 
+          ? messageToSend.substring(0, 47) + '...'
+          : messageToSend;
+        await updateChatTitle(chatId, title);
+      }
     } catch (error: any) {
       console.error('Error:', error);
       const errorMessage: Message = {
