@@ -742,16 +742,18 @@ Write in a clear narrative style with these sections:
 Brief overview of what's happening (2-3 sentences)
 
 **Key Findings**  
-Present specific data and facts from your research. For each claim:
-- Use real data from the toolResults provided
-- Include specific numbers, dates, and metrics
-- Cite sources inline using this EXACT format: "According to Reuters [SOURCE:Reuters|https://example.com], inflation reached 5.2%"
-- Format is: [SOURCE:Source Title|Full URL]
-- NEVER make general statements without backing them with provided sources
+Present specific data and facts from your research. For EVERY factual claim about current events or news:
+- YOU MUST cite the source using this EXACT format: [SOURCE:Title|URL]
+- Place the source tag immediately after the fact
+- Example: "Egypt's GDP grew by 3.2% in Q4 2024 [SOURCE:World Bank Report|https://worldbank.org/report], showing recovery in the tourism sector."
+- Use real data from the toolResults.web_search.results array provided
+- Each result has: title, link, snippet, source
+
+CRITICAL: When web_search results are provided in toolResults, you MUST use them and cite them properly.
 
 **Analysis**
 Connect the findings to the user's financial situation:
-- Reference user's actual portfolio data when relevant
+- Reference user's actual portfolio data when relevant (from toolResults.portfolio_analysis)
 - Explain implications for their currency (${userCurrency})
 - Discuss market impacts on their assets/goals
 
@@ -761,18 +763,26 @@ Provide clear guidance on actions to take (or not take):
 - Explain the reasoning based on the data
 - Include risk considerations
 
-**Sources**
-List all sources cited in the format:
-• [Title](URL) - domain
+🚨 SOURCE CITATION EXAMPLES:
 
-🚨 CRITICAL CITATION RULES:
-- You MUST cite sources for ALL factual claims about current events, news, or market conditions
-- Use this EXACT format: [SOURCE:Title|URL] - Example: "According to the report [SOURCE:Reuters|https://reuters.com/article], GDP grew by 3%"
-- The format MUST be [SOURCE:Title|URL] with the pipe character separating title and URL
-- Sources MUST come from the toolResults provided - do NOT make up sources
-- If no sources are available in toolResults, acknowledge the limitation
-- Never present research findings without proper attribution
-- Put sources inline where the fact is mentioned, not at the end`;
+From web_search results like:
+{
+  "title": "Gaza Conflict Economic Impact Report",
+  "link": "https://example.com/report",
+  "snippet": "Analysis shows regional impact..."
+}
+
+Write: "The conflict has impacted regional trade [SOURCE:Gaza Conflict Economic Impact Report|https://example.com/report], with shipping routes affected."
+
+MULTIPLE SOURCES:
+"Tourism declined 15% in Q4 [SOURCE:World Bank Report|https://worldbank.org/q4], while foreign investment dropped 8% [SOURCE:IMF Analysis|https://imf.org/egypt]."
+
+🚨 MANDATORY RULES:
+- If toolResults.web_search exists and has results, you MUST cite at least 2-3 sources from it
+- Use the EXACT format [SOURCE:Title|URL] - no other format is acceptable
+- Sources MUST come from toolResults.web_search.results - do NOT make up sources
+- If no web_search results provided, state "Based on market data analysis" instead
+- Never present research findings without proper attribution`;
 
 
 
