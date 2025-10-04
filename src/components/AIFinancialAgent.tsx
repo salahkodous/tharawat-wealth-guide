@@ -77,45 +77,43 @@ const AIFinancialAgent = () => {
   };
 
   const formatAgentResponse = (content: string) => {
-    // Parse content with source citations in format [SOURCE:Title|URL]
-    const parts = [];
-    let lastIndex = 0;
-    // Updated regex to handle both [SOURCE:Title|URL] and [SOURCE: Title|URL] (with optional space)
+    // Extract all sources and remove them from the text
+    const sources: Array<{ title: string; url: string }> = [];
     const sourceRegex = /\[SOURCE:\s*(.*?)\|(.*?)\]/g;
     let match;
-    let sourceIndex = 1;
-
+    
+    // Collect all sources
     while ((match = sourceRegex.exec(content)) !== null) {
-      // Add text before the source
-      if (match.index > lastIndex) {
-        parts.push(
-          <span key={`text-${lastIndex}`}>
-            {content.substring(lastIndex, match.index)}
-          </span>
-        );
-      }
-
-      // Add the source chip
-      const title = match[1];
-      const url = match[2];
-      parts.push(
-        <SourceChip key={`source-${match.index}`} title={title} url={url} index={sourceIndex} />
-      );
-      sourceIndex++;
-
-      lastIndex = match.index + match[0].length;
+      sources.push({
+        title: match[1].trim(),
+        url: match[2].trim()
+      });
     }
-
-    // Add remaining text
-    if (lastIndex < content.length) {
-      parts.push(
-        <span key={`text-${lastIndex}`}>
-          {content.substring(lastIndex)}
-        </span>
-      );
-    }
-
-    return <div className="text-base leading-relaxed whitespace-pre-wrap">{parts}</div>;
+    
+    // Remove all source tags from content
+    const cleanedContent = content.replace(sourceRegex, '').replace(/\s{2,}/g, ' ').trim();
+    
+    // Return content with sources at the end if any exist
+    return (
+      <div className="text-base leading-relaxed whitespace-pre-wrap">
+        <div>{cleanedContent}</div>
+        {sources.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-sm font-semibold mb-2">Sources:</p>
+            <div className="flex flex-wrap gap-2">
+              {sources.map((source, index) => (
+                <SourceChip 
+                  key={`source-${index}`} 
+                  title={source.title} 
+                  url={source.url}
+                  index={index + 1}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const sendMessage = async () => {
