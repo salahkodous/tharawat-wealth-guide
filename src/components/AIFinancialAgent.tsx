@@ -121,6 +121,9 @@ const AIFinancialAgent = () => {
   const sendMessage = async () => {
     if (!input.trim() || isLoading || !user) return;
 
+    // Check if this is the first message in the chat
+    const isFirstMessage = messages.length === 0;
+
     // Create a new chat if none exists
     let chatId = currentChatId;
     if (!chatId) {
@@ -171,7 +174,7 @@ const AIFinancialAgent = () => {
       setMessages(prev => [...prev, agentMessage]);
 
       // If this is the first message exchange, generate a title from the user's message
-      if (messages.length === 1 && chatId) {
+      if (isFirstMessage && chatId) {
         const title = messageToSend.length > 50 
           ? messageToSend.substring(0, 47) + '...'
           : messageToSend;
