@@ -432,6 +432,13 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
                   index === self.findIndex(t => t.link === item.link)
                 ).slice(0, 5);
                 
+                // Log search results for debugging
+                console.log('Web search results:', JSON.stringify(uniqueResults.map(r => ({
+                  title: r.title,
+                  url: r.link,
+                  source: r.source
+                })), null, 2));
+                
                 // Extract key insights and topics
                 const keyInsights = uniqueResults.map(item => 
                   `${item.title}: ${item.snippet}`
