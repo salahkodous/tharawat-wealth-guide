@@ -93,3 +93,15 @@ verify_jwt = false
 
 [functions.send-verification-email]
 verify_jwt = false
+
+[functions.rag-embeddings]
+verify_jwt = false
+
+[functions.rag-retrieval]
+verify_jwt = false
+
+[functions.rag-scraper]
+verify_jwt = false
+
+[functions.rag-grounded-agent]
+verify_jwt = false
