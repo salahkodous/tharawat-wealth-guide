@@ -144,7 +144,8 @@ const AIFinancialAgent = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-router-agent', {
+      // Use RAG-powered agent for grounded responses
+      const { data, error } = await supabase.functions.invoke('rag-agent', {
         body: {
           message: messageToSend,
           userId: user.id,

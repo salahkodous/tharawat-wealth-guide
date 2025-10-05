@@ -94,14 +94,11 @@ verify_jwt = false
 [functions.send-verification-email]
 verify_jwt = false
 
-[functions.rag-embeddings]
+[functions.rag-retriever]
 verify_jwt = false
 
-[functions.rag-retrieval]
+[functions.rag-ingest]
 verify_jwt = false
 
-[functions.rag-scraper]
-verify_jwt = false
-
-[functions.rag-grounded-agent]
+[functions.rag-agent]
 verify_jwt = false
