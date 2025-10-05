@@ -220,20 +220,41 @@ serve(async (req) => {
       }
     }
 
-    // Step 3B: Keyword Search via Google (for fresh, time-sensitive content)
+    // Detect input language (Arabic vs English)
+    const isArabic = /[\u0600-\u06FF]/.test(message);
+    const responseLanguage = isArabic ? 'Arabic' : 'English';
+    console.log(`🌐 Input language detected: ${responseLanguage}`);
+
+    // Step 3B: Egypt-focused Keyword Search via Google (for fresh, time-sensitive content)
     if (toolSelection.useWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
-      console.log('🔑 Keyword search via Google:', toolSelection.searchQuery);
+      console.log('🔑 Egypt-focused keyword search via Google:', toolSelection.searchQuery);
       
       if (!FIRECRAWL_API_KEY) {
         console.error('⚠️ FIRECRAWL_API_KEY missing - will skip article scraping');
       }
       
-      // Build search with time constraint
-      const dateRestrict = toolSelection.dateFilter || (toolSelection.timeConstraint === 'realtime' ? 'd1' : toolSelection.timeConstraint === 'recent' ? 'w1' : 'm1');
-      const searchQuery = encodeURIComponent(toolSelection.searchQuery || message);
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&dateRestrict=${dateRestrict}&num=10`;
+      // Add Egypt-specific context to search for better local results
+      const baseQuery = toolSelection.searchQuery || message;
+      const egyptFocusedQuery = isArabic 
+        ? `${baseQuery} مصر OR السوق المصري OR البورصة المصرية OR القاهرة`
+        : `${baseQuery} Egypt OR Egyptian market OR EGX OR Cairo`;
       
-      console.log(`📅 Date filter: ${dateRestrict}, Query: "${toolSelection.searchQuery || message}"`);
+      // Build search with time constraint and Egypt focus
+      const dateRestrict = toolSelection.dateFilter || (toolSelection.timeConstraint === 'realtime' ? 'd1' : toolSelection.timeConstraint === 'recent' ? 'w1' : 'm1');
+      const searchParams = new URLSearchParams({
+        key: GOOGLE_SEARCH_API_KEY,
+        cx: GOOGLE_SEARCH_ENGINE_ID,
+        q: egyptFocusedQuery,
+        dateRestrict,
+        num: '10',
+        lr: isArabic ? 'lang_ar' : 'lang_en', // Language restriction
+        gl: 'eg', // Geographic location: Egypt
+      });
+      
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`;
+      
+      console.log(`📅 Date filter: ${dateRestrict}, Language: ${isArabic ? 'Arabic' : 'English'}, Region: Egypt`);
+      console.log(`🔍 Egypt-focused query: "${egyptFocusedQuery}"`);
       const searchResponse = await fetch(searchUrl);
       if (searchResponse.ok) {
         const searchData = await searchResponse.json();
@@ -447,8 +468,8 @@ RECENT NEWS ARTICLES:
 ${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentiment})`).join('\n') || 'None'}
 `;
 
-    // Step 7: Generate response with Groq using all context
-    console.log('Generating response with Groq AI...');
+    // Step 7: Generate bilingual response with Groq using all context
+    console.log(`Generating ${responseLanguage} response with Groq AI...`);
     const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -459,37 +480,48 @@ ${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentim
         model: 'llama-3.3-70b-versatile',
         messages: [{
           role: 'system',
-          content: `You are a comprehensive financial advisor AI with deep access to the user's complete financial profile. You provide informed, personalized advice based on their actual financial situation, market data, and current news.
+          content: `You are an Egyptian financial advisor AI specializing in the Egyptian market (EGX, Egyptian pounds, local regulations). You have deep access to the user's complete financial profile.
+
+🌍 CRITICAL: Respond ENTIRELY in ${responseLanguage}. Match the user's language exactly.
+
+💰 CURRENCY: All monetary values should be in Egyptian Pounds (EGP) unless explicitly stated otherwise.
+
+🇪🇬 MARKET CONTEXT: Focus on Egyptian market dynamics, EGX stocks, Egyptian regulations, and local economic conditions.
 
 QUERY ANALYSIS:
 - Intent: ${toolSelection.intent}
 - Time Constraint: ${toolSelection.timeConstraint}
+- Language: ${responseLanguage}
 - Retrieval Strategy: ${toolSelection.reasoning}
 
 ${userFinancialContext}
 
-EXTERNAL KNOWLEDGE & RESEARCH (${knowledgeContext.length} sources):
+EXTERNAL KNOWLEDGE & RESEARCH (${knowledgeContext.length} sources - may include Arabic sources):
 ${contextText}
 
 CRITICAL INSTRUCTIONS - READ CAREFULLY:
-1. The sources above WERE SUCCESSFULLY RETRIEVED and contain the latest news
-2. You MUST analyze and reference the specific content provided in the EXTERNAL KNOWLEDGE section
-3. DO NOT say "the provided articles don't mention..." when they clearly do
-4. Start your response by summarizing the KEY POINTS from the articles above
-5. Then connect those specific points to the user's portfolio
+1. Respond ENTIRELY in ${responseLanguage} - no mixing languages
+2. Use EGP as the default currency for all amounts
+3. The sources above WERE SUCCESSFULLY RETRIEVED and contain the latest news
+4. You MUST analyze and reference the specific content provided in the EXTERNAL KNOWLEDGE section
+5. DO NOT say "the provided articles don't mention..." when they clearly do
+6. Start your response by summarizing the KEY POINTS from the articles above
+7. Then connect those specific points to the user's Egyptian portfolio
+8. Consider Egyptian market regulations, tax implications, and local economic conditions
 
 YOUR ROLE:
-- Analyze the ACTUAL CONTENT from the ${knowledgeContext.length} sources provided above
+- Analyze the ACTUAL CONTENT from the ${knowledgeContext.length} sources (Arabic and English) provided above
 - Extract specific facts, events, and data from these sources
-- Connect these specific events to the user's portfolio holdings
-- Provide actionable recommendations based on the real news content
+- Connect these specific events to the user's Egyptian portfolio holdings
+- Provide actionable recommendations based on the real news content and Egyptian market context
 - Reference specific details from the articles (quotes, data points, events)
+- All financial advice should be relevant to Egyptian investors
 
-RESPONSE STRUCTURE:
+RESPONSE STRUCTURE (in ${responseLanguage}):
 1. **Latest News Summary:** Summarize the key events/developments from the sources
-2. **Portfolio Impact Analysis:** Connect specific news to specific assets in their portfolio
-3. **Risk Assessment:** Identify potential risks based on the news
-4. **Recommendations:** Provide specific actions they should consider
+2. **Portfolio Impact Analysis:** Connect specific news to specific Egyptian assets in their portfolio
+3. **Risk Assessment:** Identify potential risks based on Egyptian market conditions
+4. **Recommendations:** Provide specific actions appropriate for Egyptian investors
 
 NEVER say "the articles don't mention" or "no specific information" - you have ${knowledgeContext.length} sources with full content to analyze.`,
         }, {
