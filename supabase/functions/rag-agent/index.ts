@@ -15,16 +15,19 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-// Tool selection and routing logic
+// Advanced Router Agent with intent classification
 async function analyzeQueryAndSelectTools(message: string): Promise<{
+  intent: 'price_check' | 'recent_news' | 'research' | 'portfolio_analysis' | 'general';
+  timeConstraint: 'realtime' | 'recent' | 'any';
   useKnowledgeBase: boolean;
   useWebSearch: boolean;
-  useFirecrawl: boolean;
+  useSemanticSearch: boolean;
+  useKeywordSearch: boolean;
   searchQuery?: string;
-  crawlUrl?: string;
+  dateFilter?: string;
   reasoning: string;
 }> {
-  console.log('Analyzing query to select appropriate tools...');
+  console.log('🔍 Router Agent analyzing query intent...');
   
   const analysisResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -36,32 +39,44 @@ async function analyzeQueryAndSelectTools(message: string): Promise<{
       model: 'llama-3.3-70b-versatile',
       messages: [{
         role: 'system',
-        content: `You are a tool selection AI. Analyze the user's query and decide which tools to use:
-- Knowledge Base: For questions about stored/historical information, past conversations, or already-known data
-- Web Search (Google): ALWAYS use for news, current events, market updates, geopolitical events
-- Firecrawl: Automatically used with web search to get full article content
+        content: `You are an intelligent routing agent. Analyze queries and determine optimal retrieval strategy.
 
-CRITICAL SEARCH QUERY RULES:
-- For news queries, create specific search terms like "Gaza latest news 2025" or "Gaza conflict October 2025"
-- Include the current year (2025) for recent news
-- Add keywords like "latest", "today", "news", "update" for recent articles
-- Be specific about the topic (e.g., "Gaza economy impact" not just "Gaza")
+INTENT CLASSIFICATION:
+- price_check: Real-time price, market data (use external APIs)
+- recent_news: Latest news, events (use keyword search + time filter)
+- research: Deep analysis, concepts (use semantic vector search)
+- portfolio_analysis: User's holdings analysis (use user data + relevant news)
+- general: General questions (hybrid approach)
 
-Return ONLY a JSON object with this exact structure:
+TIME CONSTRAINTS:
+- realtime: Last 24 hours (today, now, current)
+- recent: Last 7-30 days (latest, recent, this week/month)
+- any: No time constraint
+
+SEARCH STRATEGY:
+- useKnowledgeBase: Historical knowledge, past conversations
+- useWebSearch: Google Search for fresh content
+- useSemanticSearch: Vector DB for conceptual matches
+- useKeywordSearch: Exact matches, named entities, dates
+
+Return JSON:
 {
+  "intent": "recent_news" | "price_check" | "research" | "portfolio_analysis" | "general",
+  "timeConstraint": "realtime" | "recent" | "any",
   "useKnowledgeBase": boolean,
   "useWebSearch": boolean,
-  "useFirecrawl": boolean,
-  "searchQuery": "optimized news search query with year and keywords" or null,
-  "crawlUrl": "URL to crawl with Firecrawl" or null,
-  "reasoning": "brief explanation of tool selection"
+  "useSemanticSearch": boolean,
+  "useKeywordSearch": boolean,
+  "searchQuery": "optimized query with keywords and year",
+  "dateFilter": "m1" | "w1" | "d1" or null,
+  "reasoning": "explanation"
 }`,
       }, {
         role: 'user',
-        content: `Analyze this query and select appropriate tools: "${message}"`,
+        content: `Analyze: "${message}"`,
       }],
-      temperature: 0.3,
-      max_tokens: 300,
+      temperature: 0.2,
+      max_tokens: 400,
     }),
   });
 
@@ -69,29 +84,31 @@ Return ONLY a JSON object with this exact structure:
     const data = await analysisResponse.json();
     try {
       let content = data.choices[0].message.content;
-      // Remove markdown code blocks if present
       content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const result = JSON.parse(content);
-      console.log('Tool selection:', result);
+      console.log('📊 Router decision:', result);
       return result;
     } catch (e) {
-      console.error('Failed to parse tool selection:', e, data.choices[0].message.content);
+      console.error('Failed to parse routing decision:', e);
     }
   }
 
-  // Fallback to simple heuristics
-  const needsWebSearch = message.toLowerCase().includes('latest') ||
-                         message.toLowerCase().includes('recent') ||
-                         message.toLowerCase().includes('news') ||
-                         message.toLowerCase().includes('today') ||
-                         message.toLowerCase().includes('current');
+  // Enhanced fallback heuristics
+  const lowerMsg = message.toLowerCase();
+  const isTimeSensitive = /today|now|latest|recent|current|this (week|month)/.test(lowerMsg);
+  const isPriceQuery = /price|cost|value|worth|trading at/.test(lowerMsg);
+  const isNewsQuery = /news|event|happen|update/.test(lowerMsg);
   
   return {
+    intent: isPriceQuery ? 'price_check' : isNewsQuery ? 'recent_news' : 'general',
+    timeConstraint: isTimeSensitive ? 'recent' : 'any',
     useKnowledgeBase: true,
-    useWebSearch: needsWebSearch,
-    useFirecrawl: false,
-    searchQuery: needsWebSearch ? message : undefined,
-    reasoning: 'Fallback heuristic selection',
+    useWebSearch: isTimeSensitive || isNewsQuery,
+    useSemanticSearch: !isPriceQuery,
+    useKeywordSearch: isTimeSensitive || isPriceQuery,
+    searchQuery: message,
+    dateFilter: isTimeSensitive ? 'm1' : undefined,
+    reasoning: 'Fallback heuristic classification',
   };
 }
 
@@ -155,16 +172,18 @@ serve(async (req) => {
     console.log('Fetching user financial data...');
     const userData = await getUserFinancialData(userId, supabase);
 
-    // Step 2: Intelligent tool selection
+    // Step 2: Advanced Router Agent
     const toolSelection = await analyzeQueryAndSelectTools(message);
-    console.log('Tool selection reasoning:', toolSelection.reasoning);
+    console.log(`📋 Intent: ${toolSelection.intent}, Time: ${toolSelection.timeConstraint}`);
+    console.log('💡 Reasoning:', toolSelection.reasoning);
 
     let knowledgeContext: any[] = [];
     let sources: any[] = [];
+    const seenUrls = new Set<string>();
 
-    // Step 3: Retrieve from knowledge base if selected
-    if (toolSelection.useKnowledgeBase) {
-      console.log('Retrieving from knowledge base...');
+    // Step 3A: Semantic Vector Search (for conceptual queries)
+    if (toolSelection.useSemanticSearch) {
+      console.log('🔮 Semantic vector search...');
       const retrievalResponse = await fetch(`${supabaseUrl}/functions/v1/rag-retriever`, {
         method: 'POST',
         headers: {
@@ -179,31 +198,42 @@ serve(async (req) => {
 
       if (retrievalResponse.ok) {
         const retrievalData = await retrievalResponse.json();
-        knowledgeContext = retrievalData.results || [];
-        console.log(`Retrieved ${knowledgeContext.length} knowledge documents`);
+        const semanticResults = retrievalData.results || [];
+        console.log(`✓ Retrieved ${semanticResults.length} semantic matches`);
         
-        sources = knowledgeContext.map((doc: any) => ({
-          title: doc.metadata?.title || 'Knowledge Base',
-          url: doc.sourceUrl,
-          type: doc.sourceType,
-        })).filter((s: any) => s.url);
+        semanticResults.forEach((doc: any) => {
+          const url = doc.sourceUrl;
+          if (url && !seenUrls.has(url)) {
+            seenUrls.add(url);
+            knowledgeContext.push({
+              ...doc,
+              retrievalType: 'semantic',
+              score: doc.similarity || 0.8,
+            });
+            sources.push({
+              title: doc.metadata?.title || 'Knowledge Base',
+              url,
+              type: 'semantic_match',
+            });
+          }
+        });
       }
     }
 
-    // Step 4: Fetch from web search if selected
+    // Step 3B: Keyword Search via Google (for fresh, time-sensitive content)
     if (toolSelection.useWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
-      console.log('Fetching top recent news from Google Search:', toolSelection.searchQuery);
+      console.log('🔑 Keyword search via Google:', toolSelection.searchQuery);
       
       if (!FIRECRAWL_API_KEY) {
-        console.error('CRITICAL: FIRECRAWL_API_KEY not found! Cannot retrieve full articles.');
+        console.error('⚠️ FIRECRAWL_API_KEY missing - will skip article scraping');
       }
       
-      // Use the AI-optimized search query directly (it already has year and keywords)
-      const searchQuery = encodeURIComponent(toolSelection.searchQuery || `${message} latest news 2025`);
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&dateRestrict=m1&num=10`;
+      // Build search with time constraint
+      const dateRestrict = toolSelection.dateFilter || (toolSelection.timeConstraint === 'realtime' ? 'd1' : toolSelection.timeConstraint === 'recent' ? 'w1' : 'm1');
+      const searchQuery = encodeURIComponent(toolSelection.searchQuery || message);
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&dateRestrict=${dateRestrict}&num=10`;
       
-      console.log('Searching for:', toolSelection.searchQuery || message);
-      console.log('Full search URL:', searchUrl);
+      console.log(`📅 Date filter: ${dateRestrict}, Query: "${toolSelection.searchQuery || message}"`);
       const searchResponse = await fetch(searchUrl);
       if (searchResponse.ok) {
         const searchData = await searchResponse.json();
@@ -221,26 +251,36 @@ serve(async (req) => {
           console.log(`     URL: ${item.link}`);
         });
         
-        // Keep URLs that look like articles (less aggressive filtering)
+        // Deduplicate and filter articles
         const articleItems = (searchData.items || []).filter((item: any) => {
           const url = item.link.toLowerCase();
-          // Only exclude obvious homepages
-          const isObviousHomepage = url.match(/^https?:\/\/[^\/]+\/?$/);
-          return !isObviousHomepage;
+          if (seenUrls.has(url)) return false; // Already have this
+          const isHomepage = url.match(/^https?:\/\/[^\/]+\/?$/);
+          return !isHomepage;
         });
         
-        console.log(`Using ${articleItems.length} URLs (removed ${resultCount - articleItems.length} obvious homepages)`);
+        console.log(`📰 Found ${articleItems.length} unique articles (${resultCount - articleItems.length} duplicates removed)`);
         
-        // MUST use Firecrawl for full article content
         if (!FIRECRAWL_API_KEY) {
-          console.error('CRITICAL: Cannot proceed without FIRECRAWL_API_KEY');
-          throw new Error('Firecrawl API key required for news retrieval');
-        }
-        
-        if (articleItems.length > 0) {
+          console.warn('⚠️ Skipping Firecrawl - using snippets only');
+          // Fallback to snippets
+          articleItems.slice(0, 5).forEach((item: any) => {
+            seenUrls.add(item.link);
+            knowledgeContext.push({
+              content: item.snippet,
+              metadata: { title: item.title, source: 'Google Search' },
+              sourceUrl: item.link,
+              retrievalType: 'keyword',
+              score: 0.9,
+            });
+            sources.push({ title: item.title, url: item.link, type: 'news_article' });
+          });
+        } else if (articleItems.length > 0) {
+          // Scrape top articles with Firecrawl
           for (const item of articleItems.slice(0, 3)) {
+            if (seenUrls.has(item.link)) continue;
             try {
-              console.log('Firecrawl: Scraping article:', item.title, 'URL:', item.link);
+              console.log('🔥 Firecrawl scraping:', item.title);
               const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
                 method: 'POST',
                 headers: {
@@ -265,6 +305,20 @@ serve(async (req) => {
                 }
                 
                 const actualContent = content || item.snippet;
+                seenUrls.add(item.link);
+                
+                knowledgeContext.push({
+                  content: actualContent.substring(0, 12000),
+                  metadata: { 
+                    title: item.title, 
+                    source: 'Firecrawl',
+                    date: new Date().toISOString(),
+                    domain: new URL(item.link).hostname,
+                  },
+                  sourceUrl: item.link,
+                  retrievalType: 'keyword',
+                  score: 0.95, // Fresh content gets high score
+                });
                 
                 sources.push({
                   title: item.title,
@@ -272,17 +326,7 @@ serve(async (req) => {
                   type: 'news_article',
                 });
                 
-                knowledgeContext.push({
-                  content: actualContent.substring(0, 12000), // Large chunk for comprehensive analysis
-                  metadata: { 
-                    title: item.title, 
-                    source: 'Firecrawl',
-                    date: new Date().toISOString()
-                  },
-                  sourceUrl: item.link,
-                });
-                
-                console.log('✓ Successfully crawled full article:', item.title);
+                console.log('✅ Full article scraped:', item.title);
               } else {
                 const errorText = await firecrawlResponse.text();
                 console.error('Firecrawl API error:', firecrawlResponse.status, errorText);
@@ -302,9 +346,22 @@ serve(async (req) => {
       }
     }
 
-    // Step 5: Use Firecrawl for specific URL analysis if requested
-    if (toolSelection.useFirecrawl && toolSelection.crawlUrl && FIRECRAWL_API_KEY) {
-      console.log('Using Firecrawl to analyze specific URL:', toolSelection.crawlUrl);
+    // Step 4: Rank and deduplicate context
+    console.log(`📊 Total context items: ${knowledgeContext.length}, Unique sources: ${sources.length}`);
+    
+    // Sort by score (freshness + relevance)
+    knowledgeContext.sort((a, b) => (b.score || 0) - (a.score || 0));
+    
+    // Take top results (balance keyword + semantic)
+    const maxResults = 6;
+    knowledgeContext = knowledgeContext.slice(0, maxResults);
+    
+    console.log(`✂️ Using top ${knowledgeContext.length} results (${knowledgeContext.filter(c => c.retrievalType === 'keyword').length} keyword, ${knowledgeContext.filter(c => c.retrievalType === 'semantic').length} semantic)`);
+
+    // Step 5: Optional deep analysis of specific URL
+    if (toolSelection.searchQuery?.startsWith('http') && FIRECRAWL_API_KEY) {
+      const targetUrl = toolSelection.searchQuery;
+      console.log('🎯 Deep URL analysis:', targetUrl);
       
       try {
         const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -314,8 +371,9 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            url: toolSelection.crawlUrl,
+            url: targetUrl,
             formats: ['markdown'],
+            onlyMainContent: true,
           }),
         });
 
@@ -323,24 +381,25 @@ serve(async (req) => {
           const firecrawlData = await firecrawlResponse.json();
           const content = firecrawlData.data?.markdown || '';
           
-          if (content) {
+          if (content && !seenUrls.has(targetUrl)) {
+            seenUrls.add(targetUrl);
+            knowledgeContext.push({
+              content: content.substring(0, 10000),
+              metadata: { title: firecrawlData.data?.title, source: 'Deep Analysis' },
+              sourceUrl: targetUrl,
+              retrievalType: 'deep_crawl',
+              score: 1.0,
+            });
             sources.push({
-              title: firecrawlData.data?.title || 'Website Analysis',
-              url: toolSelection.crawlUrl,
+              title: firecrawlData.data?.title || 'Deep Analysis',
+              url: targetUrl,
               type: 'deep_analysis',
             });
-
-            knowledgeContext.push({
-              content: content.substring(0, 8000),
-              metadata: { title: firecrawlData.data?.title, source: 'Firecrawl Deep Analysis' },
-              sourceUrl: toolSelection.crawlUrl,
-            });
-
-            console.log('Successfully retrieved content from Firecrawl');
+            console.log('✅ Deep crawl complete');
           }
         }
       } catch (error) {
-        console.error('Firecrawl error:', error);
+        console.error('Deep crawl error:', error);
       }
     }
 
@@ -402,8 +461,10 @@ ${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentim
           role: 'system',
           content: `You are a comprehensive financial advisor AI with deep access to the user's complete financial profile. You provide informed, personalized advice based on their actual financial situation, market data, and current news.
 
-TOOL SELECTION REASONING:
-${toolSelection.reasoning}
+QUERY ANALYSIS:
+- Intent: ${toolSelection.intent}
+- Time Constraint: ${toolSelection.timeConstraint}
+- Retrieval Strategy: ${toolSelection.reasoning}
 
 ${userFinancialContext}
 
@@ -485,9 +546,15 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
       sourcesUsed: sources.length,
       contextRetrieved: knowledgeContext.length,
       toolsUsed: {
-        knowledgeBase: toolSelection.useKnowledgeBase,
-        webSearch: toolSelection.useWebSearch,
-        firecrawl: toolSelection.useFirecrawl,
+        intent: toolSelection.intent,
+        timeConstraint: toolSelection.timeConstraint,
+        semanticSearch: toolSelection.useSemanticSearch,
+        keywordSearch: toolSelection.useKeywordSearch,
+      },
+      retrievalBreakdown: {
+        keyword: knowledgeContext.filter(c => c.retrievalType === 'keyword').length,
+        semantic: knowledgeContext.filter(c => c.retrievalType === 'semantic').length,
+        deepCrawl: knowledgeContext.filter(c => c.retrievalType === 'deep_crawl').length,
       },
       reasoning: toolSelection.reasoning,
     }), {
