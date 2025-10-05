@@ -518,15 +518,15 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
     const aiData = await aiResponse.json();
     let response = aiData.choices[0].message.content;
 
-    // Step 8: Format source citations properly
+    // Step 8: Format sources as structured data (not markdown)
     const uniqueSources = sources.filter((s: any, idx: number, self: any[]) => 
       self.findIndex((x: any) => x.url === s.url) === idx
     );
     
+    // Add source tags inline for frontend to parse
     if (uniqueSources.length > 0) {
-      response += '\n\n**Sources:**\n';
       uniqueSources.forEach((source: any, idx: number) => {
-        response += `${idx + 1}. [${source.title}](${source.url})\n`;
+        response += `[SOURCE: ${source.title}|${source.url}]`;
       });
     }
 
