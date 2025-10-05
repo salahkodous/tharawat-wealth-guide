@@ -33,65 +33,53 @@ async function classifyQuery(message: string, groqApiKey: string) {
       model: 'llama-3.1-8b-instant',
       messages: [{
         role: 'system',
-        content: `Analyze this financial query and return a JSON response with query type, needed context, response type, and tools.
+        content: `You are a financial query classifier. Analyze the query and return ONLY a JSON object.
+
+CRITICAL ARABIC TERM DETECTION:
+- If query contains "صناديق" or "صندوق" → type MUST be "product_research", toolsNeeded MUST include "web_search"
+- If query contains "شهادات" or "شهادة" → type MUST be "product_research", toolsNeeded MUST include "web_search"  
+- If query contains "وديعة" or "ودائع" → type MUST be "product_research", toolsNeeded MUST include "web_search"
+- If query contains "استثمار" with "بنك" → type MUST be "product_research", toolsNeeded MUST include "web_search"
+- If query contains "fund" or "funds" or "mutual fund" → type MUST be "product_research", toolsNeeded MUST include "web_search"
+- If query asks about "أخبار" or "news" ONLY → type is "news_analysis", use "egyptian_news" tool
 
 QUERY TYPES:
-- greeting: Simple greetings, hellos, casual conversation
-- quick_value: Asking for specific numbers (income, net worth, balance, gold prices, currency rates, stock prices)
-- portfolio_analysis: Holdings, performance, diversification questions
-- debt_management: Debt strategy, payments, consolidation questions  
-- investment_advice: Investment recommendations, buying/selling, asset allocation, fund selection
-- product_research: Researching specific financial products (bank funds, ETFs, mutual funds, certificates)
-- news_analysis: Market news impact on portfolio, latest news requests
-- goal_tracking: Financial goals progress and planning
-- expense_analysis: Spending patterns, budgeting advice
-- income_optimization: Income strategies, tax efficiency
-- market_research: Market trends, economic analysis, company/industry information
-- risk_assessment: Risk evaluation, insurance planning
-- general_financial: General financial advice and education
+- greeting: Simple greetings only
+- quick_value: Direct price/value questions (gold price, USD rate, stock price)
+- product_research: Bank products, funds, certificates, investment products
+- investment_advice: General investment strategy, asset allocation
+- news_analysis: News summaries, market news (NOT product research)
+- portfolio_analysis: User's holdings analysis
+- market_research: Company/economic research
+- general_financial: General advice
 
-CONTEXT TYPES: personal_finances, debts, assets, goals, income, expenses, deposits, news, bank, fund, etf
+CONTEXT: personal_finances, debts, assets, goals, income, expenses, deposits, news, bank, fund, etf
 
-RESPONSE TYPES:
-- brief: Short greeting or simple answer (50-100 tokens)
-- value: Just return a number/value with minimal context (20-50 tokens)  
-- medium: Focused analysis with key points (300-500 tokens)
-- detailed: Comprehensive analysis with full insights (800-1500 tokens)
+RESPONSE TYPES: brief, value, medium, detailed
 
-TOOLS NEEDED:
-- web_search: For researching Egyptian investment products (bank funds, certificates), companies, opportunities NOT in database
-- egyptian_news: For Egyptian stock market news specifically
-- portfolio_analysis: For detailed portfolio insights and recommendations
-- goal_planning: For long-term financial planning and projections
-- risk_analysis: For risk assessment and insurance planning
+TOOLS:
+- web_search: For Egyptian bank products, funds, certificates, company research
+- egyptian_news: For Egyptian market NEWS only (NOT for product research)
+- portfolio_analysis: User portfolio insights
+- goal_planning: Financial planning
+- risk_analysis: Risk assessment
 
-CRITICAL TOOL RULES:
-- For queries about Egyptian BANK PRODUCTS (صناديق، شهادات، وديعة) → MUST use web_search to find latest offerings
-- For queries about specific FUNDS or ETFs not in database → MUST use web_search
-- DO NOT use web_search for: gold prices, currency rates, stock prices, indices - these are in our database
-- For queries about NEWS, current events, geopolitical situations → MUST use web_search
-- For investment product research in Egypt → MUST use web_search with Egyptian banking terms
-
-Return ONLY this JSON format:
+Return ONLY this JSON:
 {
   "type": "query_type",
   "context": ["context1", "context2"],
   "priority": "high|medium|low",
   "responseType": "brief|value|medium|detailed",
-  "toolsNeeded": ["tool1", "tool2"]
+  "toolsNeeded": ["tool1"]
 }
 
 Examples:
-- "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "24 karat gold price" → {"type":"quick_value","context":["assets","gold"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "استثمار الفائض من دخلي في صناديق البنوك" → {"type":"product_research","context":["bank","fund","personal_finances"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
-- "بنوك مصر صناديق الأسهم" → {"type":"product_research","context":["bank","fund","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
-- "Bank stock funds Egypt" → {"type":"product_research","context":["bank","fund"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
-- "شهادات استثمار البنك الأهلي" → {"type":"product_research","context":["bank"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
-- "USD to EGP rate" → {"type":"quick_value","context":["assets","currency"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "Egyptian stock market news" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
-- "Apple stock information" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
-- "How should I invest $10k?" → {"type":"investment_advice","context":["personal_finances","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["portfolio_analysis"]}`
+- "صناديق الاستثمار في الأسهم" → {"type":"product_research","context":["bank","fund","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
+- "صناديق الاستثمار البنوك المصرية" → {"type":"product_research","context":["bank","fund"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
+- "شهادات استثمار 18%" → {"type":"product_research","context":["bank"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
+- "أخبار البورصة المصرية" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
+- "سعر الذهب" → {"type":"quick_value","context":["gold"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "USD to EGP" → {"type":"quick_value","context":["currency"],"priority":"low","responseType":"value","toolsNeeded":[]}`
       }, {
         role: 'user', 
         content: message
