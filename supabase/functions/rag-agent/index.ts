@@ -194,23 +194,6 @@ serve(async (req) => {
         for (const item of searchData.items || []) {
           const content = `${item.title}\n\n${item.snippet}`;
           
-          // Store in knowledge base (fire and forget)
-          fetch(`${supabaseUrl}/functions/v1/rag-ingest`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${supabaseAnonKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content,
-              metadata: { title: item.title, searchQuery: toolSelection.searchQuery },
-              sourceUrl: item.link,
-              sourceType: 'web_search',
-              userId: null,
-              validate: false,
-            }),
-          }).catch(e => console.error('Failed to ingest search result:', e));
-
           sources.push({
             title: item.title,
             url: item.link,
@@ -248,23 +231,6 @@ serve(async (req) => {
           const content = firecrawlData.data?.markdown || firecrawlData.data?.html || '';
           
           if (content) {
-            // Store in knowledge base
-            fetch(`${supabaseUrl}/functions/v1/rag-ingest`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${supabaseAnonKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                content: content.substring(0, 10000),
-                metadata: { title: firecrawlData.data?.title || 'Firecrawl Result' },
-                sourceUrl: toolSelection.crawlUrl,
-                sourceType: 'firecrawl',
-                userId: null,
-                validate: false,
-              }),
-            }).catch(e => console.error('Failed to ingest Firecrawl result:', e));
-
             sources.push({
               title: firecrawlData.data?.title || 'Website Analysis',
               url: toolSelection.crawlUrl,
@@ -395,17 +361,16 @@ GUIDELINES:
     const aiData = await aiResponse.json();
     let response = aiData.choices[0].message.content;
 
-    // Step 8: Add source citations if not already present
-    if (sources.length > 0 && !response.includes('[SOURCE:')) {
-      const uniqueSources = sources.filter((s: any, idx: number, self: any[]) => 
-        self.findIndex((x: any) => x.url === s.url) === idx
-      );
-      
-      for (const source of uniqueSources) {
-        if (!response.includes(source.url)) {
-          response += ` [SOURCE:${source.title}|${source.url}]`;
-        }
-      }
+    // Step 8: Format source citations properly
+    const uniqueSources = sources.filter((s: any, idx: number, self: any[]) => 
+      self.findIndex((x: any) => x.url === s.url) === idx
+    );
+    
+    if (uniqueSources.length > 0) {
+      response += '\n\n**Sources:**\n';
+      uniqueSources.forEach((source: any, idx: number) => {
+        response += `${idx + 1}. [${source.title}](${source.url})\n`;
+      });
     }
 
     // Step 9: Store the conversation
