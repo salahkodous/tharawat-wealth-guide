@@ -17,7 +17,7 @@ const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
 // Advanced Router Agent with intent classification
 async function analyzeQueryAndSelectTools(message: string): Promise<{
-  intent: 'price_check' | 'recent_news' | 'research' | 'portfolio_analysis' | 'general';
+  intent: 'price_check' | 'recent_news' | 'research' | 'portfolio_analysis' | 'product_research' | 'general';
   timeConstraint: 'realtime' | 'recent' | 'any';
   useKnowledgeBase: boolean;
   useWebSearch: boolean;
@@ -29,6 +29,24 @@ async function analyzeQueryAndSelectTools(message: string): Promise<{
 }> {
   console.log('🔍 Router Agent analyzing query intent...');
   
+  // Quick Arabic product detection (before expensive API call)
+  const hasProductTerms = /صناد|صندوق|شهاد|شهادة|وديع|ودائع/.test(message);
+  const hasInvestmentTerms = /استثمار|استثمارات/.test(message);
+  
+  if (hasProductTerms || (hasInvestmentTerms && /بنك|بنوك/.test(message))) {
+    console.log('🎯 Detected Arabic investment product query - using web search');
+    return {
+      intent: 'product_research',
+      timeConstraint: 'recent',
+      useKnowledgeBase: false,
+      useWebSearch: true,
+      useSemanticSearch: false,
+      useKeywordSearch: false,
+      searchQuery: message,
+      reasoning: 'Arabic investment product query detected',
+    };
+  }
+  
   const analysisResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -39,44 +57,42 @@ async function analyzeQueryAndSelectTools(message: string): Promise<{
       model: 'llama-3.3-70b-versatile',
       messages: [{
         role: 'system',
-        content: `You are an intelligent routing agent. Analyze queries and determine optimal retrieval strategy.
+        content: `You are a financial query router. Return ONLY valid JSON.
 
-INTENT CLASSIFICATION:
-- price_check: Real-time price, market data (use external APIs)
-- recent_news: Latest news, events (use keyword search + time filter)
-- research: Deep analysis, concepts (use semantic vector search)
-- portfolio_analysis: User's holdings analysis (use user data + relevant news)
-- general: General questions (hybrid approach)
+CRITICAL ARABIC DETECTION:
+- "صناديق" or "صندوق" → intent: "product_research", useWebSearch: true
+- "شهادات" or "شهادة" → intent: "product_research", useWebSearch: true  
+- "وديعة" or "ودائع" → intent: "product_research", useWebSearch: true
+- Investment funds, certificates, deposits → intent: "product_research", useWebSearch: true
 
-TIME CONSTRAINTS:
-- realtime: Last 24 hours (today, now, current)
-- recent: Last 7-30 days (latest, recent, this week/month)
-- any: No time constraint
+INTENT TYPES:
+- product_research: Bank funds, certificates, investment products (MUST use web search)
+- price_check: Real-time prices (use APIs)
+- recent_news: Latest news only
+- research: Deep analysis
+- portfolio_analysis: User holdings
+- general: Other
 
-SEARCH STRATEGY:
-- useKnowledgeBase: Historical knowledge, past conversations
-- useWebSearch: Google Search for fresh content
-- useSemanticSearch: Vector DB for conceptual matches
-- useKeywordSearch: Exact matches, named entities, dates
+TIME: realtime (24h), recent (7-30d), any
 
-Return JSON:
+Return ONLY this JSON:
 {
-  "intent": "recent_news" | "price_check" | "research" | "portfolio_analysis" | "general",
-  "timeConstraint": "realtime" | "recent" | "any",
+  "intent": "product_research|price_check|recent_news|research|portfolio_analysis|general",
+  "timeConstraint": "realtime|recent|any",
   "useKnowledgeBase": boolean,
   "useWebSearch": boolean,
   "useSemanticSearch": boolean,
   "useKeywordSearch": boolean,
-  "searchQuery": "optimized query with keywords and year",
-  "dateFilter": "m1" | "w1" | "d1" or null,
+  "searchQuery": "query",
+  "dateFilter": "m1|w1|d1" or null,
   "reasoning": "explanation"
 }`,
       }, {
         role: 'user',
         content: `Analyze: "${message}"`,
       }],
-      temperature: 0.2,
-      max_tokens: 400,
+      temperature: 0.1,
+      max_tokens: 300,
     }),
   });
 
@@ -95,16 +111,17 @@ Return JSON:
 
   // Enhanced fallback heuristics
   const lowerMsg = message.toLowerCase();
-  const isTimeSensitive = /today|now|latest|recent|current|this (week|month)/.test(lowerMsg);
-  const isPriceQuery = /price|cost|value|worth|trading at/.test(lowerMsg);
-  const isNewsQuery = /news|event|happen|update/.test(lowerMsg);
+  const isTimeSensitive = /today|now|latest|recent|current|this (week|month)|أخبار/.test(lowerMsg);
+  const isPriceQuery = /price|cost|value|worth|trading at|سعر/.test(lowerMsg);
+  const isNewsQuery = /news|event|happen|update|أخبار/.test(lowerMsg);
+  const isProductQuery = /fund|funds|certificate|deposit|صناد|صندوق|شهاد|وديع/.test(lowerMsg);
   
   return {
-    intent: isPriceQuery ? 'price_check' : isNewsQuery ? 'recent_news' : 'general',
+    intent: isProductQuery ? 'product_research' : isPriceQuery ? 'price_check' : isNewsQuery ? 'recent_news' : 'general',
     timeConstraint: isTimeSensitive ? 'recent' : 'any',
-    useKnowledgeBase: true,
-    useWebSearch: isTimeSensitive || isNewsQuery,
-    useSemanticSearch: !isPriceQuery,
+    useKnowledgeBase: !isProductQuery,
+    useWebSearch: isProductQuery || isTimeSensitive || isNewsQuery,
+    useSemanticSearch: !isPriceQuery && !isProductQuery,
     useKeywordSearch: isTimeSensitive || isPriceQuery,
     searchQuery: message,
     dateFilter: isTimeSensitive ? 'm1' : undefined,
