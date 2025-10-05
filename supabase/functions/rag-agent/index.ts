@@ -62,11 +62,14 @@ Return ONLY a JSON object with this exact structure:
   if (analysisResponse.ok) {
     const data = await analysisResponse.json();
     try {
-      const result = JSON.parse(data.choices[0].message.content);
+      let content = data.choices[0].message.content;
+      // Remove markdown code blocks if present
+      content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const result = JSON.parse(content);
       console.log('Tool selection:', result);
       return result;
     } catch (e) {
-      console.error('Failed to parse tool selection:', e);
+      console.error('Failed to parse tool selection:', e, data.choices[0].message.content);
     }
   }
 
@@ -183,35 +186,104 @@ serve(async (req) => {
 
     // Step 4: Fetch from web search if selected
     if (toolSelection.useWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
-      console.log('Fetching from Google Search:', toolSelection.searchQuery);
-      const searchQuery = encodeURIComponent(toolSelection.searchQuery || message);
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&num=5`;
+      console.log('Fetching top recent news from Google Search:', toolSelection.searchQuery);
+      
+      // Add date filter for recent results
+      const currentYear = new Date().getFullYear();
+      const searchQuery = encodeURIComponent(`${toolSelection.searchQuery || message} ${currentYear}`);
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&num=3&sort=date`;
       
       const searchResponse = await fetch(searchUrl);
       if (searchResponse.ok) {
         const searchData = await searchResponse.json();
+        console.log(`Found ${searchData.items?.length || 0} search results`);
         
-        for (const item of searchData.items || []) {
-          const content = `${item.title}\n\n${item.snippet}`;
-          
-          sources.push({
-            title: item.title,
-            url: item.link,
-            type: 'web_search',
-          });
-          
-          knowledgeContext.push({
-            content,
-            metadata: { title: item.title },
-            sourceUrl: item.link,
-          });
+        // Use Firecrawl on top 3 results for full content
+        if (FIRECRAWL_API_KEY && searchData.items?.length > 0) {
+          for (const item of searchData.items.slice(0, 3)) {
+            try {
+              console.log('Crawling article:', item.title);
+              const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  url: item.link,
+                  formats: ['markdown'],
+                }),
+              });
+
+              if (firecrawlResponse.ok) {
+                const firecrawlData = await firecrawlResponse.json();
+                const content = firecrawlData.data?.markdown || item.snippet;
+                
+                sources.push({
+                  title: item.title,
+                  url: item.link,
+                  type: 'news_article',
+                });
+                
+                knowledgeContext.push({
+                  content: content.substring(0, 8000), // Larger chunk for news articles
+                  metadata: { title: item.title, source: 'Google Search + Firecrawl' },
+                  sourceUrl: item.link,
+                });
+                
+                console.log('Successfully crawled:', item.title);
+              } else {
+                // Fallback to snippet if Firecrawl fails
+                sources.push({
+                  title: item.title,
+                  url: item.link,
+                  type: 'web_search',
+                });
+                
+                knowledgeContext.push({
+                  content: `${item.title}\n\n${item.snippet}`,
+                  metadata: { title: item.title },
+                  sourceUrl: item.link,
+                });
+              }
+            } catch (e) {
+              console.error('Firecrawl error for:', item.link, e);
+              // Fallback to snippet
+              sources.push({
+                title: item.title,
+                url: item.link,
+                type: 'web_search',
+              });
+              
+              knowledgeContext.push({
+                content: `${item.title}\n\n${item.snippet}`,
+                metadata: { title: item.title },
+                sourceUrl: item.link,
+              });
+            }
+          }
+        } else {
+          // Fallback if no Firecrawl API
+          for (const item of searchData.items || []) {
+            sources.push({
+              title: item.title,
+              url: item.link,
+              type: 'web_search',
+            });
+            
+            knowledgeContext.push({
+              content: `${item.title}\n\n${item.snippet}`,
+              metadata: { title: item.title },
+              sourceUrl: item.link,
+            });
+          }
         }
       }
     }
 
-    // Step 5: Use Firecrawl for deep website analysis if selected
+    // Step 5: Use Firecrawl for specific URL analysis if requested
     if (toolSelection.useFirecrawl && toolSelection.crawlUrl && FIRECRAWL_API_KEY) {
-      console.log('Using Firecrawl to analyze:', toolSelection.crawlUrl);
+      console.log('Using Firecrawl to analyze specific URL:', toolSelection.crawlUrl);
       
       try {
         const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -222,24 +294,24 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             url: toolSelection.crawlUrl,
-            formats: ['markdown', 'html'],
+            formats: ['markdown'],
           }),
         });
 
         if (firecrawlResponse.ok) {
           const firecrawlData = await firecrawlResponse.json();
-          const content = firecrawlData.data?.markdown || firecrawlData.data?.html || '';
+          const content = firecrawlData.data?.markdown || '';
           
           if (content) {
             sources.push({
               title: firecrawlData.data?.title || 'Website Analysis',
               url: toolSelection.crawlUrl,
-              type: 'firecrawl',
+              type: 'deep_analysis',
             });
 
             knowledgeContext.push({
-              content: content.substring(0, 5000),
-              metadata: { title: firecrawlData.data?.title },
+              content: content.substring(0, 8000),
+              metadata: { title: firecrawlData.data?.title, source: 'Firecrawl Deep Analysis' },
               sourceUrl: toolSelection.crawlUrl,
             });
 
@@ -307,7 +379,7 @@ ${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentim
         model: 'llama-3.3-70b-versatile',
         messages: [{
           role: 'system',
-          content: `You are a comprehensive financial advisor AI with deep access to the user's complete financial profile. You provide informed, personalized advice based on their actual financial situation, market data, and web research.
+          content: `You are a comprehensive financial advisor AI with deep access to the user's complete financial profile. You provide informed, personalized advice based on their actual financial situation, market data, and current news.
 
 TOOL SELECTION REASONING:
 ${toolSelection.reasoning}
@@ -318,23 +390,23 @@ EXTERNAL KNOWLEDGE & RESEARCH:
 ${contextText}
 
 YOUR ROLE:
-- You are an informative decision-making agent
+- You are an informative decision-making agent providing personalized financial insights
 - Analyze the user's complete financial picture (income, expenses, debts, assets, goals, savings)
-- Use both their personal data AND external knowledge/news to provide context-aware advice
-- Make specific recommendations based on their actual financial situation
-- Always cite sources for external information using [SOURCE:Title|URL] format
-- Be proactive in identifying opportunities or risks based on their portfolio and goals
-- Explain reasoning clearly and tie recommendations to their specific circumstances
-- Acknowledge which tools were used to gather information
+- CRITICAL: Use the LATEST news and information from the sources provided to give up-to-date analysis
+- Connect external news events directly to the user's specific portfolio and holdings
+- Make specific, actionable recommendations based on their actual financial situation
+- NEVER cite sources that weren't provided in the context above
+- Be proactive in identifying opportunities or risks based on current events and their portfolio
+- Explain how recent news impacts their specific assets and goals
 
-GUIDELINES:
-- Start by acknowledging relevant aspects of their financial situation when appropriate
-- Provide actionable, personalized advice (not generic)
-- If they ask about something that conflicts with their goals or situation, point it out
-- Use their actual numbers (income, expenses, asset values) in your analysis
-- Consider their risk tolerance based on their portfolio composition
-- If you need more information to give good advice, ask specific questions
-- Cite all sources using [SOURCE:Title|URL] format`,
+GUIDELINES FOR NEWS ANALYSIS:
+- Start by summarizing the key recent developments from the sources
+- Directly relate these developments to the user's specific holdings and portfolio
+- Quantify potential impacts when possible (e.g., "Your Egyptian stocks may be affected because...")
+- If news is about geopolitical events, analyze sector-specific impacts on their assets
+- Provide actionable next steps based on the news and their situation
+- Only reference sources that were actually provided in the EXTERNAL KNOWLEDGE section above
+- Keep analysis current and relevant - focus on latest developments`,
         }, {
           role: 'user',
           content: message,
