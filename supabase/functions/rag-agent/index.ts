@@ -38,8 +38,8 @@ async function analyzeQueryAndSelectTools(message: string): Promise<{
         role: 'system',
         content: `You are a tool selection AI. Analyze the user's query and decide which tools to use:
 - Knowledge Base: For questions about stored/historical information, past conversations, or already-known data
-- Web Search (Google): For recent news, current events, trending topics, quick facts, or time-sensitive information
-- Firecrawl: For deep analysis of specific websites, extracting detailed structured data from URLs (only when a specific URL is mentioned)
+- Web Search (Google): For recent news, current events, trending topics, quick facts, or time-sensitive information (ALWAYS use this for news queries)
+- Firecrawl: For deep analysis of websites and extracting full article content (ALWAYS use with web search for news)
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -188,21 +188,56 @@ serve(async (req) => {
     if (toolSelection.useWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
       console.log('Fetching top recent news from Google Search:', toolSelection.searchQuery);
       
-      // Add date filter for recent results
-      const currentYear = new Date().getFullYear();
-      const searchQuery = encodeURIComponent(`${toolSelection.searchQuery || message} ${currentYear}`);
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&num=3&sort=date`;
+      if (!FIRECRAWL_API_KEY) {
+        console.error('CRITICAL: FIRECRAWL_API_KEY not found! Cannot retrieve full articles.');
+      }
       
+      // Build news-focused search query with date range
+      const today = new Date();
+      const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const dateRestrict = `d7`; // Last 7 days
+      
+      const baseQuery = toolSelection.searchQuery || message;
+      const newsQuery = `${baseQuery} news article`;
+      const searchQuery = encodeURIComponent(newsQuery);
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&dateRestrict=${dateRestrict}&num=5&sort=date:d`;
+      
+      console.log('Google Search URL:', searchUrl);
       const searchResponse = await fetch(searchUrl);
       if (searchResponse.ok) {
         const searchData = await searchResponse.json();
-        console.log(`Found ${searchData.items?.length || 0} search results`);
+        const resultCount = searchData.items?.length || 0;
+        console.log(`Found ${resultCount} search results`);
         
-        // Use Firecrawl on top 3 results for full content
-        if (FIRECRAWL_API_KEY && searchData.items?.length > 0) {
-          for (const item of searchData.items.slice(0, 3)) {
+        if (resultCount === 0) {
+          console.error('No search results found! Check search query and API settings.');
+        }
+        
+        // Filter out homepage URLs and keep only article URLs
+        const articleItems = (searchData.items || []).filter((item: any) => {
+          const url = item.link.toLowerCase();
+          // Exclude homepages and generic pages
+          const isHomepage = url.endsWith('.com/') || url.endsWith('.com') || 
+                            url.endsWith('.org/') || url.endsWith('.org') ||
+                            url.match(/\.(com|org|net)\/?$/);
+          const hasArticleIndicators = url.includes('/article') || url.includes('/news') || 
+                                       url.includes('/story') || url.includes('/20') || // year in URL
+                                       url.split('/').length > 4; // has path segments
+          return !isHomepage && hasArticleIndicators;
+        });
+        
+        console.log(`Filtered to ${articleItems.length} article URLs (removed ${resultCount - articleItems.length} homepages)`);
+        
+        // MUST use Firecrawl for full article content
+        if (!FIRECRAWL_API_KEY) {
+          console.error('CRITICAL: Cannot proceed without FIRECRAWL_API_KEY');
+          throw new Error('Firecrawl API key required for news retrieval');
+        }
+        
+        if (articleItems.length > 0) {
+          for (const item of articleItems.slice(0, 3)) {
             try {
-              console.log('Crawling article:', item.title);
+              console.log('Firecrawl: Scraping article:', item.title, 'URL:', item.link);
               const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
                 method: 'POST',
                 headers: {
@@ -212,12 +247,21 @@ serve(async (req) => {
                 body: JSON.stringify({
                   url: item.link,
                   formats: ['markdown'],
+                  onlyMainContent: true,
                 }),
               });
 
+              console.log('Firecrawl response status:', firecrawlResponse.status);
+
               if (firecrawlResponse.ok) {
                 const firecrawlData = await firecrawlResponse.json();
-                const content = firecrawlData.data?.markdown || item.snippet;
+                const content = firecrawlData.data?.markdown || '';
+                
+                if (!content) {
+                  console.warn('Firecrawl returned empty content for:', item.link);
+                }
+                
+                const actualContent = content || item.snippet;
                 
                 sources.push({
                   title: item.title,
@@ -226,58 +270,32 @@ serve(async (req) => {
                 });
                 
                 knowledgeContext.push({
-                  content: content.substring(0, 8000), // Larger chunk for news articles
-                  metadata: { title: item.title, source: 'Google Search + Firecrawl' },
+                  content: actualContent.substring(0, 12000), // Large chunk for comprehensive analysis
+                  metadata: { 
+                    title: item.title, 
+                    source: 'Firecrawl',
+                    date: new Date().toISOString()
+                  },
                   sourceUrl: item.link,
                 });
                 
-                console.log('Successfully crawled:', item.title);
+                console.log('✓ Successfully crawled full article:', item.title);
               } else {
-                // Fallback to snippet if Firecrawl fails
-                sources.push({
-                  title: item.title,
-                  url: item.link,
-                  type: 'web_search',
-                });
-                
-                knowledgeContext.push({
-                  content: `${item.title}\n\n${item.snippet}`,
-                  metadata: { title: item.title },
-                  sourceUrl: item.link,
-                });
+                const errorText = await firecrawlResponse.text();
+                console.error('Firecrawl API error:', firecrawlResponse.status, errorText);
+                // Skip this source if Firecrawl fails
+                console.warn('Skipping source due to Firecrawl failure');
               }
             } catch (e) {
-              console.error('Firecrawl error for:', item.link, e);
-              // Fallback to snippet
-              sources.push({
-                title: item.title,
-                url: item.link,
-                type: 'web_search',
-              });
-              
-              knowledgeContext.push({
-                content: `${item.title}\n\n${item.snippet}`,
-                metadata: { title: item.title },
-                sourceUrl: item.link,
-              });
+              console.error('Exception during Firecrawl for:', item.link, e);
             }
           }
         } else {
-          // Fallback if no Firecrawl API
-          for (const item of searchData.items || []) {
-            sources.push({
-              title: item.title,
-              url: item.link,
-              type: 'web_search',
-            });
-            
-            knowledgeContext.push({
-              content: `${item.title}\n\n${item.snippet}`,
-              metadata: { title: item.title },
-              sourceUrl: item.link,
-            });
-          }
+          console.warn('No valid article URLs found in search results');
         }
+      } else {
+        const errorText = await searchResponse.text();
+        console.error('Google Search API error:', searchResponse.status, errorText);
       }
     }
 
