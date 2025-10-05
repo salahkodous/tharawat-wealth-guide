@@ -14,6 +14,47 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
+async function getUserFinancialData(userId: string, supabase: any) {
+  console.log('Fetching user financial data for:', userId);
+  
+  const [
+    { data: personalFinances },
+    { data: debts },
+    { data: assets },
+    { data: portfolios },
+    { data: financialGoals },
+    { data: incomeStreams },
+    { data: expenseStreams },
+    { data: deposits },
+    { data: portfolioGoals },
+    { data: newsArticles }
+  ] = await Promise.all([
+    supabase.from('personal_finances').select('*').eq('user_id', userId).single(),
+    supabase.from('debts').select('*').eq('user_id', userId),
+    supabase.from('assets').select('*').eq('user_id', userId),
+    supabase.from('portfolios').select('*').eq('user_id', userId),
+    supabase.from('financial_goals').select('*').eq('user_id', userId),
+    supabase.from('income_streams').select('*').eq('user_id', userId),
+    supabase.from('expense_streams').select('*').eq('user_id', userId),
+    supabase.from('deposits').select('*').eq('user_id', userId),
+    supabase.from('portfolio_goals').select('*').eq('user_id', userId),
+    supabase.from('news_articles').select('*').order('created_at', { ascending: false }).limit(10)
+  ]);
+
+  return {
+    personalFinances: personalFinances || {},
+    debts: debts || [],
+    assets: assets || [],
+    portfolios: portfolios || [],
+    financialGoals: financialGoals || [],
+    incomeStreams: incomeStreams || [],
+    expenseStreams: expenseStreams || [],
+    deposits: deposits || [],
+    portfolioGoals: portfolioGoals || [],
+    newsArticles: newsArticles || []
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -29,7 +70,11 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Step 1: Retrieve relevant context from knowledge base
+    // Step 1: Fetch user's financial data
+    console.log('Fetching user financial data...');
+    const userData = await getUserFinancialData(userId, supabase);
+
+    // Step 2: Retrieve relevant context from knowledge base
     console.log('Retrieving relevant context...');
     const retrievalResponse = await fetch(`${supabaseUrl}/functions/v1/rag-retriever`, {
       method: 'POST',
@@ -117,6 +162,45 @@ serve(async (req) => {
       .map((doc: any, idx: number) => `[${idx + 1}] ${doc.content}`)
       .join('\n\n');
 
+    // Build user financial context
+    const userFinancialContext = `
+USER'S FINANCIAL PROFILE:
+=========================
+
+PERSONAL FINANCES:
+- Monthly Income: ${userData.personalFinances.monthly_income || 0}
+- Monthly Expenses: ${userData.personalFinances.monthly_expenses || 0}
+- Net Savings: ${userData.personalFinances.net_savings || 0}
+- Monthly Investing Amount: ${userData.personalFinances.monthly_investing_amount || 0}
+
+INCOME STREAMS (${userData.incomeStreams.length}):
+${userData.incomeStreams.map((s: any) => `- ${s.name}: ${s.amount} (${s.income_type}, ${s.is_active ? 'active' : 'inactive'})`).join('\n') || 'None'}
+
+EXPENSE STREAMS (${userData.expenseStreams.length}):
+${userData.expenseStreams.map((s: any) => `- ${s.name}: ${s.amount} (${s.expense_type}, ${s.is_active ? 'active' : 'inactive'})`).join('\n') || 'None'}
+
+DEBTS (${userData.debts.length}):
+${userData.debts.map((d: any) => `- ${d.name}: Total ${d.total_amount}, Paid ${d.paid_amount}, Monthly Payment ${d.monthly_payment}, Interest Rate ${d.interest_rate}%`).join('\n') || 'None'}
+
+PORTFOLIOS (${userData.portfolios.length}):
+${userData.portfolios.map((p: any) => `- ${p.name}`).join('\n') || 'None'}
+
+ASSETS (${userData.assets.length}):
+${userData.assets.map((a: any) => `- ${a.asset_name} (${a.asset_type}): Current ${a.current_price}, Purchase ${a.purchase_price}, Quantity ${a.quantity}`).join('\n') || 'None'}
+
+DEPOSITS & SAVINGS (${userData.deposits.length}):
+${userData.deposits.map((d: any) => `- ${d.deposit_type}: Principal ${d.principal}, Rate ${d.rate}%, Status ${d.status}`).join('\n') || 'None'}
+
+FINANCIAL GOALS (${userData.financialGoals.length}):
+${userData.financialGoals.map((g: any) => `- ${g.title}: Target ${g.target_amount}, Current ${g.current_amount}, Status ${g.status}`).join('\n') || 'None'}
+
+PORTFOLIO GOALS (${userData.portfolioGoals.length}):
+${userData.portfolioGoals.map((g: any) => `- ${g.title} (${g.goal_type}): Target ${g.target_value}, Current ${g.current_value}, Status ${g.status}`).join('\n') || 'None'}
+
+RECENT NEWS ARTICLES:
+${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentiment})`).join('\n') || 'None'}
+`;
+
     // Step 4: Generate response with LLM using retrieved context
     console.log('Generating response with AI...');
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -129,22 +213,34 @@ serve(async (req) => {
         model: 'google/gemini-2.5-flash',
         messages: [{
           role: 'system',
-          content: `You are a financial advisor AI. Use the provided context to answer questions accurately. Always cite your sources using [SOURCE:Title|URL] format at the end of each relevant statement.
+          content: `You are a comprehensive financial advisor AI with deep access to the user's complete financial profile. You provide informed, personalized advice based on their actual financial situation, market data, and web research.
 
-Context from knowledge base:
+${userFinancialContext}
+
+KNOWLEDGE BASE & WEB RESEARCH:
 ${contextText}
 
-Guidelines:
-- Base your answer primarily on the provided context
-- If context doesn't fully answer the question, acknowledge the limitation
-- Add source citations in format: [SOURCE:Title|URL]
-- Be clear, concise, and accurate
-- If making recommendations, explain the reasoning`,
+YOUR ROLE:
+- You are an informative decision-making agent
+- Analyze the user's complete financial picture (income, expenses, debts, assets, goals, savings)
+- Use both their personal data AND external knowledge/news to provide context-aware advice
+- Make specific recommendations based on their actual financial situation
+- Always cite sources for external information using [SOURCE:Title|URL] format
+- Be proactive in identifying opportunities or risks based on their portfolio and goals
+- Explain reasoning clearly and tie recommendations to their specific circumstances
+
+GUIDELINES:
+- Start by acknowledging relevant aspects of their financial situation when appropriate
+- Provide actionable, personalized advice (not generic)
+- If they ask about something that conflicts with their goals or situation, point it out
+- Use their actual numbers (income, expenses, asset values) in your analysis
+- Consider their risk tolerance based on their portfolio composition
+- If you need more information to give good advice, ask specific questions`,
         }, {
           role: 'user',
           content: message,
         }],
-        max_tokens: 1500,
+        max_tokens: 2000,
         temperature: 0.7,
       }),
     });
