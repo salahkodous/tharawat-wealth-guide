@@ -40,7 +40,8 @@ QUERY TYPES:
 - quick_value: Asking for specific numbers (income, net worth, balance, gold prices, currency rates, stock prices)
 - portfolio_analysis: Holdings, performance, diversification questions
 - debt_management: Debt strategy, payments, consolidation questions  
-- investment_advice: Buying/selling, asset allocation recommendations
+- investment_advice: Investment recommendations, buying/selling, asset allocation, fund selection
+- product_research: Researching specific financial products (bank funds, ETFs, mutual funds, certificates)
 - news_analysis: Market news impact on portfolio, latest news requests
 - goal_tracking: Financial goals progress and planning
 - expense_analysis: Spending patterns, budgeting advice
@@ -49,7 +50,7 @@ QUERY TYPES:
 - risk_assessment: Risk evaluation, insurance planning
 - general_financial: General financial advice and education
 
-CONTEXT TYPES: personal_finances, debts, assets, goals, income, expenses, deposits, news
+CONTEXT TYPES: personal_finances, debts, assets, goals, income, expenses, deposits, news, bank, fund, etf
 
 RESPONSE TYPES:
 - brief: Short greeting or simple answer (50-100 tokens)
@@ -58,17 +59,18 @@ RESPONSE TYPES:
 - detailed: Comprehensive analysis with full insights (800-1500 tokens)
 
 TOOLS NEEDED:
-- web_search: ONLY for market research about companies, investment opportunities, economic trends that are NOT in our database
+- web_search: For researching Egyptian investment products (bank funds, certificates), companies, opportunities NOT in database
 - egyptian_news: For Egyptian stock market news specifically
 - portfolio_analysis: For detailed portfolio insights and recommendations
 - goal_planning: For long-term financial planning and projections
 - risk_analysis: For risk assessment and insurance planning
 
 CRITICAL TOOL RULES:
+- For queries about Egyptian BANK PRODUCTS (صناديق، شهادات، وديعة) → MUST use web_search to find latest offerings
+- For queries about specific FUNDS or ETFs not in database → MUST use web_search
 - DO NOT use web_search for: gold prices, currency rates, stock prices, indices - these are in our database
-- ONLY use web_search for: company research, economic analysis, investment opportunities not in database
-- For queries about "gold price", "currency rate", "stock price", "EGX index" → toolsNeeded: []
-- For queries about NEWS, current events, geopolitical situations (Gaza, conflicts, politics) → MUST use web_search
+- For queries about NEWS, current events, geopolitical situations → MUST use web_search
+- For investment product research in Egypt → MUST use web_search with Egyptian banking terms
 
 Return ONLY this JSON format:
 {
@@ -82,7 +84,10 @@ Return ONLY this JSON format:
 Examples:
 - "What's my total income?" → {"type":"quick_value","context":["income"],"priority":"low","responseType":"value","toolsNeeded":[]}
 - "24 karat gold price" → {"type":"quick_value","context":["assets","gold"],"priority":"low","responseType":"value","toolsNeeded":[]}
-- "ETF EGX30 price" → {"type":"quick_value","context":["assets","EGX30","etf"],"priority":"low","responseType":"value","toolsNeeded":[]}
+- "استثمار الفائض من دخلي في صناديق البنوك" → {"type":"product_research","context":["bank","fund","personal_finances"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
+- "بنوك مصر صناديق الأسهم" → {"type":"product_research","context":["bank","fund","assets"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
+- "Bank stock funds Egypt" → {"type":"product_research","context":["bank","fund"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
+- "شهادات استثمار البنك الأهلي" → {"type":"product_research","context":["bank"],"priority":"high","responseType":"detailed","toolsNeeded":["web_search"]}
 - "USD to EGP rate" → {"type":"quick_value","context":["assets","currency"],"priority":"low","responseType":"value","toolsNeeded":[]}
 - "Egyptian stock market news" → {"type":"news_analysis","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["egyptian_news"]}
 - "Apple stock information" → {"type":"market_research","context":["news"],"priority":"medium","responseType":"medium","toolsNeeded":["web_search"]}
@@ -383,27 +388,50 @@ async function executeTools(toolsNeeded: string[], message: string, userData: an
             if (googleApiKey && searchEngineId) {
               // Enhanced search queries for better results
               let searchQueries = [];
+              const messageLower = message.toLowerCase();
+              const isArabic = /[\u0600-\u06FF]/.test(message);
               
-              // Check if query is about general news/events (not financial markets)
-              const isGeneralNews = message.toLowerCase().includes('news') && 
-                                   !message.toLowerCase().includes('market') &&
-                                   !message.toLowerCase().includes('stock') &&
-                                   !message.toLowerCase().includes('price');
+              // Detect Egyptian banking product queries
+              const isBankProduct = messageLower.includes('صناد') || messageLower.includes('شهاد') || 
+                                   messageLower.includes('وديع') || messageLower.includes('bank fund') ||
+                                   messageLower.includes('صندوق') || messageLower.includes('certificate');
               
-              // Primary search based on user message
-              let primaryQuery = isGeneralNews 
-                ? `${message} ${userCountry} latest updates` 
-                : `${message} financial market analysis investment news ${userCountry} ${userCurrency}`;
-              searchQueries.push(primaryQuery);
+              // Detect general news/events queries
+              const isGeneralNews = messageLower.includes('news') && 
+                                   !messageLower.includes('market') &&
+                                   !messageLower.includes('stock') &&
+                                   !messageLower.includes('price');
+              
+              // Build primary search query based on query type
+              let primaryQuery = '';
+              
+              if (isBankProduct) {
+                // Egyptian bank product research - use Arabic and English terms
+                if (isArabic) {
+                  primaryQuery = `${message} مصر البنوك 2024`;
+                  searchQueries.push(`صناديق الاستثمار البنوك المصرية 2024`);
+                  searchQueries.push(`أفضل صناديق الأسهم مصر`);
+                } else {
+                  primaryQuery = `${message} Egypt banks 2024`;
+                  searchQueries.push(`Egyptian bank investment funds stock funds 2024`);
+                  searchQueries.push(`best mutual funds Egypt banks`);
+                }
+              } else if (isGeneralNews) {
+                primaryQuery = `${message} ${userCountry} latest updates`;
+              } else {
+                primaryQuery = `${message} financial market analysis investment ${userCountry} ${userCurrency}`;
+              }
+              
+              searchQueries.unshift(primaryQuery);
               
               // Additional specific searches based on keywords
-              if (message.toLowerCase().includes('stock') || message.toLowerCase().includes('equity')) {
-                searchQueries.push(`stock market trends ${userCountry} latest news analysis`);
+              if (messageLower.includes('stock') || messageLower.includes('سهم') || messageLower.includes('equity')) {
+                searchQueries.push(`stock market trends ${userCountry} latest analysis`);
               }
-              if (message.toLowerCase().includes('crypto') || message.toLowerCase().includes('bitcoin')) {
-                searchQueries.push(`cryptocurrency market analysis ${userCountry} regulation news`);
+              if (messageLower.includes('crypto') || messageLower.includes('bitcoin')) {
+                searchQueries.push(`cryptocurrency market analysis ${userCountry} regulation`);
               }
-              if (message.toLowerCase().includes('real estate') || message.toLowerCase().includes('property')) {
+              if (messageLower.includes('real estate') || messageLower.includes('property') || messageLower.includes('عقار')) {
                 searchQueries.push(`real estate market trends ${userCountry} property investment`);
               }
               
