@@ -41,8 +41,16 @@ serve(async (req) => {
     });
 
     if (!embeddingResponse.ok) {
-      const error = await embeddingResponse.text();
-      console.error('Embedding API error:', error);
+      const errorText = await embeddingResponse.text();
+      console.error('Embedding API error:', errorText);
+      
+      // Handle specific error codes
+      if (embeddingResponse.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      } else if (embeddingResponse.status === 402) {
+        throw new Error('AI service payment required. Please contact support.');
+      }
+      
       throw new Error('Failed to generate query embedding');
     }
 

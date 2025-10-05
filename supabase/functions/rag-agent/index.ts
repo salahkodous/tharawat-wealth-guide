@@ -67,7 +67,8 @@ serve(async (req) => {
 
     if (needsWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
       console.log('Fetching fresh data from web...');
-      const searchQuery = encodeURIComponent(`${message} financial market news`);
+      // Use the original query without forcing "financial market news" context
+      const searchQuery = encodeURIComponent(message);
       const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&num=3`;
       
       const searchResponse = await fetch(searchUrl);
@@ -149,8 +150,16 @@ Guidelines:
     });
 
     if (!aiResponse.ok) {
-      const error = await aiResponse.text();
-      console.error('AI API error:', error);
+      const errorText = await aiResponse.text();
+      console.error('AI API error:', errorText);
+      
+      // Handle specific error codes
+      if (aiResponse.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      } else if (aiResponse.status === 402) {
+        throw new Error('AI service payment required. Please contact support.');
+      }
+      
       throw new Error('Failed to generate AI response');
     }
 
