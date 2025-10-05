@@ -38,15 +38,21 @@ async function analyzeQueryAndSelectTools(message: string): Promise<{
         role: 'system',
         content: `You are a tool selection AI. Analyze the user's query and decide which tools to use:
 - Knowledge Base: For questions about stored/historical information, past conversations, or already-known data
-- Web Search (Google): For recent news, current events, trending topics, quick facts, or time-sensitive information (ALWAYS use this for news queries)
-- Firecrawl: For deep analysis of websites and extracting full article content (ALWAYS use with web search for news)
+- Web Search (Google): ALWAYS use for news, current events, market updates, geopolitical events
+- Firecrawl: Automatically used with web search to get full article content
+
+CRITICAL SEARCH QUERY RULES:
+- For news queries, create specific search terms like "Gaza latest news 2025" or "Gaza conflict October 2025"
+- Include the current year (2025) for recent news
+- Add keywords like "latest", "today", "news", "update" for recent articles
+- Be specific about the topic (e.g., "Gaza economy impact" not just "Gaza")
 
 Return ONLY a JSON object with this exact structure:
 {
   "useKnowledgeBase": boolean,
   "useWebSearch": boolean,
   "useFirecrawl": boolean,
-  "searchQuery": "optimized search query for Google" or null,
+  "searchQuery": "optimized news search query with year and keywords" or null,
   "crawlUrl": "URL to crawl with Firecrawl" or null,
   "reasoning": "brief explanation of tool selection"
 }`,
@@ -192,17 +198,12 @@ serve(async (req) => {
         console.error('CRITICAL: FIRECRAWL_API_KEY not found! Cannot retrieve full articles.');
       }
       
-      // Build news-focused search query with date range
-      const today = new Date();
-      const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const dateRestrict = `d7`; // Last 7 days
+      // Use the AI-optimized search query directly (it already has year and keywords)
+      const searchQuery = encodeURIComponent(toolSelection.searchQuery || `${message} latest news 2025`);
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&dateRestrict=m1&num=10`;
       
-      const baseQuery = toolSelection.searchQuery || message;
-      const newsQuery = `${baseQuery} news article`;
-      const searchQuery = encodeURIComponent(newsQuery);
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&dateRestrict=${dateRestrict}&num=5&sort=date:d`;
-      
-      console.log('Google Search URL:', searchUrl);
+      console.log('Searching for:', toolSelection.searchQuery || message);
+      console.log('Full search URL:', searchUrl);
       const searchResponse = await fetch(searchUrl);
       if (searchResponse.ok) {
         const searchData = await searchResponse.json();
@@ -213,20 +214,22 @@ serve(async (req) => {
           console.error('No search results found! Check search query and API settings.');
         }
         
-        // Filter out homepage URLs and keep only article URLs
-        const articleItems = (searchData.items || []).filter((item: any) => {
-          const url = item.link.toLowerCase();
-          // Exclude homepages and generic pages
-          const isHomepage = url.endsWith('.com/') || url.endsWith('.com') || 
-                            url.endsWith('.org/') || url.endsWith('.org') ||
-                            url.match(/\.(com|org|net)\/?$/);
-          const hasArticleIndicators = url.includes('/article') || url.includes('/news') || 
-                                       url.includes('/story') || url.includes('/20') || // year in URL
-                                       url.split('/').length > 4; // has path segments
-          return !isHomepage && hasArticleIndicators;
+        // Log all URLs for debugging
+        console.log('All search results:');
+        (searchData.items || []).forEach((item: any, idx: number) => {
+          console.log(`  ${idx + 1}. ${item.title}`);
+          console.log(`     URL: ${item.link}`);
         });
         
-        console.log(`Filtered to ${articleItems.length} article URLs (removed ${resultCount - articleItems.length} homepages)`);
+        // Keep URLs that look like articles (less aggressive filtering)
+        const articleItems = (searchData.items || []).filter((item: any) => {
+          const url = item.link.toLowerCase();
+          // Only exclude obvious homepages
+          const isObviousHomepage = url.match(/^https?:\/\/[^\/]+\/?$/);
+          return !isObviousHomepage;
+        });
+        
+        console.log(`Using ${articleItems.length} URLs (removed ${resultCount - articleItems.length} obvious homepages)`);
         
         // MUST use Firecrawl for full article content
         if (!FIRECRAWL_API_KEY) {
