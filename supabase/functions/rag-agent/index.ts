@@ -7,12 +7,84 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
 const GOOGLE_SEARCH_API_KEY = Deno.env.get('GOOGLE_SEARCH_API_KEY');
 const GOOGLE_SEARCH_ENGINE_ID = Deno.env.get('GOOGLE_SEARCH_ENGINE_ID');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+// Tool selection and routing logic
+async function analyzeQueryAndSelectTools(message: string): Promise<{
+  useKnowledgeBase: boolean;
+  useWebSearch: boolean;
+  useFirecrawl: boolean;
+  searchQuery?: string;
+  crawlUrl?: string;
+  reasoning: string;
+}> {
+  console.log('Analyzing query to select appropriate tools...');
+  
+  const analysisResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{
+        role: 'system',
+        content: `You are a tool selection AI. Analyze the user's query and decide which tools to use:
+- Knowledge Base: For questions about stored/historical information, past conversations, or already-known data
+- Web Search (Google): For recent news, current events, trending topics, quick facts, or time-sensitive information
+- Firecrawl: For deep analysis of specific websites, extracting detailed structured data from URLs (only when a specific URL is mentioned)
+
+Return ONLY a JSON object with this exact structure:
+{
+  "useKnowledgeBase": boolean,
+  "useWebSearch": boolean,
+  "useFirecrawl": boolean,
+  "searchQuery": "optimized search query for Google" or null,
+  "crawlUrl": "URL to crawl with Firecrawl" or null,
+  "reasoning": "brief explanation of tool selection"
+}`,
+      }, {
+        role: 'user',
+        content: `Analyze this query and select appropriate tools: "${message}"`,
+      }],
+      temperature: 0.3,
+      max_tokens: 300,
+    }),
+  });
+
+  if (analysisResponse.ok) {
+    const data = await analysisResponse.json();
+    try {
+      const result = JSON.parse(data.choices[0].message.content);
+      console.log('Tool selection:', result);
+      return result;
+    } catch (e) {
+      console.error('Failed to parse tool selection:', e);
+    }
+  }
+
+  // Fallback to simple heuristics
+  const needsWebSearch = message.toLowerCase().includes('latest') ||
+                         message.toLowerCase().includes('recent') ||
+                         message.toLowerCase().includes('news') ||
+                         message.toLowerCase().includes('today') ||
+                         message.toLowerCase().includes('current');
+  
+  return {
+    useKnowledgeBase: true,
+    useWebSearch: needsWebSearch,
+    useFirecrawl: false,
+    searchQuery: needsWebSearch ? message : undefined,
+    reasoning: 'Fallback heuristic selection',
+  };
+}
 
 async function getUserFinancialData(userId: string, supabase: any) {
   console.log('Fetching user financial data for:', userId);
@@ -74,53 +146,51 @@ serve(async (req) => {
     console.log('Fetching user financial data...');
     const userData = await getUserFinancialData(userId, supabase);
 
-    // Step 2: Retrieve relevant context from knowledge base
-    console.log('Retrieving relevant context...');
-    const retrievalResponse = await fetch(`${supabaseUrl}/functions/v1/rag-retriever`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: message,
-        userId,
-      }),
-    });
+    // Step 2: Intelligent tool selection
+    const toolSelection = await analyzeQueryAndSelectTools(message);
+    console.log('Tool selection reasoning:', toolSelection.reasoning);
 
-    let knowledgeContext = [];
-    let sources = [];
+    let knowledgeContext: any[] = [];
+    let sources: any[] = [];
 
-    if (retrievalResponse.ok) {
-      const retrievalData = await retrievalResponse.json();
-      knowledgeContext = retrievalData.results || [];
-      console.log(`Retrieved ${knowledgeContext.length} knowledge documents`);
-      
-      // Extract sources for citation
-      sources = knowledgeContext.map((doc: any) => ({
-        title: doc.metadata?.title || 'Source',
-        url: doc.sourceUrl,
-        type: doc.sourceType,
-      })).filter((s: any) => s.url);
+    // Step 3: Retrieve from knowledge base if selected
+    if (toolSelection.useKnowledgeBase) {
+      console.log('Retrieving from knowledge base...');
+      const retrievalResponse = await fetch(`${supabaseUrl}/functions/v1/rag-retriever`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: message,
+          userId,
+        }),
+      });
+
+      if (retrievalResponse.ok) {
+        const retrievalData = await retrievalResponse.json();
+        knowledgeContext = retrievalData.results || [];
+        console.log(`Retrieved ${knowledgeContext.length} knowledge documents`);
+        
+        sources = knowledgeContext.map((doc: any) => ({
+          title: doc.metadata?.title || 'Knowledge Base',
+          url: doc.sourceUrl,
+          type: doc.sourceType,
+        })).filter((s: any) => s.url);
+      }
     }
 
-    // Step 2: Check if we need to fetch fresh data from web
-    const needsWebSearch = knowledgeContext.length === 0 || 
-                           message.toLowerCase().includes('latest') ||
-                           message.toLowerCase().includes('current') ||
-                           message.toLowerCase().includes('today');
-
-    if (needsWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
-      console.log('Fetching fresh data from web...');
-      // Use the original query without forcing "financial market news" context
-      const searchQuery = encodeURIComponent(message);
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&num=3`;
+    // Step 4: Fetch from web search if selected
+    if (toolSelection.useWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
+      console.log('Fetching from Google Search:', toolSelection.searchQuery);
+      const searchQuery = encodeURIComponent(toolSelection.searchQuery || message);
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${searchQuery}&num=5`;
       
       const searchResponse = await fetch(searchUrl);
       if (searchResponse.ok) {
         const searchData = await searchResponse.json();
         
-        // Ingest search results into knowledge base
         for (const item of searchData.items || []) {
           const content = `${item.title}\n\n${item.snippet}`;
           
@@ -133,19 +203,18 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               content,
-              metadata: { title: item.title },
+              metadata: { title: item.title, searchQuery: toolSelection.searchQuery },
               sourceUrl: item.link,
-              sourceType: 'web',
-              userId: null, // Global knowledge
+              sourceType: 'web_search',
+              userId: null,
               validate: false,
             }),
-          }).catch(e => console.error('Failed to ingest:', e));
+          }).catch(e => console.error('Failed to ingest search result:', e));
 
-          // Add to sources
           sources.push({
             title: item.title,
             url: item.link,
-            type: 'web',
+            type: 'web_search',
           });
           
           knowledgeContext.push({
@@ -157,7 +226,66 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Build context for LLM
+    // Step 5: Use Firecrawl for deep website analysis if selected
+    if (toolSelection.useFirecrawl && toolSelection.crawlUrl && FIRECRAWL_API_KEY) {
+      console.log('Using Firecrawl to analyze:', toolSelection.crawlUrl);
+      
+      try {
+        const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: toolSelection.crawlUrl,
+            formats: ['markdown', 'html'],
+          }),
+        });
+
+        if (firecrawlResponse.ok) {
+          const firecrawlData = await firecrawlResponse.json();
+          const content = firecrawlData.data?.markdown || firecrawlData.data?.html || '';
+          
+          if (content) {
+            // Store in knowledge base
+            fetch(`${supabaseUrl}/functions/v1/rag-ingest`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content: content.substring(0, 10000),
+                metadata: { title: firecrawlData.data?.title || 'Firecrawl Result' },
+                sourceUrl: toolSelection.crawlUrl,
+                sourceType: 'firecrawl',
+                userId: null,
+                validate: false,
+              }),
+            }).catch(e => console.error('Failed to ingest Firecrawl result:', e));
+
+            sources.push({
+              title: firecrawlData.data?.title || 'Website Analysis',
+              url: toolSelection.crawlUrl,
+              type: 'firecrawl',
+            });
+
+            knowledgeContext.push({
+              content: content.substring(0, 5000),
+              metadata: { title: firecrawlData.data?.title },
+              sourceUrl: toolSelection.crawlUrl,
+            });
+
+            console.log('Successfully retrieved content from Firecrawl');
+          }
+        }
+      } catch (error) {
+        console.error('Firecrawl error:', error);
+      }
+    }
+
+    // Step 6: Build context for LLM
     const contextText = knowledgeContext
       .map((doc: any, idx: number) => `[${idx + 1}] ${doc.content}`)
       .join('\n\n');
@@ -201,23 +329,26 @@ RECENT NEWS ARTICLES:
 ${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentiment})`).join('\n') || 'None'}
 `;
 
-    // Step 4: Generate response with LLM using retrieved context
-    console.log('Generating response with AI...');
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Step 7: Generate response with Groq using all context
+    console.log('Generating response with Groq AI...');
+    const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'llama-3.3-70b-versatile',
         messages: [{
           role: 'system',
           content: `You are a comprehensive financial advisor AI with deep access to the user's complete financial profile. You provide informed, personalized advice based on their actual financial situation, market data, and web research.
 
+TOOL SELECTION REASONING:
+${toolSelection.reasoning}
+
 ${userFinancialContext}
 
-KNOWLEDGE BASE & WEB RESEARCH:
+EXTERNAL KNOWLEDGE & RESEARCH:
 ${contextText}
 
 YOUR ROLE:
@@ -228,6 +359,7 @@ YOUR ROLE:
 - Always cite sources for external information using [SOURCE:Title|URL] format
 - Be proactive in identifying opportunities or risks based on their portfolio and goals
 - Explain reasoning clearly and tie recommendations to their specific circumstances
+- Acknowledge which tools were used to gather information
 
 GUIDELINES:
 - Start by acknowledging relevant aspects of their financial situation when appropriate
@@ -235,7 +367,8 @@ GUIDELINES:
 - If they ask about something that conflicts with their goals or situation, point it out
 - Use their actual numbers (income, expenses, asset values) in your analysis
 - Consider their risk tolerance based on their portfolio composition
-- If you need more information to give good advice, ask specific questions`,
+- If you need more information to give good advice, ask specific questions
+- Cite all sources using [SOURCE:Title|URL] format`,
         }, {
           role: 'user',
           content: message,
@@ -262,7 +395,7 @@ GUIDELINES:
     const aiData = await aiResponse.json();
     let response = aiData.choices[0].message.content;
 
-    // Step 5: Add source citations if not already present
+    // Step 8: Add source citations if not already present
     if (sources.length > 0 && !response.includes('[SOURCE:')) {
       const uniqueSources = sources.filter((s: any, idx: number, self: any[]) => 
         self.findIndex((x: any) => x.url === s.url) === idx
@@ -275,7 +408,7 @@ GUIDELINES:
       }
     }
 
-    // Step 6: Store the conversation
+    // Step 9: Store the conversation
     if (chatId) {
       await supabase.from('chat_messages').insert([
         { chat_id: chatId, user_id: userId, role: 'user', content: message },
@@ -290,6 +423,12 @@ GUIDELINES:
       response,
       sourcesUsed: sources.length,
       contextRetrieved: knowledgeContext.length,
+      toolsUsed: {
+        knowledgeBase: toolSelection.useKnowledgeBase,
+        webSearch: toolSelection.useWebSearch,
+        firecrawl: toolSelection.useFirecrawl,
+      },
+      reasoning: toolSelection.reasoning,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
