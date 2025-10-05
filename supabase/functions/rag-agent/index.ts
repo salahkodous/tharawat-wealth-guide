@@ -487,6 +487,49 @@ ${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentim
 
     // Step 7: Generate bilingual response with Groq using all context
     console.log(`Generating ${responseLanguage} response with Groq AI...`);
+    
+    // Build intent-specific system prompt
+    let responseStructure = '';
+    let roleDescription = '';
+    
+    if (toolSelection.intent === 'product_research') {
+      roleDescription = `You are an Egyptian financial product specialist helping users understand and compare investment products (funds, deposits, bonds, etc.) available in Egypt.`;
+      responseStructure = `
+RESPONSE STRUCTURE (in ${responseLanguage}):
+1. **المنتجات المتاحة / Available Products:** List and describe the specific investment products found (funds, certificates, deposits)
+2. **المقارنة والمميزات / Comparison & Features:** Compare features, returns, risks, and requirements
+3. **التوصيات / Recommendations:** Suggest which products match the user's financial profile and goals
+4. **الخطوات التالية / Next Steps:** Explain how to invest (which bank, minimum amounts, procedures)
+
+Focus on:
+- Specific product names, rates, and terms from Egyptian banks
+- Minimum investment amounts and eligibility
+- Expected returns and risk levels
+- How to purchase/subscribe
+- Bank contact information and procedures`;
+    } else if (toolSelection.intent === 'news_analysis') {
+      roleDescription = `You are an Egyptian financial advisor analyzing how recent news affects the user's portfolio and Egyptian market investments.`;
+      responseStructure = `
+RESPONSE STRUCTURE (in ${responseLanguage}):
+1. **ملخص الأخبار الأخيرة / Latest News Summary:** Summarize key events/developments from the sources
+2. **تأثير على المحفظة / Portfolio Impact Analysis:** Connect specific news to specific Egyptian assets in their portfolio
+3. **تقييم المخاطر / Risk Assessment:** Identify potential risks based on Egyptian market conditions
+4. **التوصيات / Recommendations:** Provide specific actions appropriate for Egyptian investors`;
+    } else if (toolSelection.intent === 'portfolio_analysis') {
+      roleDescription = `You are an Egyptian portfolio analyst evaluating the user's investment holdings and providing optimization recommendations.`;
+      responseStructure = `
+RESPONSE STRUCTURE (in ${responseLanguage}):
+1. **تحليل المحفظة الحالية / Current Portfolio Analysis:** Evaluate asset allocation, diversification, and risk
+2. **نقاط القوة والضعف / Strengths & Weaknesses:** Identify what's working and areas for improvement
+3. **فرص التحسين / Optimization Opportunities:** Suggest rebalancing or new investments
+4. **التوصيات / Recommendations:** Specific actionable steps for portfolio improvement`;
+    } else {
+      roleDescription = `You are an Egyptian financial advisor helping users with their financial questions and investment decisions.`;
+      responseStructure = `
+RESPONSE STRUCTURE (in ${responseLanguage}):
+Provide a clear, helpful response that directly answers the user's question with specific information from the sources.`;
+    }
+    
     const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -497,7 +540,7 @@ ${userData.newsArticles.map((n: any) => `- ${n.title} (${n.category}, ${n.sentim
         model: 'llama-3.3-70b-versatile',
         messages: [{
           role: 'system',
-          content: `You are an Egyptian financial advisor AI specializing in the Egyptian market (EGX, Egyptian pounds, local regulations). You have deep access to the user's complete financial profile.
+          content: `${roleDescription}
 
 🌍 CRITICAL: Respond ENTIRELY in ${responseLanguage}. Match the user's language exactly.
 
@@ -519,26 +562,13 @@ ${contextText}
 CRITICAL INSTRUCTIONS - READ CAREFULLY:
 1. Respond ENTIRELY in ${responseLanguage} - no mixing languages
 2. Use EGP as the default currency for all amounts
-3. The sources above WERE SUCCESSFULLY RETRIEVED and contain the latest news
-4. You MUST analyze and reference the specific content provided in the EXTERNAL KNOWLEDGE section
+3. The sources above WERE SUCCESSFULLY RETRIEVED - analyze their ACTUAL content
+4. You MUST reference specific details from the EXTERNAL KNOWLEDGE section
 5. DO NOT say "the provided articles don't mention..." when they clearly do
-6. Start your response by summarizing the KEY POINTS from the articles above
-7. Then connect those specific points to the user's Egyptian portfolio
-8. Consider Egyptian market regulations, tax implications, and local economic conditions
+6. Extract and cite specific product names, rates, terms, and details from the sources
+7. All financial advice should be relevant to Egyptian investors
 
-YOUR ROLE:
-- Analyze the ACTUAL CONTENT from the ${knowledgeContext.length} sources (Arabic and English) provided above
-- Extract specific facts, events, and data from these sources
-- Connect these specific events to the user's Egyptian portfolio holdings
-- Provide actionable recommendations based on the real news content and Egyptian market context
-- Reference specific details from the articles (quotes, data points, events)
-- All financial advice should be relevant to Egyptian investors
-
-RESPONSE STRUCTURE (in ${responseLanguage}):
-1. **Latest News Summary:** Summarize the key events/developments from the sources
-2. **Portfolio Impact Analysis:** Connect specific news to specific Egyptian assets in their portfolio
-3. **Risk Assessment:** Identify potential risks based on Egyptian market conditions
-4. **Recommendations:** Provide specific actions appropriate for Egyptian investors
+${responseStructure}
 
 NEVER say "the articles don't mention" or "no specific information" - you have ${knowledgeContext.length} sources with full content to analyze.`,
         }, {
