@@ -176,8 +176,8 @@ serve(async (req) => {
   }
 
   try {
-    const { message, userId, chatId } = await req.json();
-    console.log('RAG Agent request:', { message, userId });
+    const { message, userId, chatId, conversationHistory = [] } = await req.json();
+    console.log('RAG Agent request:', { message, userId, historyLength: conversationHistory.length });
 
     if (!message) {
       throw new Error('Message is required');
@@ -530,17 +530,11 @@ RESPONSE STRUCTURE (in ${responseLanguage}):
 Provide a clear, helpful response that directly answers the user's question with specific information from the sources.`;
     }
     
-    const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{
-          role: 'system',
-          content: `${roleDescription}
+    // Build messages array with conversation history
+    const messages = [
+      {
+        role: 'system',
+        content: `${roleDescription}
 
 🌍 CRITICAL: Respond ENTIRELY in ${responseLanguage}. Match the user's language exactly.
 
@@ -567,14 +561,35 @@ CRITICAL INSTRUCTIONS - READ CAREFULLY:
 5. DO NOT say "the provided articles don't mention..." when they clearly do
 6. Extract and cite specific product names, rates, terms, and details from the sources
 7. All financial advice should be relevant to Egyptian investors
+8. MAINTAIN CONVERSATION CONTEXT - refer to previous questions/answers when relevant
 
 ${responseStructure}
 
-NEVER say "the articles don't mention" or "no specific information" - you have ${knowledgeContext.length} sources with full content to analyze.`,
-        }, {
-          role: 'user',
-          content: message,
-        }],
+NEVER say "the articles don't mention" or "no specific information" - you have ${knowledgeContext.length} sources with full content to analyze.`
+      }
+    ];
+
+    // Add conversation history
+    if (conversationHistory && conversationHistory.length > 0) {
+      console.log(`📜 Including ${conversationHistory.length} previous messages for context`);
+      messages.push(...conversationHistory);
+    }
+
+    // Add current message
+    messages.push({
+      role: 'user',
+      content: message,
+    });
+
+    const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages,
         max_tokens: 2000,
         temperature: 0.7,
       }),

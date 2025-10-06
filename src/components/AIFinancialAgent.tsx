@@ -144,10 +144,17 @@ const AIFinancialAgent = () => {
     setIsLoading(true);
 
     try {
-      // Use RAG-powered agent for grounded responses
+      // Build conversation history for context
+      const conversationHistory = messages.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
+      // Use RAG-powered agent for grounded responses with full conversation history
       const { data, error } = await supabase.functions.invoke('rag-agent', {
         body: {
           message: messageToSend,
+          conversationHistory, // Send full chat history
           userId: user.id,
           chatId: chatId
         }
