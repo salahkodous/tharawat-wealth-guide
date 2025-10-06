@@ -116,36 +116,45 @@ async function determineSearchTopics(
         model: 'llama-3.3-70b-versatile',
         messages: [{
           role: 'system',
-          content: `You are a search strategy AI agent. Analyze the user's query and conversation context to determine the BEST search topics and keywords.
+          content: `You are a search strategy AI agent for Egyptian market queries. Generate HIGHLY SPECIFIC search queries in ENGLISH that will find accurate, relevant results.
 
 YOUR TASK:
-1. Identify the main topic/entity being discussed (e.g., "refrigerators", "investment funds", "CBE interest rates")
-2. Extract specific subtopics to search for (e.g., "prices", "brands", "reviews", "comparisons")
-3. Generate 2-4 optimized search queries that will find the most relevant information
-4. Consider Egyptian market context when applicable
+1. Identify the main product/topic (e.g., "refrigerators", "investment funds", "CBE rates")
+2. Generate 2-4 SPECIFIC search queries in ENGLISH optimized for Google Search
+3. Include Egyptian market context (brands, stores, banks available in Egypt)
+4. For prices: include "Egypt 2025", "EGP", specific brands/models
+5. For products: include common Egyptian retailers/brands
 
-CRITICAL RULES:
-- Focus on SPECIFIC, SEARCHABLE topics (not vague concepts)
-- Include brand names, product types, or specific entities when mentioned
-- For price queries: include "Egypt", "2025", "current prices"
-- For investment products: include bank names, product types, rates
-- For news: include specific events, organizations, dates
-- Maintain the original language (Arabic or English)
+CRITICAL RULES FOR SEARCH QUERIES:
+- ALWAYS write queries in ENGLISH (not Arabic) for better Google results
+- Include "Egypt" or "Egyptian market" in EVERY query
+- For price queries: add "2025", "current price", "price range"
+- For appliances: include major brands available in Egypt (Samsung, LG, Toshiba, Sharp, etc.)
+- For investment products: include bank names (NBE, Banque Misr, CIB, etc.)
+- Be SPECIFIC: "Samsung refrigerator prices Egypt 2025" NOT "fridge prices"
+- Avoid generic terms that could match unrelated content
+
+EXAMPLES:
+❌ BAD: "refrigerator Egypt"
+✅ GOOD: "Samsung LG refrigerator prices Egypt 2025 EGP range"
+
+❌ BAD: "investment funds"
+✅ GOOD: "Egyptian bank equity investment funds 2025 minimum deposit rates"
 
 CONVERSATION CONTEXT:
 ${contextSummary}
 
-CURRENT QUERY: "${resolvedQuery}"
+CURRENT QUERY (may be in Arabic): "${resolvedQuery}"
 
 Return ONLY this JSON:
 {
-  "primaryTopic": "main subject (e.g., 'refrigerators in Egypt')",
-  "searchTopics": ["topic1", "topic2", "topic3"],
+  "primaryTopic": "specific product/topic in English",
+  "searchTopics": ["subtopic1", "subtopic2"],
   "searchQueries": [
-    "optimized query 1 for search engine",
-    "optimized query 2 for search engine"
+    "highly specific English query 1 with Egypt 2025",
+    "highly specific English query 2 with brands/details"
   ],
-  "reasoning": "brief explanation of search strategy"
+  "reasoning": "brief explanation"
 }`
         }],
         temperature: 0.2,
@@ -466,10 +475,21 @@ serve(async (req) => {
           const resultCount = searchData.items?.length || 0;
           console.log(`  ✓ Found ${resultCount} results for this query`);
           
+          // Filter out irrelevant domains (hotels, travel, etc.)
+          const irrelevantDomains = ['booking.com', 'hotels.com', 'airbnb.com', 'expedia.com', 'tripadvisor.com'];
+          
           // Deduplicate and filter articles
           const articleItems = (searchData.items || []).filter((item: any) => {
             const url = item.link.toLowerCase();
             if (seenUrls.has(url)) return false;
+            
+            // Filter out irrelevant domains
+            const domain = new URL(item.link).hostname.toLowerCase();
+            if (irrelevantDomains.some(d => domain.includes(d))) {
+              console.log(`  ⚠️ Filtered out irrelevant domain: ${domain}`);
+              return false;
+            }
+            
             const isHomepage = url.match(/^https?:\/\/[^\/]+\/?$/);
             return !isHomepage;
           });
