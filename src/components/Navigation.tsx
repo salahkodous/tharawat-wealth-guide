@@ -22,7 +22,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUserCountry } from '@/hooks/useUserCountry';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import AnakinLogo from '@/components/AnakinLogo';
 import CurrencySymbol from '@/components/CurrencySymbol';
 import { useState } from 'react';
@@ -30,6 +30,8 @@ import { useState } from 'react';
 const Navigation = () => {
   const { signOut } = useAuth();
   const location = useLocation();
+  const { lang } = useParams<{ lang: string }>();
+  const currentLang = lang || 'en';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t, isRTL } = useTranslation();
   const { userCountry, setUserCountry, getAllCountries } = useUserCountry();
@@ -47,11 +49,12 @@ const Navigation = () => {
     }
   };
 
+  // Language-aware navigation items
   const navItems = [
-    { path: '/dashboard', icon: Home, label: t('dashboard') },
-    { path: '/portfolio', icon: Briefcase, label: t('portfolio') },
-    { path: '/finances', icon: Calculator, label: t('finances') },
-    { path: '/analytics', icon: Globe, label: 'News' },
+    { path: `/${currentLang}/dashboard`, icon: Home, label: t('dashboard') },
+    { path: `/${currentLang}/portfolio`, icon: Briefcase, label: t('portfolio') },
+    { path: `/${currentLang}/finances`, icon: Calculator, label: t('finances') },
+    { path: `/${currentLang}/analytics`, icon: Globe, label: 'News' },
   ];
 
   return (
@@ -77,7 +80,7 @@ const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
-            <Link to="/settings">
+            <Link to={`/${currentLang}/settings`}>
               <Button variant="ghost" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 {t('settings')}
@@ -118,7 +121,7 @@ const Navigation = () => {
                   </Button>
                 </Link>
               ))}
-              <Link to="/settings" onClick={() => setIsMenuOpen(false)}>
+              <Link to={`/${currentLang}/settings`} onClick={() => setIsMenuOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start gap-2">
                   <Settings className="w-4 h-4" />
                   {t('settings')}
