@@ -88,6 +88,98 @@ Return only the expanded query:`
   return message; // Fallback to original
 }
 
+// AI agent to determine search topics and keywords
+async function determineSearchTopics(
+  resolvedQuery: string,
+  conversationHistory: any[]
+): Promise<{
+  searchTopics: string[];
+  primaryTopic: string;
+  searchQueries: string[];
+  reasoning: string;
+}> {
+  console.log('🤖 AI Agent determining search topics...');
+
+  try {
+    const contextSummary = conversationHistory
+      .slice(-6)
+      .map((msg: any) => `${msg.role}: ${msg.content.substring(0, 200)}`)
+      .join('\n');
+
+    const topicResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{
+          role: 'system',
+          content: `You are a search strategy AI agent. Analyze the user's query and conversation context to determine the BEST search topics and keywords.
+
+YOUR TASK:
+1. Identify the main topic/entity being discussed (e.g., "refrigerators", "investment funds", "CBE interest rates")
+2. Extract specific subtopics to search for (e.g., "prices", "brands", "reviews", "comparisons")
+3. Generate 2-4 optimized search queries that will find the most relevant information
+4. Consider Egyptian market context when applicable
+
+CRITICAL RULES:
+- Focus on SPECIFIC, SEARCHABLE topics (not vague concepts)
+- Include brand names, product types, or specific entities when mentioned
+- For price queries: include "Egypt", "2025", "current prices"
+- For investment products: include bank names, product types, rates
+- For news: include specific events, organizations, dates
+- Maintain the original language (Arabic or English)
+
+CONVERSATION CONTEXT:
+${contextSummary}
+
+CURRENT QUERY: "${resolvedQuery}"
+
+Return ONLY this JSON:
+{
+  "primaryTopic": "main subject (e.g., 'refrigerators in Egypt')",
+  "searchTopics": ["topic1", "topic2", "topic3"],
+  "searchQueries": [
+    "optimized query 1 for search engine",
+    "optimized query 2 for search engine"
+  ],
+  "reasoning": "brief explanation of search strategy"
+}`
+        }],
+        temperature: 0.2,
+        max_tokens: 400,
+      }),
+    });
+
+    if (topicResponse.ok) {
+      const data = await topicResponse.json();
+      let content = data.choices[0].message.content;
+      content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const result = JSON.parse(content);
+      
+      console.log('📊 Search Topics Determined:');
+      console.log(`  Primary: ${result.primaryTopic}`);
+      console.log(`  Topics: ${result.searchTopics.join(', ')}`);
+      console.log(`  Queries: ${result.searchQueries.join(' | ')}`);
+      console.log(`  Reasoning: ${result.reasoning}`);
+      
+      return result;
+    }
+  } catch (e) {
+    console.error('Topic determination failed:', e);
+  }
+
+  // Fallback: use resolved query as-is
+  return {
+    primaryTopic: resolvedQuery,
+    searchTopics: [resolvedQuery],
+    searchQueries: [resolvedQuery],
+    reasoning: 'Fallback to direct query',
+  };
+}
+
 // Advanced Router Agent with intent classification
 async function analyzeQueryAndSelectTools(message: string, resolvedMessage: string): Promise<{
   intent: 'price_check' | 'recent_news' | 'research' | 'portfolio_analysis' | 'product_research' | 'general';
@@ -263,14 +355,25 @@ serve(async (req) => {
     console.log('🔄 Resolving context references...');
     const resolvedMessage = await resolveContextReferences(message, conversationHistory);
     
-    // Step 2: Fetch user's financial data
+    // Step 2: AI Agent determines search topics
+    console.log('🤖 Determining search topics...');
+    const searchStrategy = await determineSearchTopics(resolvedMessage, conversationHistory);
+    
+    // Step 3: Fetch user's financial data
     console.log('Fetching user financial data...');
     const userData = await getUserFinancialData(userId, supabase);
 
-    // Step 3: Advanced Router Agent (use resolved message)
+    // Step 4: Advanced Router Agent (use resolved message and search topics)
     const toolSelection = await analyzeQueryAndSelectTools(message, resolvedMessage);
+    
+    // Override search query with AI-determined queries
+    if (searchStrategy.searchQueries.length > 0) {
+      toolSelection.searchQuery = searchStrategy.searchQueries[0]; // Use primary search query
+    }
+    
     console.log(`📋 Intent: ${toolSelection.intent}, Time: ${toolSelection.timeConstraint}`);
     console.log('💡 Reasoning:', toolSelection.reasoning);
+    console.log('🎯 Search Strategy:', searchStrategy.reasoning);
 
     let knowledgeContext: any[] = [];
     let sources: any[] = [];
@@ -322,82 +425,78 @@ serve(async (req) => {
 
     // Step 3B: Egypt-focused Keyword Search via Google (for fresh, time-sensitive content)
     if (toolSelection.useWebSearch && GOOGLE_SEARCH_API_KEY && GOOGLE_SEARCH_ENGINE_ID) {
-      console.log('🔑 Egypt-focused keyword search via Google:', toolSelection.searchQuery);
+      // Use AI-determined search queries for better results
+      const searchQueriesToUse = searchStrategy.searchQueries.length > 0 
+        ? searchStrategy.searchQueries 
+        : [toolSelection.searchQuery || message];
+      
+      console.log('🔑 AI-powered search queries:', searchQueriesToUse);
       
       if (!FIRECRAWL_API_KEY) {
         console.error('⚠️ FIRECRAWL_API_KEY missing - will skip article scraping');
       }
       
-      // Add Egypt-specific context to search for better local results
-      const baseQuery = toolSelection.searchQuery || message;
-      const egyptFocusedQuery = isArabic 
-        ? `${baseQuery} مصر OR السوق المصري OR البورصة المصرية OR القاهرة`
-        : `${baseQuery} Egypt OR Egyptian market OR EGX OR Cairo`;
-      
-      // Build search with time constraint and Egypt focus
-      const dateRestrict = toolSelection.dateFilter || (toolSelection.timeConstraint === 'realtime' ? 'd1' : toolSelection.timeConstraint === 'recent' ? 'w1' : 'm1');
-      const searchParams = new URLSearchParams({
-        key: GOOGLE_SEARCH_API_KEY,
-        cx: GOOGLE_SEARCH_ENGINE_ID,
-        q: egyptFocusedQuery,
-        dateRestrict,
-        num: '10',
-        lr: isArabic ? 'lang_ar' : 'lang_en', // Language restriction
-        gl: 'eg', // Geographic location: Egypt
-      });
-      
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`;
-      
-      console.log(`📅 Date filter: ${dateRestrict}, Language: ${isArabic ? 'Arabic' : 'English'}, Region: Egypt`);
-      console.log(`🔍 Egypt-focused query: "${egyptFocusedQuery}"`);
-      const searchResponse = await fetch(searchUrl);
-      if (searchResponse.ok) {
-        const searchData = await searchResponse.json();
-        const resultCount = searchData.items?.length || 0;
-        console.log(`Found ${resultCount} search results`);
+      // Execute searches for each AI-determined query
+      for (const searchQuery of searchQueriesToUse) {
+        console.log(`🔍 Searching: "${searchQuery}"`);
         
-        if (resultCount === 0) {
-          console.error('No search results found! Check search query and API settings.');
-        }
-        
-        // Log all URLs for debugging
-        console.log('All search results:');
-        (searchData.items || []).forEach((item: any, idx: number) => {
-          console.log(`  ${idx + 1}. ${item.title}`);
-          console.log(`     URL: ${item.link}`);
+        // Add Egypt-specific context to search for better local results
+        const egyptFocusedQuery = isArabic 
+          ? `${searchQuery} مصر OR السوق المصري OR البورصة المصرية OR القاهرة`
+          : `${searchQuery} Egypt OR Egyptian market OR EGX OR Cairo`;
+      
+        // Build search with time constraint and Egypt focus
+        const dateRestrict = toolSelection.dateFilter || (toolSelection.timeConstraint === 'realtime' ? 'd1' : toolSelection.timeConstraint === 'recent' ? 'w1' : 'm1');
+        const searchParams = new URLSearchParams({
+          key: GOOGLE_SEARCH_API_KEY,
+          cx: GOOGLE_SEARCH_ENGINE_ID,
+          q: egyptFocusedQuery,
+          dateRestrict,
+          num: '5', // Fewer per query since we're running multiple
+          lr: isArabic ? 'lang_ar' : 'lang_en',
+          gl: 'eg',
         });
         
-        // Deduplicate and filter articles
-        const articleItems = (searchData.items || []).filter((item: any) => {
-          const url = item.link.toLowerCase();
-          if (seenUrls.has(url)) return false; // Already have this
-          const isHomepage = url.match(/^https?:\/\/[^\/]+\/?$/);
-          return !isHomepage;
-        });
+        const searchUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`;
         
-        console.log(`📰 Found ${articleItems.length} unique articles (${resultCount - articleItems.length} duplicates removed)`);
-        
-        if (!FIRECRAWL_API_KEY) {
-          console.warn('⚠️ Skipping Firecrawl - using snippets only');
-          // Fallback to snippets
-          articleItems.slice(0, 5).forEach((item: any) => {
-            seenUrls.add(item.link);
-            knowledgeContext.push({
-              content: item.snippet,
-              metadata: { title: item.title, source: 'Google Search' },
-              sourceUrl: item.link,
-              retrievalType: 'keyword',
-              score: 0.9,
-            });
-            sources.push({ title: item.title, url: item.link, type: 'news_article' });
+        console.log(`📅 Date: ${dateRestrict}, Lang: ${isArabic ? 'AR' : 'EN'}, Query: "${egyptFocusedQuery}"`);
+        const searchResponse = await fetch(searchUrl);
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          const resultCount = searchData.items?.length || 0;
+          console.log(`  ✓ Found ${resultCount} results for this query`);
+          
+          // Deduplicate and filter articles
+          const articleItems = (searchData.items || []).filter((item: any) => {
+            const url = item.link.toLowerCase();
+            if (seenUrls.has(url)) return false;
+            const isHomepage = url.match(/^https?:\/\/[^\/]+\/?$/);
+            return !isHomepage;
           });
-        } else if (articleItems.length > 0) {
-          // Scrape top articles with Firecrawl
-          for (const item of articleItems.slice(0, 3)) {
-            if (seenUrls.has(item.link)) continue;
-            try {
-              console.log('🔥 Firecrawl scraping:', item.title);
-              const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          
+          console.log(`  📰 ${articleItems.length} unique articles from this search`);
+          
+          if (!FIRECRAWL_API_KEY) {
+            console.warn('⚠️ Skipping Firecrawl - using snippets only');
+            // Fallback to snippets
+            articleItems.slice(0, 3).forEach((item: any) => {
+              seenUrls.add(item.link);
+              knowledgeContext.push({
+                content: item.snippet,
+                metadata: { title: item.title, source: 'Google Search', query: searchQuery },
+                sourceUrl: item.link,
+                retrievalType: 'keyword',
+                score: 0.9,
+              });
+              sources.push({ title: item.title, url: item.link, type: 'news_article' });
+            });
+          } else if (articleItems.length > 0) {
+            // Scrape top articles with Firecrawl (limit to 2 per query)
+            for (const item of articleItems.slice(0, 2)) {
+              if (seenUrls.has(item.link)) continue;
+              try {
+                console.log(`  🔥 Scraping: ${item.title.substring(0, 60)}...`);
+                const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
@@ -423,43 +522,45 @@ serve(async (req) => {
                 const actualContent = content || item.snippet;
                 seenUrls.add(item.link);
                 
-                knowledgeContext.push({
-                  content: actualContent.substring(0, 12000),
-                  metadata: { 
-                    title: item.title, 
-                    source: 'Firecrawl',
-                    date: new Date().toISOString(),
-                    domain: new URL(item.link).hostname,
-                  },
-                  sourceUrl: item.link,
-                  retrievalType: 'keyword',
-                  score: 0.95, // Fresh content gets high score
-                });
-                
-                sources.push({
-                  title: item.title,
-                  url: item.link,
-                  type: 'news_article',
-                });
-                
-                console.log('✅ Full article scraped:', item.title);
-              } else {
-                const errorText = await firecrawlResponse.text();
-                console.error('Firecrawl API error:', firecrawlResponse.status, errorText);
-                // Skip this source if Firecrawl fails
-                console.warn('Skipping source due to Firecrawl failure');
+                  knowledgeContext.push({
+                    content: actualContent.substring(0, 12000),
+                    metadata: { 
+                      title: item.title, 
+                      source: 'Firecrawl',
+                      searchQuery: searchQuery, // Track which query found this
+                      date: new Date().toISOString(),
+                      domain: new URL(item.link).hostname,
+                    },
+                    sourceUrl: item.link,
+                    retrievalType: 'keyword',
+                    score: 0.95,
+                  });
+                  
+                  sources.push({
+                    title: item.title,
+                    url: item.link,
+                    type: 'news_article',
+                  });
+                  
+                  console.log(`  ✅ Scraped successfully`);
+                } else {
+                  const errorText = await firecrawlResponse.text();
+                  console.error(`  ❌ Firecrawl error: ${firecrawlResponse.status}`);
+                }
+              } catch (e) {
+                console.error(`  ❌ Exception:`, e);
               }
-            } catch (e) {
-              console.error('Exception during Firecrawl for:', item.link, e);
             }
+          } else {
+            console.warn(`  ⚠️ No articles found for this query`);
           }
         } else {
-          console.warn('No valid article URLs found in search results');
+          const errorText = await searchResponse.text();
+          console.error(`  ❌ Search API error: ${searchResponse.status}`);
         }
-      } else {
-        const errorText = await searchResponse.text();
-        console.error('Google Search API error:', searchResponse.status, errorText);
-      }
+      } // End of search query loop
+      
+      console.log(`📊 Total sources collected: ${sources.length} from ${searchQueriesToUse.length} queries`);
     }
 
     // Step 4: Rank and deduplicate context
