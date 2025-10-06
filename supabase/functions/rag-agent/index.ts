@@ -15,8 +15,81 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
+// Resolve context references before routing
+async function resolveContextReferences(message: string, conversationHistory: any[]): Promise<string> {
+  if (!conversationHistory || conversationHistory.length === 0) {
+    return message;
+  }
+
+  // Check if query contains pronouns/references that need context
+  const hasPronouns = /\b(it|that|this|them|its|those|these|he|she|they)\b/i.test(message);
+  const hasRelativeTerms = /\b(average|price|cost|same|similar|better)\b/i.test(message);
+  const arabicPronouns = /\b(ه|هذا|تلك|نفس|متوسط|سعر)\b/.test(message);
+  
+  if (!hasPronouns && !hasRelativeTerms && !arabicPronouns) {
+    return message; // No context resolution needed
+  }
+
+  console.log('🔄 Resolving context references in query...');
+  
+  // Use LLM to expand the query with conversation context
+  try {
+    const contextMessages = conversationHistory.slice(-4); // Last 2 exchanges
+    const contextSummary = contextMessages
+      .map((msg: any) => `${msg.role}: ${msg.content}`)
+      .join('\n');
+
+    const resolutionResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{
+          role: 'system',
+          content: `You are a context resolver. Expand the user's query by replacing pronouns and implicit references with explicit terms from the conversation history.
+
+CRITICAL RULES:
+1. Replace "it", "this", "that", "them" with the actual subject from context
+2. If asking about "average price" or "price of it", identify what "it" refers to
+3. Keep the expanded query concise and search-friendly
+4. Return ONLY the expanded query, nothing else
+5. Maintain the original language (Arabic or English)
+
+Examples:
+- "average price of it" + context about fridges → "average price of refrigerators in Egypt"
+- "متوسط سعره" + context about fridges → "متوسط سعر الثلاجات في مصر"
+- "is it better to buy now or later" → keep as is (no pronoun to resolve)
+
+CONVERSATION CONTEXT:
+${contextSummary}
+
+USER'S NEW QUERY: "${message}"
+
+Return only the expanded query:`
+        }],
+        temperature: 0.3,
+        max_tokens: 100,
+      }),
+    });
+
+    if (resolutionResponse.ok) {
+      const data = await resolutionResponse.json();
+      const expandedQuery = data.choices[0].message.content.trim();
+      console.log(`✓ Context resolved: "${message}" → "${expandedQuery}"`);
+      return expandedQuery;
+    }
+  } catch (e) {
+    console.error('Context resolution failed:', e);
+  }
+
+  return message; // Fallback to original
+}
+
 // Advanced Router Agent with intent classification
-async function analyzeQueryAndSelectTools(message: string): Promise<{
+async function analyzeQueryAndSelectTools(message: string, resolvedMessage: string): Promise<{
   intent: 'price_check' | 'recent_news' | 'research' | 'portfolio_analysis' | 'product_research' | 'general';
   timeConstraint: 'realtime' | 'recent' | 'any';
   useKnowledgeBase: boolean;
@@ -28,12 +101,13 @@ async function analyzeQueryAndSelectTools(message: string): Promise<{
   reasoning: string;
 }> {
   console.log('🔍 Router Agent analyzing query intent...');
+  console.log(`📝 Original: "${message}", Resolved: "${resolvedMessage}"`);
   
-  // Quick Arabic product detection (before expensive API call)
-  const hasProductTerms = /صناد|صندوق|شهاد|شهادة|وديع|ودائع/.test(message);
-  const hasInvestmentTerms = /استثمار|استثمارات/.test(message);
+  // Quick Arabic product detection (use RESOLVED message for better detection)
+  const hasProductTerms = /صناد|صندوق|شهاد|شهادة|وديع|ودائع/.test(resolvedMessage);
+  const hasInvestmentTerms = /استثمار|استثمارات/.test(resolvedMessage);
   
-  if (hasProductTerms || (hasInvestmentTerms && /بنك|بنوك/.test(message))) {
+  if (hasProductTerms || (hasInvestmentTerms && /بنك|بنوك/.test(resolvedMessage))) {
     console.log('🎯 Detected Arabic investment product query - using web search');
     return {
       intent: 'product_research',
@@ -42,7 +116,7 @@ async function analyzeQueryAndSelectTools(message: string): Promise<{
       useWebSearch: true,
       useSemanticSearch: false,
       useKeywordSearch: false,
-      searchQuery: message,
+      searchQuery: resolvedMessage, // Use resolved query for search
       reasoning: 'Arabic investment product query detected',
     };
   }
@@ -89,7 +163,7 @@ Return ONLY this JSON:
 }`,
       }, {
         role: 'user',
-        content: `Analyze: "${message}"`,
+        content: `Analyze: "${resolvedMessage}"`, // Use resolved query
       }],
       temperature: 0.1,
       max_tokens: 300,
@@ -109,21 +183,21 @@ Return ONLY this JSON:
     }
   }
 
-  // Enhanced fallback heuristics
-  const lowerMsg = message.toLowerCase();
+  // Enhanced fallback heuristics (use RESOLVED message)
+  const lowerMsg = resolvedMessage.toLowerCase();
   const isTimeSensitive = /today|now|latest|recent|current|this (week|month)|أخبار/.test(lowerMsg);
   const isPriceQuery = /price|cost|value|worth|trading at|سعر/.test(lowerMsg);
   const isNewsQuery = /news|event|happen|update|أخبار/.test(lowerMsg);
-  const isProductQuery = /fund|funds|certificate|deposit|صناد|صندوق|شهاد|وديع/.test(lowerMsg);
+  const isProductQuery = /fund|funds|certificate|deposit|refrigerator|fridge|صناد|صندوق|شهاد|وديع|ثلاج/.test(lowerMsg);
   
   return {
     intent: isProductQuery ? 'product_research' : isPriceQuery ? 'price_check' : isNewsQuery ? 'recent_news' : 'general',
     timeConstraint: isTimeSensitive ? 'recent' : 'any',
     useKnowledgeBase: !isProductQuery,
-    useWebSearch: isProductQuery || isTimeSensitive || isNewsQuery,
+    useWebSearch: isProductQuery || isTimeSensitive || isNewsQuery || isPriceQuery, // Enable web search for price queries too
     useSemanticSearch: !isPriceQuery && !isProductQuery,
     useKeywordSearch: isTimeSensitive || isPriceQuery,
-    searchQuery: message,
+    searchQuery: resolvedMessage, // Use resolved query
     dateFilter: isTimeSensitive ? 'm1' : undefined,
     reasoning: 'Fallback heuristic classification',
   };
@@ -185,12 +259,16 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Step 1: Fetch user's financial data
+    // Step 1: Resolve context references in the query
+    console.log('🔄 Resolving context references...');
+    const resolvedMessage = await resolveContextReferences(message, conversationHistory);
+    
+    // Step 2: Fetch user's financial data
     console.log('Fetching user financial data...');
     const userData = await getUserFinancialData(userId, supabase);
 
-    // Step 2: Advanced Router Agent
-    const toolSelection = await analyzeQueryAndSelectTools(message);
+    // Step 3: Advanced Router Agent (use resolved message)
+    const toolSelection = await analyzeQueryAndSelectTools(message, resolvedMessage);
     console.log(`📋 Intent: ${toolSelection.intent}, Time: ${toolSelection.timeConstraint}`);
     console.log('💡 Reasoning:', toolSelection.reasoning);
 
