@@ -9,6 +9,7 @@ const corsHeaders = {
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
+const SCRAPERAPI_KEY = Deno.env.get('SCRAPERAPI_KEY');
 const GOOGLE_SEARCH_API_KEY = Deno.env.get('GOOGLE_SEARCH_API_KEY');
 const GOOGLE_SEARCH_ENGINE_ID = Deno.env.get('GOOGLE_SEARCH_ENGINE_ID');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -566,15 +567,71 @@ serve(async (req) => {
                   
                   articleAdded = true;
                   successfulScrapes++;
-                  console.log(`  ✅ Scraped successfully`);
+                  console.log(`  ✅ Scraped successfully with Firecrawl`);
                 } else {
-                  console.warn('Firecrawl returned empty content, using snippet fallback');
+                  console.warn('Firecrawl returned empty content, trying ScraperAPI fallback');
                 }
               } else {
-                console.error(`  ❌ Firecrawl error: ${firecrawlResponse.status}, using snippet fallback`);
+                console.error(`  ❌ Firecrawl error: ${firecrawlResponse.status}, trying ScraperAPI fallback`);
               }
               } catch (e) {
-                console.error(`  ❌ Firecrawl exception:`, e, '- using snippet fallback');
+                console.error(`  ❌ Firecrawl exception:`, e, '- trying ScraperAPI fallback');
+              }
+              
+              // Try ScraperAPI if Firecrawl failed and we have the API key
+              if (!articleAdded && SCRAPERAPI_KEY) {
+                try {
+                  console.log(`  🕷️ Trying ScraperAPI...`);
+                  const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPERAPI_KEY}&url=${encodeURIComponent(item.link)}`;
+                  
+                  const scraperResponse = await fetch(scraperApiUrl);
+                  
+                  if (scraperResponse.ok) {
+                    const htmlContent = await scraperResponse.text();
+                    
+                    // Basic HTML to text conversion (remove tags, clean up)
+                    const textContent = htmlContent
+                      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                      .replace(/<[^>]+>/g, ' ')
+                      .replace(/\s+/g, ' ')
+                      .trim();
+                    
+                    if (textContent && textContent.length > 100) {
+                      seenUrls.add(item.link);
+                      
+                      knowledgeContext.push({
+                        content: textContent.substring(0, 12000),
+                        metadata: { 
+                          title: item.title, 
+                          source: 'ScraperAPI',
+                          searchQuery: searchQuery,
+                          date: new Date().toISOString(),
+                          domain: new URL(item.link).hostname,
+                        },
+                        sourceUrl: item.link,
+                        retrievalType: 'keyword',
+                        score: 0.92,
+                      });
+                      
+                      sources.push({
+                        title: item.title,
+                        url: item.link,
+                        type: 'news_article',
+                      });
+                      
+                      articleAdded = true;
+                      successfulScrapes++;
+                      console.log(`  ✅ Scraped successfully with ScraperAPI`);
+                    } else {
+                      console.warn('ScraperAPI returned empty/short content');
+                    }
+                  } else {
+                    console.error(`  ❌ ScraperAPI error: ${scraperResponse.status}`);
+                  }
+                } catch (e) {
+                  console.error(`  ❌ ScraperAPI exception:`, e);
+                }
               }
               
               // Fallback to snippet if scraping failed
