@@ -597,7 +597,6 @@ serve(async (req) => {
             }
             
             console.log(`  ✅ Scraped ${successfulScrapes}/${itemsToScrape.length} articles successfully`);
-          }
           } else {
             console.warn(`  ⚠️ No articles found for this query`);
           }
