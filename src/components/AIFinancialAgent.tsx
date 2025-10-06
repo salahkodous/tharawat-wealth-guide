@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useChatHistory } from '@/hooks/useChatHistory';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Bot, Send, User, MessageSquarePlus, History, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SourceChip } from '@/components/SourceChip';
@@ -25,6 +26,7 @@ interface Message {
 
 const AIFinancialAgent = () => {
   const { user } = useAuth();
+  const { language } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -156,7 +158,8 @@ const AIFinancialAgent = () => {
           message: messageToSend,
           conversationHistory, // Send full chat history
           userId: user.id,
-          chatId: chatId
+          chatId: chatId,
+          language: language // Pass language to agent
         }
       });
 
