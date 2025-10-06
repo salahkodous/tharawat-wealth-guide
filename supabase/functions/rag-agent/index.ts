@@ -512,8 +512,14 @@ serve(async (req) => {
             });
           } else if (articleItems.length > 0) {
             // Scrape top articles with Firecrawl (limit to 2 per query)
-            for (const item of articleItems.slice(0, 2)) {
+            let successfulScrapes = 0;
+            const itemsToScrape = articleItems.slice(0, 2);
+            
+            for (const item of itemsToScrape) {
               if (seenUrls.has(item.link)) continue;
+              
+              let articleAdded = false;
+              
               try {
                 console.log(`  🔥 Scraping: ${item.title.substring(0, 60)}...`);
                 const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -535,19 +541,15 @@ serve(async (req) => {
                 const firecrawlData = await firecrawlResponse.json();
                 const content = firecrawlData.data?.markdown || '';
                 
-                if (!content) {
-                  console.warn('Firecrawl returned empty content for:', item.link);
-                }
-                
-                const actualContent = content || item.snippet;
-                seenUrls.add(item.link);
-                
+                if (content) {
+                  seenUrls.add(item.link);
+                  
                   knowledgeContext.push({
-                    content: actualContent.substring(0, 12000),
+                    content: content.substring(0, 12000),
                     metadata: { 
                       title: item.title, 
                       source: 'Firecrawl',
-                      searchQuery: searchQuery, // Track which query found this
+                      searchQuery: searchQuery,
                       date: new Date().toISOString(),
                       domain: new URL(item.link).hostname,
                     },
@@ -562,15 +564,40 @@ serve(async (req) => {
                     type: 'news_article',
                   });
                   
+                  articleAdded = true;
+                  successfulScrapes++;
                   console.log(`  ✅ Scraped successfully`);
                 } else {
-                  const errorText = await firecrawlResponse.text();
-                  console.error(`  ❌ Firecrawl error: ${firecrawlResponse.status}`);
+                  console.warn('Firecrawl returned empty content, using snippet fallback');
                 }
+              } else {
+                console.error(`  ❌ Firecrawl error: ${firecrawlResponse.status}, using snippet fallback`);
+              }
               } catch (e) {
-                console.error(`  ❌ Exception:`, e);
+                console.error(`  ❌ Firecrawl exception:`, e, '- using snippet fallback');
+              }
+              
+              // Fallback to snippet if scraping failed
+              if (!articleAdded && !seenUrls.has(item.link)) {
+                seenUrls.add(item.link);
+                knowledgeContext.push({
+                  content: item.snippet,
+                  metadata: { 
+                    title: item.title, 
+                    source: 'Google Search (Snippet)', 
+                    query: searchQuery,
+                  },
+                  sourceUrl: item.link,
+                  retrievalType: 'keyword',
+                  score: 0.85,
+                });
+                sources.push({ title: item.title, url: item.link, type: 'news_article' });
+                console.log(`  📝 Using snippet as fallback`);
               }
             }
+            
+            console.log(`  ✅ Scraped ${successfulScrapes}/${itemsToScrape.length} articles successfully`);
+          }
           } else {
             console.warn(`  ⚠️ No articles found for this query`);
           }
