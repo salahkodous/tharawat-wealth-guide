@@ -897,6 +897,7 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
     // Determine UI components to include based on query
     const uiComponents: string[] = [];
     let assetDetails = null;
+    const messageLower = message.toLowerCase();
 
     // Check for finance-related queries
     const isFinanceQuery = /\b(income|expenses|budget|finances|salary|debt|savings|spending|financial|overview)\b/i.test(message);
@@ -904,27 +905,32 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
       uiComponents.push('PersonalFinanceCard');
     }
 
+    // Check for asset/crypto price queries (more flexible matching)
+    const assetKeywords = ['bitcoin', 'bit coin', 'btc', 'ethereum', 'eth', 'stock price', 'crypto price', 'asset price', 'value of', 'price of'];
+    const isAssetPriceQuery = assetKeywords.some(keyword => messageLower.includes(keyword));
+
     // Check for portfolio-related queries (but not specific asset queries)
-    const isPortfolioQuery = /\b(portfolio|holdings|assets|investments|allocation|diversification)\b/i.test(message);
-    const isSpecificAssetQuery = /\b(stock|share|bond|property|real estate|crypto|bitcoin|ethereum)\s+(?:of|for|about|price|value)\b/i.test(message) ||
-                                 /\b(how much|what is|current price|market value)\b/i.test(message) && userData.assets.length > 0;
+    const isPortfolioQuery = /\b(portfolio|holdings|my assets|investments|allocation|diversification)\b/i.test(message) && !isAssetPriceQuery;
     
-    if (isPortfolioQuery && !isSpecificAssetQuery) {
+    if (isPortfolioQuery) {
       uiComponents.push('PortfolioHoldingsCard');
     }
 
-    // Check for specific asset queries and try to find the asset
-    if (isSpecificAssetQuery && userData.assets.length > 0) {
-      // Try to extract asset name/symbol from the query
-      const messageLower = message.toLowerCase();
-      
-      // Look for asset in user's portfolio
-      const foundAsset = userData.assets.find((asset: any) => 
-        messageLower.includes(asset.asset_name.toLowerCase()) ||
-        (asset.symbol && messageLower.includes(asset.symbol.toLowerCase()))
-      );
+    // Check for specific asset queries
+    if (isAssetPriceQuery) {
+      // First try to find in user's portfolio
+      let foundAsset = null;
+      if (userData.assets && userData.assets.length > 0) {
+        foundAsset = userData.assets.find((asset: any) => 
+          messageLower.includes(asset.asset_name.toLowerCase()) ||
+          (asset.symbol && messageLower.includes(asset.symbol.toLowerCase())) ||
+          // Handle spaces in search (e.g., "bit coin" vs "bitcoin")
+          messageLower.replace(/\s+/g, '').includes(asset.asset_name.toLowerCase().replace(/\s+/g, ''))
+        );
+      }
 
       if (foundAsset) {
+        // Asset found in portfolio
         assetDetails = {
           assetName: foundAsset.asset_name,
           assetType: foundAsset.asset_type,
@@ -938,6 +944,63 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
           inPortfolio: true,
         };
         uiComponents.push('AssetDetailCard');
+      } else {
+        // Asset not in portfolio - fetch from market data
+        const normalizedMessage = messageLower.replace(/\s+/g, '');
+        
+        if (normalizedMessage.includes('bitcoin') || messageLower.includes('btc')) {
+          const { data: cryptoData } = await supabase
+            .from('cryptocurrencies')
+            .select('*')
+            .ilike('symbol', 'BTC')
+            .single();
+          
+          if (cryptoData) {
+            assetDetails = {
+              assetName: cryptoData.name,
+              assetType: 'Cryptocurrency',
+              symbol: cryptoData.symbol,
+              currentPrice: cryptoData.price_egp || cryptoData.price_usd,
+              country: 'Global',
+              inPortfolio: false,
+              marketData: {
+                change24h: cryptoData.change_24h,
+                changePercent24h: cryptoData.change_percentage_24h,
+                volume24h: cryptoData.volume_24h,
+                marketCap: cryptoData.market_cap,
+                high24h: cryptoData.high_24h,
+                low24h: cryptoData.low_24h,
+              }
+            };
+            uiComponents.push('AssetDetailCard');
+          }
+        } else if (normalizedMessage.includes('ethereum') || messageLower.includes('eth')) {
+          const { data: cryptoData } = await supabase
+            .from('cryptocurrencies')
+            .select('*')
+            .ilike('symbol', 'ETH')
+            .single();
+          
+          if (cryptoData) {
+            assetDetails = {
+              assetName: cryptoData.name,
+              assetType: 'Cryptocurrency',
+              symbol: cryptoData.symbol,
+              currentPrice: cryptoData.price_egp || cryptoData.price_usd,
+              country: 'Global',
+              inPortfolio: false,
+              marketData: {
+                change24h: cryptoData.change_24h,
+                changePercent24h: cryptoData.change_percentage_24h,
+                volume24h: cryptoData.volume_24h,
+                marketCap: cryptoData.market_cap,
+                high24h: cryptoData.high_24h,
+                low24h: cryptoData.low_24h,
+              }
+            };
+            uiComponents.push('AssetDetailCard');
+          }
+        }
       }
     }
 
