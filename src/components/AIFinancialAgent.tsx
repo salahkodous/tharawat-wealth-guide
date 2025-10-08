@@ -9,6 +9,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Bot, Send, User, MessageSquarePlus, History, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SourceChip } from '@/components/SourceChip';
+import PersonalFinanceCard from '@/components/PersonalFinanceCard';
 import {
   Sheet,
   SheetContent,
@@ -22,6 +23,7 @@ interface Message {
   type: 'user' | 'agent' | 'error';
   content: string;
   timestamp: Date;
+  uiComponents?: string[];
 }
 
 const AIFinancialAgent = () => {
@@ -177,7 +179,8 @@ const AIFinancialAgent = () => {
         id: (Date.now() + 1).toString(),
         type: 'agent',
         content: data?.response || 'No response received',
-        timestamp: new Date()
+        timestamp: new Date(),
+        uiComponents: data?.uiComponents || []
       };
 
       setMessages(prev => [...prev, agentMessage]);
@@ -315,8 +318,13 @@ const AIFinancialAgent = () => {
                         : 'bg-muted'
                     }`}>
                       {message.type === 'agent' ? (
-                        <div className="space-y-1">
+                        <div className="space-y-3">
                           {formatAgentResponse(message.content)}
+                          {message.uiComponents?.includes('PersonalFinanceCard') && (
+                            <div className="mt-4">
+                              <PersonalFinanceCard />
+                            </div>
+                          )}
                         </div>
                       ) : (
                         message.content

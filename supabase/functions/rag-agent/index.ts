@@ -894,6 +894,9 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
     const aiData = await aiResponse.json();
     let response = aiData.choices[0].message.content;
 
+    // Determine if we should include UI components based on the query
+    const shouldIncludeFinanceCard = /\b(income|expenses|budget|finances|salary|debt|savings|spending|financial|overview)\b/i.test(message);
+
     // Step 8: Format sources as structured data (not markdown)
     const uniqueSources = sources.filter((s: any, idx: number, self: any[]) => 
       self.findIndex((x: any) => x.url === s.url) === idx
@@ -919,6 +922,7 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
     return new Response(JSON.stringify({
       success: true,
       response,
+      uiComponents: shouldIncludeFinanceCard ? ['PersonalFinanceCard'] : [],
       sourcesUsed: sources.length,
       contextRetrieved: knowledgeContext.length,
       toolsUsed: {
