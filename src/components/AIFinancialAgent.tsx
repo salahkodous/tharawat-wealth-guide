@@ -10,6 +10,8 @@ import { Bot, Send, User, MessageSquarePlus, History, Trash2 } from 'lucide-reac
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SourceChip } from '@/components/SourceChip';
 import PersonalFinanceCard from '@/components/PersonalFinanceCard';
+import PortfolioHoldingsCard from '@/components/PortfolioHoldingsCard';
+import AssetDetailCard from '@/components/AssetDetailCard';
 import {
   Sheet,
   SheetContent,
@@ -24,6 +26,7 @@ interface Message {
   content: string;
   timestamp: Date;
   uiComponents?: string[];
+  assetDetails?: any;
 }
 
 const AIFinancialAgent = () => {
@@ -180,7 +183,8 @@ const AIFinancialAgent = () => {
         type: 'agent',
         content: data?.response || 'No response received',
         timestamp: new Date(),
-        uiComponents: data?.uiComponents || []
+        uiComponents: data?.uiComponents || [],
+        assetDetails: data?.assetDetails
       };
 
       setMessages(prev => [...prev, agentMessage]);
@@ -323,6 +327,16 @@ const AIFinancialAgent = () => {
                           {message.uiComponents?.includes('PersonalFinanceCard') && (
                             <div className="mt-4">
                               <PersonalFinanceCard />
+                            </div>
+                          )}
+                          {message.uiComponents?.includes('PortfolioHoldingsCard') && (
+                            <div className="mt-4">
+                              <PortfolioHoldingsCard />
+                            </div>
+                          )}
+                          {message.uiComponents?.includes('AssetDetailCard') && message.assetDetails && (
+                            <div className="mt-4">
+                              <AssetDetailCard {...message.assetDetails} />
                             </div>
                           )}
                         </div>

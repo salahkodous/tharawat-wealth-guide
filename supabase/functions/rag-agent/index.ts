@@ -894,8 +894,52 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
     const aiData = await aiResponse.json();
     let response = aiData.choices[0].message.content;
 
-    // Determine if we should include UI components based on the query
-    const shouldIncludeFinanceCard = /\b(income|expenses|budget|finances|salary|debt|savings|spending|financial|overview)\b/i.test(message);
+    // Determine UI components to include based on query
+    const uiComponents: string[] = [];
+    let assetDetails = null;
+
+    // Check for finance-related queries
+    const isFinanceQuery = /\b(income|expenses|budget|finances|salary|debt|savings|spending|financial|overview)\b/i.test(message);
+    if (isFinanceQuery) {
+      uiComponents.push('PersonalFinanceCard');
+    }
+
+    // Check for portfolio-related queries (but not specific asset queries)
+    const isPortfolioQuery = /\b(portfolio|holdings|assets|investments|allocation|diversification)\b/i.test(message);
+    const isSpecificAssetQuery = /\b(stock|share|bond|property|real estate|crypto|bitcoin|ethereum)\s+(?:of|for|about|price|value)\b/i.test(message) ||
+                                 /\b(how much|what is|current price|market value)\b/i.test(message) && userData.assets.length > 0;
+    
+    if (isPortfolioQuery && !isSpecificAssetQuery) {
+      uiComponents.push('PortfolioHoldingsCard');
+    }
+
+    // Check for specific asset queries and try to find the asset
+    if (isSpecificAssetQuery && userData.assets.length > 0) {
+      // Try to extract asset name/symbol from the query
+      const messageLower = message.toLowerCase();
+      
+      // Look for asset in user's portfolio
+      const foundAsset = userData.assets.find((asset: any) => 
+        messageLower.includes(asset.asset_name.toLowerCase()) ||
+        (asset.symbol && messageLower.includes(asset.symbol.toLowerCase()))
+      );
+
+      if (foundAsset) {
+        assetDetails = {
+          assetName: foundAsset.asset_name,
+          assetType: foundAsset.asset_type,
+          symbol: foundAsset.symbol,
+          currentPrice: foundAsset.current_price,
+          purchasePrice: foundAsset.purchase_price,
+          quantity: foundAsset.quantity,
+          country: foundAsset.country,
+          city: foundAsset.city,
+          purchaseDate: foundAsset.purchase_date,
+          inPortfolio: true,
+        };
+        uiComponents.push('AssetDetailCard');
+      }
+    }
 
     // Step 8: Format sources as structured data (not markdown)
     const uniqueSources = sources.filter((s: any, idx: number, self: any[]) => 
@@ -922,7 +966,8 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
     return new Response(JSON.stringify({
       success: true,
       response,
-      uiComponents: shouldIncludeFinanceCard ? ['PersonalFinanceCard'] : [],
+      uiComponents,
+      assetDetails,
       sourcesUsed: sources.length,
       contextRetrieved: knowledgeContext.length,
       toolsUsed: {
