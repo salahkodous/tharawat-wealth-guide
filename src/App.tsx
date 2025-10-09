@@ -19,7 +19,6 @@ import Auth from "./pages/Auth";
 import VerifyEmail from "./pages/VerifyEmail";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import Agent from "./pages/Agent";
 
 const queryClient = new QueryClient();
 
@@ -128,13 +127,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         </LanguageWrapper>
       } />
-      <Route path="/:lang/agent" element={
-        <LanguageWrapper>
-          <ProtectedRoute>
-            <Agent />
-          </ProtectedRoute>
-        </LanguageWrapper>
-      } />
       
       {/* Legacy routes redirect to language version */}
       <Route path="/auth" element={<Navigate to={`/${settings.language || 'en'}/auth`} replace />} />
@@ -143,7 +135,6 @@ const AppRoutes = () => {
       <Route path="/finances" element={<Navigate to={`/${settings.language || 'en'}/finances`} replace />} />
       <Route path="/analytics" element={<Navigate to={`/${settings.language || 'en'}/analytics`} replace />} />
       <Route path="/settings" element={<Navigate to={`/${settings.language || 'en'}/settings`} replace />} />
-      <Route path="/agent" element={<Navigate to={`/${settings.language || 'en'}/agent`} replace />} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

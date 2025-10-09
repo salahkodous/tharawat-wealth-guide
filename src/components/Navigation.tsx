@@ -10,7 +10,6 @@ import {
   Home, 
   Briefcase, 
   Calculator, 
-  Bot,
   TrendingUp,
   LogOut,
   Settings,
@@ -55,7 +54,6 @@ const Navigation = () => {
     { path: `/${currentLang}/portfolio`, icon: Briefcase, label: t('portfolio') },
     { path: `/${currentLang}/finances`, icon: Calculator, label: t('finances') },
     { path: `/${currentLang}/analytics`, icon: Globe, label: 'News' },
-    { path: `/${currentLang}/agent`, icon: Bot, label: 'AI Agent' },
   ];
 
   return (
