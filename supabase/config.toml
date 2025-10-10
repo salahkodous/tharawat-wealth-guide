@@ -102,3 +102,6 @@ verify_jwt = false
 
 [functions.rag-agent]
 verify_jwt = false
+
+[functions.shopify-integration]
+verify_jwt = false

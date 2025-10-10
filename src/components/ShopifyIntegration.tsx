@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Store, Link2, RefreshCw } from 'lucide-react';
+import { Store, Link2, RefreshCw, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -26,10 +26,21 @@ const ShopifyIntegration = ({ projectId }: ShopifyIntegrationProps) => {
   const { toast } = useToast();
   const [store, setStore] = useState<ShopifyStore | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [storeUrl, setStoreUrl] = useState('');
+  const [productCount, setProductCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetchStore();
+    
+    // Check for OAuth callback
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const shop = params.get('shop');
+    
+    if (code && shop && store && !store.is_connected) {
+      handleOAuthCallback(code, shop);
+    }
   }, [projectId]);
 
   const fetchStore = async () => {
@@ -59,6 +70,7 @@ const ShopifyIntegration = ({ projectId }: ShopifyIntegrationProps) => {
 
     setIsConnecting(true);
     try {
+      // First, save the store to database
       const { data, error } = await supabase
         .from('shopify_stores')
         .insert([
@@ -74,23 +86,96 @@ const ShopifyIntegration = ({ projectId }: ShopifyIntegrationProps) => {
         .single();
 
       if (error) throw error;
-
       setStore(data);
-      setStoreUrl('');
+
+      // Get OAuth URL from edge function
+      const { data: authData, error: authError } = await supabase.functions.invoke(
+        'shopify-integration',
+        {
+          body: {
+            action: 'getAuthUrl',
+            storeUrl: storeUrl,
+          },
+        }
+      );
+
+      if (authError) throw authError;
+
+      // Redirect to Shopify OAuth
+      window.location.href = authData.authUrl;
       
-      toast({
-        title: 'Store Added',
-        description: 'Shopify store configuration saved. You can now add your API credentials.',
-      });
     } catch (error: any) {
       console.error('Error connecting Shopify store:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add Shopify store',
+        description: 'Failed to initiate Shopify connection',
+        variant: 'destructive',
+      });
+      setIsConnecting(false);
+    }
+  };
+
+  const handleOAuthCallback = async (code: string, shop: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('shopify-integration', {
+        body: {
+          action: 'exchangeToken',
+          code: code,
+          storeUrl: shop,
+          projectId: projectId,
+          userId: user?.id,
+        },
+      });
+
+      if (error) throw error;
+
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+      
+      toast({
+        title: 'Success',
+        description: 'Shopify store connected successfully!',
+      });
+
+      fetchStore();
+    } catch (error: any) {
+      console.error('OAuth callback error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to complete Shopify connection',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSyncProducts = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('shopify-integration', {
+        body: {
+          action: 'syncProducts',
+          projectId: projectId,
+          userId: user?.id,
+        },
+      });
+
+      if (error) throw error;
+
+      setProductCount(data.count);
+      
+      toast({
+        title: 'Sync Complete',
+        description: `Successfully synced ${data.count} products from Shopify`,
+      });
+    } catch (error: any) {
+      console.error('Sync error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to sync products from Shopify',
         variant: 'destructive',
       });
     } finally {
-      setIsConnecting(false);
+      setIsSyncing(false);
     }
   };
 
@@ -132,23 +217,44 @@ const ShopifyIntegration = ({ projectId }: ShopifyIntegrationProps) => {
                 <p className="text-sm text-muted-foreground">{store.store_url}</p>
               </div>
               <Badge variant={store.is_connected ? 'default' : 'secondary'}>
-                {store.is_connected ? 'Connected' : 'Not Connected'}
+                {store.is_connected ? 'Connected' : 'Pending'}
               </Badge>
             </div>
-            
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">
-                To complete the integration, you'll need to add your Shopify API credentials.
-              </p>
-              <p className="text-sm font-medium">
-                Please provide your API key and access token when ready.
-              </p>
-            </div>
 
-            {store.last_sync && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <RefreshCw className="h-4 w-4" />
-                Last synced: {new Date(store.last_sync).toLocaleString()}
+            {store.is_connected ? (
+              <>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Your Shopify store is connected and ready to sync.
+                  </p>
+                  {productCount !== null && (
+                    <p className="text-sm font-medium">
+                      {productCount} products synced
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={handleSyncProducts}
+                  disabled={isSyncing}
+                  className="w-full"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Syncing...' : 'Sync Products'}
+                </Button>
+
+                {store.last_sync && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <RefreshCw className="h-4 w-4" />
+                    Last synced: {new Date(store.last_sync).toLocaleString()}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Complete the authorization on Shopify to finish connecting your store.
+                </p>
               </div>
             )}
           </div>
