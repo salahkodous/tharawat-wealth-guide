@@ -148,6 +148,36 @@ const ShopifyIntegration = ({ projectId }: ShopifyIntegrationProps) => {
     }
   };
 
+  const handleInitiateOAuth = async () => {
+    if (!store) return;
+    
+    setIsConnecting(true);
+    try {
+      const { data: authData, error: authError } = await supabase.functions.invoke(
+        'shopify-integration',
+        {
+          body: {
+            action: 'getAuthUrl',
+            storeUrl: store.store_url,
+          },
+        }
+      );
+
+      if (authError) throw authError;
+
+      // Redirect to Shopify OAuth
+      window.location.href = authData.authUrl;
+    } catch (error: any) {
+      console.error('Error initiating OAuth:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to connect to Shopify',
+        variant: 'destructive',
+      });
+      setIsConnecting(false);
+    }
+  };
+
   const handleSyncProducts = async () => {
     setIsSyncing(true);
     try {
@@ -251,11 +281,22 @@ const ShopifyIntegration = ({ projectId }: ShopifyIntegrationProps) => {
                 )}
               </>
             ) : (
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Complete the authorization on Shopify to finish connecting your store.
-                </p>
-              </div>
+              <>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Click the button below to authorize this app on Shopify.
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={handleInitiateOAuth}
+                  disabled={isConnecting}
+                  className="w-full"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  {isConnecting ? 'Connecting...' : 'Connect to Shopify'}
+                </Button>
+              </>
             )}
           </div>
         )}
