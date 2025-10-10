@@ -241,6 +241,104 @@ export type Database = {
         }
         Relationships: []
       }
+      business_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      campaigns: {
+        Row: {
+          budget: number | null
+          campaign_type: string
+          clicks: number | null
+          conversions: number | null
+          created_at: string
+          end_date: string | null
+          id: string
+          impressions: number | null
+          metadata: Json | null
+          name: string
+          platform: string
+          project_id: string
+          spent: number | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget?: number | null
+          campaign_type: string
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          impressions?: number | null
+          metadata?: Json | null
+          name: string
+          platform: string
+          project_id: string
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget?: number | null
+          campaign_type?: string
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          impressions?: number | null
+          metadata?: Json | null
+          name?: string
+          platform?: string
+          project_id?: string
+          spent?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "business_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           chat_id: string
@@ -601,92 +699,92 @@ export type Database = {
           },
         ]
       }
-      egypt_stocks: {
+      egyptian_stocks: {
         Row: {
-          change: number | null
+          ask_volume: number | null
+          bid_volume: number | null
+          borsa_date: string
           change_amount: number | null
           change_percent: number | null
-          country: string | null
+          close_price: number | null
+          company_name: string | null
           created_at: string | null
           currency: string | null
           exchange: string | null
-          high: number | null
+          high_bid_price: number | null
           high_price: number | null
           id: number
-          last_updated: string | null
-          low: number | null
+          is_active: boolean | null
+          isin: string
+          last_price: number | null
+          low_ask_price: number | null
           low_price: number | null
           market_cap: number | null
-          name: string
-          open: number | null
           open_price: number | null
-          previous_close: number | null
-          price: number | null
+          pe_ratio: number | null
           sector: string | null
-          source: string | null
-          status: string | null
-          symbol: string
-          turnover: number | null
+          symbol: string | null
+          trades_count: number | null
           updated_at: string | null
-          url: string | null
+          value_traded: number | null
           volume: number | null
         }
         Insert: {
-          change?: number | null
+          ask_volume?: number | null
+          bid_volume?: number | null
+          borsa_date: string
           change_amount?: number | null
           change_percent?: number | null
-          country?: string | null
+          close_price?: number | null
+          company_name?: string | null
           created_at?: string | null
           currency?: string | null
           exchange?: string | null
-          high?: number | null
+          high_bid_price?: number | null
           high_price?: number | null
           id?: number
-          last_updated?: string | null
-          low?: number | null
+          is_active?: boolean | null
+          isin: string
+          last_price?: number | null
+          low_ask_price?: number | null
           low_price?: number | null
           market_cap?: number | null
-          name: string
-          open?: number | null
           open_price?: number | null
-          previous_close?: number | null
-          price?: number | null
+          pe_ratio?: number | null
           sector?: string | null
-          source?: string | null
-          status?: string | null
-          symbol: string
-          turnover?: number | null
+          symbol?: string | null
+          trades_count?: number | null
           updated_at?: string | null
-          url?: string | null
+          value_traded?: number | null
           volume?: number | null
         }
         Update: {
-          change?: number | null
+          ask_volume?: number | null
+          bid_volume?: number | null
+          borsa_date?: string
           change_amount?: number | null
           change_percent?: number | null
-          country?: string | null
+          close_price?: number | null
+          company_name?: string | null
           created_at?: string | null
           currency?: string | null
           exchange?: string | null
-          high?: number | null
+          high_bid_price?: number | null
           high_price?: number | null
           id?: number
-          last_updated?: string | null
-          low?: number | null
+          is_active?: boolean | null
+          isin?: string
+          last_price?: number | null
+          low_ask_price?: number | null
           low_price?: number | null
           market_cap?: number | null
-          name?: string
-          open?: number | null
           open_price?: number | null
-          previous_close?: number | null
-          price?: number | null
+          pe_ratio?: number | null
           sector?: string | null
-          source?: string | null
-          status?: string | null
-          symbol?: string
-          turnover?: number | null
+          symbol?: string | null
+          trades_count?: number | null
           updated_at?: string | null
-          url?: string | null
+          value_traded?: number | null
           volume?: number | null
         }
         Relationships: []
@@ -1122,6 +1220,56 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      meta_accounts: {
+        Row: {
+          access_token: string | null
+          account_id: string | null
+          account_name: string
+          created_at: string
+          id: string
+          is_connected: boolean
+          last_sync: string | null
+          platform: string
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_id?: string | null
+          account_name: string
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          platform: string
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          account_id?: string | null
+          account_name?: string
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          platform?: string
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_accounts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "business_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       neighborhoods: {
         Row: {
@@ -1578,6 +1726,53 @@ export type Database = {
         }
         Relationships: []
       }
+      shopify_stores: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          id: string
+          is_connected: boolean
+          last_sync: string | null
+          project_id: string
+          store_name: string
+          store_url: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          project_id: string
+          store_name: string
+          store_url: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          project_id?: string
+          store_name?: string
+          store_url?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_stores_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "business_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uae_stocks: {
         Row: {
           change: number | null
@@ -1733,6 +1928,60 @@ export type Database = {
         }
         Relationships: []
       }
+      latest_egyptian_stocks: {
+        Row: {
+          borsa_date: string | null
+          change_amount: number | null
+          change_percent: number | null
+          is_active: boolean | null
+          isin: string | null
+          last_price: number | null
+          symbol: string | null
+          trend: string | null
+          value_traded: number | null
+          volume: number | null
+        }
+        Insert: {
+          borsa_date?: string | null
+          change_amount?: number | null
+          change_percent?: never
+          is_active?: never
+          isin?: string | null
+          last_price?: number | null
+          symbol?: never
+          trend?: never
+          value_traded?: number | null
+          volume?: number | null
+        }
+        Update: {
+          borsa_date?: string | null
+          change_amount?: number | null
+          change_percent?: never
+          is_active?: never
+          isin?: string | null
+          last_price?: number | null
+          symbol?: never
+          trend?: never
+          value_traded?: number | null
+          volume?: number | null
+        }
+        Relationships: []
+      }
+      market_summary: {
+        Row: {
+          avg_price: number | null
+          borsa_date: string | null
+          gainers: number | null
+          highest_price: number | null
+          losers: number | null
+          lowest_price: number | null
+          total_stocks: number | null
+          total_value_traded: number | null
+          total_volume: number | null
+          unchanged: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       binary_quantize: {
@@ -1797,6 +2046,20 @@ export type Database = {
           total_etfs: number
           total_market_cap: number
           total_volume: number
+        }[]
+      }
+      get_market_stats: {
+        Args: { target_date?: string }
+        Returns: {
+          avg_price: number
+          gainers: number
+          losers: number
+          market_trend: string
+          total_stocks: number
+          total_value: number
+          total_volume: number
+          trading_date: string
+          unchanged: number
         }[]
       }
       get_user_roles: {
