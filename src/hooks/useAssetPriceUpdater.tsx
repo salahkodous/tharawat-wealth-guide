@@ -32,11 +32,11 @@ export const useAssetPriceUpdater = () => {
             case 'stocks':
               if (asset.symbol && asset.country === 'Egypt') {
                 const { data } = await supabase
-                  .from('egyptian_stocks')
-                  .select('last_price')
+                  .from('egypt_stocks')
+                  .select('price')
                   .eq('symbol', asset.symbol)
                   .maybeSingle();
-                currentPrice = data?.last_price || null;
+                currentPrice = data?.price || null;
               }
               break;
 
