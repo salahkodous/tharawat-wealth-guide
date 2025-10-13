@@ -447,37 +447,51 @@ async function handleQuickQuery(
 async function generateSimpleLLMResponse(message: string, groqApiKey: string): Promise<string> {
   try {
     const isArabic = /[\u0600-\u06FF]/.test(message);
+    console.info(`Generating simple LLM response for: "${message}", isArabic: ${isArabic}`);
     
+    const requestBody = {
+      model: 'llama-3.3-70b-specdec',
+      messages: [
+        {
+          role: 'system',
+          content: isArabic 
+            ? 'أنت مساعد مالي ذكي ومفيد. أجب على الأسئلة باللغة العربية بشكل واضح ومفيد. إذا كان السؤال عن موضوع معين، قدم معلومات مفيدة عنه.'
+            : 'You are a smart and helpful financial assistant. Answer questions in English clearly and helpfully. If asked about a topic, provide useful information about it.'
+        },
+        { role: 'user', content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 300,
+    };
+
+    console.info('Calling Groq API with:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-specdec',
-        messages: [
-          {
-            role: 'system',
-            content: isArabic 
-              ? 'أنت مساعد مالي ذكي. أجب باللغة العربية بشكل واضح ومختصر (2-3 جمل). كن ودودًا ومباشرًا.'
-              : 'You are a smart financial assistant. Answer in English clearly and concisely (2-3 sentences). Be friendly and direct.'
-          },
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7,
-        max_tokens: 200,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Groq API error:', response.status, errorText);
-      return isArabic ? 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.' : 'Sorry, an error occurred. Please try again.';
+      return isArabic ? 'عذراً، حدث خطأ في الاتصال بالخدمة.' : 'Sorry, an error occurred connecting to the service.';
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || (isArabic ? 'عذراً، لم أتمكن من معالجة ذلك.' : 'Sorry, I couldn\'t process that.');
+    console.info('Groq API response:', JSON.stringify(data, null, 2));
+    
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error('No content in Groq response');
+      return isArabic ? 'عذراً، لم أتمكن من معالجة ذلك.' : 'Sorry, I couldn\'t process that.';
+    }
+    
+    console.info('Returning content:', content);
+    return content;
   } catch (error) {
     console.error('Error generating simple LLM response:', error);
     const isArabic = /[\u0600-\u06FF]/.test(message);
