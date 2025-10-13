@@ -241,6 +241,36 @@ export type Database = {
         }
         Relationships: []
       }
+      business_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           chat_id: string
@@ -601,92 +631,182 @@ export type Database = {
           },
         ]
       }
-      egypt_stocks: {
+      egyptian_funds: {
         Row: {
-          change: number | null
+          category: string | null
+          created_at: string | null
+          currency: string | null
+          fund_name: string
+          id: number
+          issuer: string
+          last_price: number | null
+          one_year_return: number | null
+          risk_level: string | null
+          scraped_at: string | null
+          since_inception_return: number | null
+          type: string | null
+          ytd_return: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          fund_name: string
+          id?: number
+          issuer: string
+          last_price?: number | null
+          one_year_return?: number | null
+          risk_level?: string | null
+          scraped_at?: string | null
+          since_inception_return?: number | null
+          type?: string | null
+          ytd_return?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          fund_name?: string
+          id?: number
+          issuer?: string
+          last_price?: number | null
+          one_year_return?: number | null
+          risk_level?: string | null
+          scraped_at?: string | null
+          since_inception_return?: number | null
+          type?: string | null
+          ytd_return?: number | null
+        }
+        Relationships: []
+      }
+      egyptian_gold_prices: {
+        Row: {
+          buy_price: number | null
+          created_at: string | null
+          id: number
+          karat: string | null
+          price_egp: number
+          price_usd: number | null
+          product_name: string
+          scraped_at: string | null
+          sell_price: number | null
+          unit: string
+          weight: string | null
+        }
+        Insert: {
+          buy_price?: number | null
+          created_at?: string | null
+          id?: number
+          karat?: string | null
+          price_egp: number
+          price_usd?: number | null
+          product_name: string
+          scraped_at?: string | null
+          sell_price?: number | null
+          unit: string
+          weight?: string | null
+        }
+        Update: {
+          buy_price?: number | null
+          created_at?: string | null
+          id?: number
+          karat?: string | null
+          price_egp?: number
+          price_usd?: number | null
+          product_name?: string
+          scraped_at?: string | null
+          sell_price?: number | null
+          unit?: string
+          weight?: string | null
+        }
+        Relationships: []
+      }
+      egyptian_stocks: {
+        Row: {
+          ask_volume: number | null
+          bid_volume: number | null
+          borsa_date: string
           change_amount: number | null
           change_percent: number | null
-          country: string | null
+          close_price: number | null
+          company_name: string | null
           created_at: string | null
           currency: string | null
           exchange: string | null
-          high: number | null
+          high_bid_price: number | null
           high_price: number | null
           id: number
-          last_updated: string | null
-          low: number | null
+          is_active: boolean | null
+          isin: string
+          last_price: number | null
+          low_ask_price: number | null
           low_price: number | null
           market_cap: number | null
-          name: string
-          open: number | null
           open_price: number | null
-          previous_close: number | null
-          price: number | null
+          pe_ratio: number | null
           sector: string | null
-          source: string | null
-          status: string | null
-          symbol: string
-          turnover: number | null
+          symbol: string | null
+          trades_count: number | null
           updated_at: string | null
-          url: string | null
+          value_traded: number | null
           volume: number | null
         }
         Insert: {
-          change?: number | null
+          ask_volume?: number | null
+          bid_volume?: number | null
+          borsa_date: string
           change_amount?: number | null
           change_percent?: number | null
-          country?: string | null
+          close_price?: number | null
+          company_name?: string | null
           created_at?: string | null
           currency?: string | null
           exchange?: string | null
-          high?: number | null
+          high_bid_price?: number | null
           high_price?: number | null
           id?: number
-          last_updated?: string | null
-          low?: number | null
+          is_active?: boolean | null
+          isin: string
+          last_price?: number | null
+          low_ask_price?: number | null
           low_price?: number | null
           market_cap?: number | null
-          name: string
-          open?: number | null
           open_price?: number | null
-          previous_close?: number | null
-          price?: number | null
+          pe_ratio?: number | null
           sector?: string | null
-          source?: string | null
-          status?: string | null
-          symbol: string
-          turnover?: number | null
+          symbol?: string | null
+          trades_count?: number | null
           updated_at?: string | null
-          url?: string | null
+          value_traded?: number | null
           volume?: number | null
         }
         Update: {
-          change?: number | null
+          ask_volume?: number | null
+          bid_volume?: number | null
+          borsa_date?: string
           change_amount?: number | null
           change_percent?: number | null
-          country?: string | null
+          close_price?: number | null
+          company_name?: string | null
           created_at?: string | null
           currency?: string | null
           exchange?: string | null
-          high?: number | null
+          high_bid_price?: number | null
           high_price?: number | null
           id?: number
-          last_updated?: string | null
-          low?: number | null
+          is_active?: boolean | null
+          isin?: string
+          last_price?: number | null
+          low_ask_price?: number | null
           low_price?: number | null
           market_cap?: number | null
-          name?: string
-          open?: number | null
           open_price?: number | null
-          previous_close?: number | null
-          price?: number | null
+          pe_ratio?: number | null
           sector?: string | null
-          source?: string | null
-          status?: string | null
-          symbol?: string
-          turnover?: number | null
+          symbol?: string | null
+          trades_count?: number | null
           updated_at?: string | null
-          url?: string | null
+          value_traded?: number | null
           volume?: number | null
         }
         Relationships: []
@@ -913,60 +1033,6 @@ export type Database = {
         }
         Relationships: []
       }
-      gold_prices: {
-        Row: {
-          change_amount: number | null
-          change_percent: number | null
-          country: string
-          created_at: string | null
-          currency: string
-          exchange_rate: number | null
-          global_gold_price_usd: number | null
-          id: string
-          karat: number
-          last_updated: string | null
-          market_premium: number | null
-          name: string
-          price_per_gram: number
-          purity: number
-          source: string | null
-        }
-        Insert: {
-          change_amount?: number | null
-          change_percent?: number | null
-          country: string
-          created_at?: string | null
-          currency: string
-          exchange_rate?: number | null
-          global_gold_price_usd?: number | null
-          id?: string
-          karat: number
-          last_updated?: string | null
-          market_premium?: number | null
-          name: string
-          price_per_gram: number
-          purity: number
-          source?: string | null
-        }
-        Update: {
-          change_amount?: number | null
-          change_percent?: number | null
-          country?: string
-          created_at?: string | null
-          currency?: string
-          exchange_rate?: number | null
-          global_gold_price_usd?: number | null
-          id?: string
-          karat?: number
-          last_updated?: string | null
-          market_premium?: number | null
-          name?: string
-          price_per_gram?: number
-          purity?: number
-          source?: string | null
-        }
-        Relationships: []
-      }
       income_streams: {
         Row: {
           amount: number
@@ -1122,6 +1188,56 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      meta_accounts: {
+        Row: {
+          access_token: string | null
+          account_id: string | null
+          account_name: string
+          created_at: string
+          id: string
+          is_connected: boolean
+          last_sync: string | null
+          platform: string
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_id?: string | null
+          account_name: string
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          platform: string
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          account_id?: string | null
+          account_name?: string
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          platform?: string
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_accounts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "business_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       neighborhoods: {
         Row: {
@@ -1362,6 +1478,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          job: string | null
           updated_at: string
           user_id: string
         }
@@ -1370,6 +1487,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          job?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1378,6 +1496,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          job?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1578,80 +1697,52 @@ export type Database = {
         }
         Relationships: []
       }
-      uae_stocks: {
+      shopify_stores: {
         Row: {
-          change: number | null
-          change_percent: number | null
-          country: string | null
-          created_at: string | null
-          currency: string | null
-          exchange: string | null
-          high: number | null
-          id: number
-          last_updated: string | null
-          low: number | null
-          market_cap: number | null
-          name: string
-          name_ar: string | null
-          open: number | null
-          price: number | null
-          sector: string | null
-          source: string | null
-          status: string | null
-          symbol: string
-          turnover: number | null
-          url: string | null
-          volume: number | null
+          access_token: string | null
+          created_at: string
+          id: string
+          is_connected: boolean
+          last_sync: string | null
+          project_id: string
+          store_name: string
+          store_url: string
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          change?: number | null
-          change_percent?: number | null
-          country?: string | null
-          created_at?: string | null
-          currency?: string | null
-          exchange?: string | null
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name: string
-          name_ar?: string | null
-          open?: number | null
-          price?: number | null
-          sector?: string | null
-          source?: string | null
-          status?: string | null
-          symbol: string
-          turnover?: number | null
-          url?: string | null
-          volume?: number | null
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          project_id: string
+          store_name: string
+          store_url: string
+          updated_at?: string
+          user_id: string
         }
         Update: {
-          change?: number | null
-          change_percent?: number | null
-          country?: string | null
-          created_at?: string | null
-          currency?: string | null
-          exchange?: string | null
-          high?: number | null
-          id?: number
-          last_updated?: string | null
-          low?: number | null
-          market_cap?: number | null
-          name?: string
-          name_ar?: string | null
-          open?: number | null
-          price?: number | null
-          sector?: string | null
-          source?: string | null
-          status?: string | null
-          symbol?: string
-          turnover?: number | null
-          url?: string | null
-          volume?: number | null
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          project_id?: string
+          store_name?: string
+          store_url?: string
+          updated_at?: string
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shopify_stores_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "business_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1733,6 +1824,60 @@ export type Database = {
         }
         Relationships: []
       }
+      latest_egyptian_stocks: {
+        Row: {
+          borsa_date: string | null
+          change_amount: number | null
+          change_percent: number | null
+          is_active: boolean | null
+          isin: string | null
+          last_price: number | null
+          symbol: string | null
+          trend: string | null
+          value_traded: number | null
+          volume: number | null
+        }
+        Insert: {
+          borsa_date?: string | null
+          change_amount?: number | null
+          change_percent?: never
+          is_active?: never
+          isin?: string | null
+          last_price?: number | null
+          symbol?: never
+          trend?: never
+          value_traded?: number | null
+          volume?: number | null
+        }
+        Update: {
+          borsa_date?: string | null
+          change_amount?: number | null
+          change_percent?: never
+          is_active?: never
+          isin?: string | null
+          last_price?: number | null
+          symbol?: never
+          trend?: never
+          value_traded?: number | null
+          volume?: number | null
+        }
+        Relationships: []
+      }
+      market_summary: {
+        Row: {
+          avg_price: number | null
+          borsa_date: string | null
+          gainers: number | null
+          highest_price: number | null
+          losers: number | null
+          lowest_price: number | null
+          total_stocks: number | null
+          total_value_traded: number | null
+          total_volume: number | null
+          unchanged: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       binary_quantize: {
@@ -1797,6 +1942,20 @@ export type Database = {
           total_etfs: number
           total_market_cap: number
           total_volume: number
+        }[]
+      }
+      get_market_stats: {
+        Args: { target_date?: string }
+        Returns: {
+          avg_price: number
+          gainers: number
+          losers: number
+          market_trend: string
+          total_stocks: number
+          total_value: number
+          total_volume: number
+          trading_date: string
+          unchanged: number
         }[]
       }
       get_user_roles: {
