@@ -151,8 +151,8 @@ export const useMarketData = () => {
       console.log('Fetching stocks from Egypt stocks table...');
 
       // Fetch data from the Egypt stocks table with 24h changes
-      const { data, error } = await supabase
-        .from('egypt_stocks')
+      const { data, error } = await (supabase as any)
+        .from('egyptian_stocks')
         .select('*')
         .order('change_percent', { ascending: false });
       

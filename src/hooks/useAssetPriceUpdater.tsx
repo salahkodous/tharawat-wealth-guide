@@ -31,12 +31,12 @@ export const useAssetPriceUpdater = () => {
           switch (asset.asset_type) {
             case 'stocks':
               if (asset.symbol && asset.country === 'Egypt') {
-                const { data } = await supabase
-                  .from('egypt_stocks')
-                  .select('price')
+                const { data } = await (supabase as any)
+                  .from('egyptian_stocks')
+                  .select('last_price')
                   .eq('symbol', asset.symbol)
                   .maybeSingle();
-                currentPrice = data?.price || null;
+                currentPrice = data?.last_price || null;
               }
               break;
 
@@ -66,15 +66,14 @@ export const useAssetPriceUpdater = () => {
             case 'gold':
               const karat = metadata?.additional_data?.karat;
               if (karat) {
-                const { data } = await supabase
-                  .from('gold_prices')
-                  .select('price_per_gram')
-                  .eq('karat', karat)
-                  .eq('country', asset.country || 'Egypt')
-                  .order('last_updated', { ascending: false })
+                const { data } = await (supabase as any)
+                  .from('egyptian_gold_prices')
+                  .select('price_egp')
+                  .eq('karat', `${karat}K`)
+                  .order('scraped_at', { ascending: false })
                   .limit(1)
                   .maybeSingle();
-                currentPrice = data?.price_per_gram || null;
+                currentPrice = data?.price_egp || null;
               }
               break;
 
