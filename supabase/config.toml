@@ -102,3 +102,6 @@ verify_jwt = false
 
 [functions.rag-agent]
 verify_jwt = false
+
+[functions.ai-query-router]
+verify_jwt = false

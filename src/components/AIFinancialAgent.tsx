@@ -157,8 +157,8 @@ const AIFinancialAgent = () => {
         content: msg.content
       }));
 
-      // Use RAG-powered agent for grounded responses with full conversation history
-      const { data, error } = await supabase.functions.invoke('rag-agent', {
+      // Use intelligent query router that handles simple queries fast and delegates complex ones
+      const { data, error } = await supabase.functions.invoke('ai-query-router', {
         body: {
           message: messageToSend,
           conversationHistory, // Send full chat history
