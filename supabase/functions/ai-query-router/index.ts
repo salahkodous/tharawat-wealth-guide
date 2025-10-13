@@ -446,6 +446,8 @@ async function handleQuickQuery(
 // Simple LLM response for creative/general queries
 async function generateSimpleLLMResponse(message: string, groqApiKey: string): Promise<string> {
   try {
+    const isArabic = /[\u0600-\u06FF]/.test(message);
+    
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -453,24 +455,33 @@ async function generateSimpleLLMResponse(message: string, groqApiKey: string): P
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-specdec', // Ultra-fast model
+        model: 'llama-3.3-70b-specdec',
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful financial assistant. Be VERY concise (1-2 sentences) unless detailed analysis requested. Be friendly and direct.'
+            content: isArabic 
+              ? 'أنت مساعد مالي ذكي. أجب باللغة العربية بشكل واضح ومختصر (2-3 جمل). كن ودودًا ومباشرًا.'
+              : 'You are a smart financial assistant. Answer in English clearly and concisely (2-3 sentences). Be friendly and direct.'
           },
           { role: 'user', content: message }
         ],
         temperature: 0.7,
-        max_tokens: 150, // Reduced for speed
+        max_tokens: 200,
       }),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Groq API error:', response.status, errorText);
+      return isArabic ? 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.' : 'Sorry, an error occurred. Please try again.';
+    }
+
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || 'Sorry, I couldn\'t process that.';
+    return data.choices?.[0]?.message?.content || (isArabic ? 'عذراً، لم أتمكن من معالجة ذلك.' : 'Sorry, I couldn\'t process that.');
   } catch (error) {
     console.error('Error generating simple LLM response:', error);
-    return 'Sorry, an error occurred. Please try again.';
+    const isArabic = /[\u0600-\u06FF]/.test(message);
+    return isArabic ? 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.' : 'Sorry, an error occurred. Please try again.';
   }
 }
 
