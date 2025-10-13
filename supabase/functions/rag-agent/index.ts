@@ -616,21 +616,38 @@ serve(async (req) => {
               }
             }
               
-            // Fallback to snippet if scraping failed
+            // Enhanced fallback with more context from Google results
             if (!articleAdded && !seenUrls.has(item.link)) {
               seenUrls.add(item.link);
+              
+              // Combine snippet with any additional context from the search result
+              const enhancedContent = [
+                item.title || '',
+                item.snippet || '',
+                item.displayLink ? `Source: ${item.displayLink}` : '',
+                item.formattedUrl || '',
+              ].filter(Boolean).join('\n\n');
+              
               knowledgeContext.push({
-                content: item.snippet,
+                content: enhancedContent,
                 metadata: { 
                   title: item.title, 
-                  source: 'Google (Snippet)', 
+                  source: 'Google Search Result', 
                   query: bestSearchQuery,
+                  note: 'Full article scraping unavailable - using search result preview',
                 },
                 sourceUrl: item.link,
                 retrievalType: 'keyword',
                 score: 0.85,
               });
-              sources.push({ title: item.title, url: item.link, type: 'news_article' });
+              
+              sources.push({ 
+                title: item.title, 
+                url: item.link, 
+                type: 'search_result' 
+              });
+              
+              console.log(`⚠️ Using search result preview for: ${item.title.substring(0, 50)}...`);
             }
           }
           
