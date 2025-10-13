@@ -9,7 +9,7 @@ const corsHeaders = {
 interface QuickQueryResult {
   isQuick: boolean;
   category?: 'greeting' | 'gold' | 'stocks' | 'funds' | 'crypto' | 'currency' | 'bonds' | 'etfs' | 
-             'personal_finance' | 'portfolio' | 'debts' | 'deposits' | 'goals' | 'income' | 'expenses';
+             'personal_finance' | 'portfolio' | 'debts' | 'deposits' | 'goals' | 'income' | 'expenses' | 'news';
   symbol?: string;
   financeType?: string;
 }
@@ -22,6 +22,11 @@ function quickClassify(message: string): QuickQueryResult {
   // Greetings (instant response)
   if (/^(hi|hello|hey|مرحبا|أهلا|السلام عليكم|سلام)$/i.test(trimmed)) {
     return { isQuick: true, category: 'greeting' };
+  }
+  
+  // News queries (needs web search)
+  if (/أخبار|news|خبر|تقرير|report|مستجدات|updates|أحداث|events/i.test(lower)) {
+    return { isQuick: false }; // Route to RAG agent for web search
   }
   
   // Personal Finance queries
@@ -469,10 +474,15 @@ async function generateSimpleLLMResponse(message: string, groqApiKey: string): P
   }
 }
 
-// Detect if query needs detailed analysis vs simple answer
+// Detect if query needs detailed analysis or web search via RAG agent
 function needsDetailedAnalysis(message: string): boolean {
+  // Keywords for news/web search that need RAG agent
+  const newsKeywords = /أخبار|news|خبر|تقرير|report|مستجدات|updates|أحداث|events|آخر|latest|حديث|recent/i;
+  
+  // Keywords for detailed analysis
   const detailedKeywords = /analyze|analysis|compare|recommend|should i|advice|strategy|plan|تحليل|مقارنة|نصيحة|استراتيجية|خطة/i;
-  return detailedKeywords.test(message) || message.length > 100;
+  
+  return newsKeywords.test(message) || detailedKeywords.test(message) || message.length > 100;
 }
 
 serve(async (req) => {
