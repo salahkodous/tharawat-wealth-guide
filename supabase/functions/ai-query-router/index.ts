@@ -461,7 +461,7 @@ async function generateSimpleLLMResponse(message: string, groqApiKey: string): P
     console.info(`Generating simple LLM response for: "${message}", isArabic: ${isArabic}`);
     
     const requestBody = {
-      model: 'llama-3.3-70b-specdec',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'system',
