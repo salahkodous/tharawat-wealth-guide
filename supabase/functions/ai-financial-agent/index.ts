@@ -14,6 +14,7 @@ async function getUserFinancialData(userId: string, supabase: any) {
     
     // Fetch all financial data in parallel
     const [
+      profile,
       personalFinances,
       debts,
       assets,
@@ -23,9 +24,12 @@ async function getUserFinancialData(userId: string, supabase: any) {
       expenseStreams,
       deposits,
       portfolios,
-      newsArticles
+      newsArticles,
+      goldPrices,
+      egyptianFunds
     ] = await Promise.all([
-      supabase.from('personal_finances').select('*').eq('user_id', userId).single(),
+      supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle(),
+      supabase.from('personal_finances').select('*').eq('user_id', userId).maybeSingle(),
       supabase.from('debts').select('*').eq('user_id', userId),
       supabase.from('assets').select('*').eq('user_id', userId),
       supabase.from('portfolio_goals').select('*').eq('user_id', userId),
@@ -34,10 +38,13 @@ async function getUserFinancialData(userId: string, supabase: any) {
       supabase.from('expense_streams').select('*').eq('user_id', userId),
       supabase.from('deposits').select('*').eq('user_id', userId),
       supabase.from('portfolios').select('*').eq('user_id', userId),
-      supabase.from('news_articles').select('*').limit(5)
+      supabase.from('news_articles').select('*').limit(5),
+      supabase.from('egyptian_gold_prices').select('*').order('scraped_at', { ascending: false }).limit(10),
+      supabase.from('egyptian_funds').select('*').order('last_price', { ascending: false }).limit(20)
     ]);
 
     return {
+      profile: profile.data,
       personalFinances: personalFinances.data,
       debts: debts.data || [],
       assets: assets.data || [],
@@ -47,7 +54,9 @@ async function getUserFinancialData(userId: string, supabase: any) {
       expenseStreams: expenseStreams.data || [],
       deposits: deposits.data || [],
       portfolios: portfolios.data || [],
-      newsArticles: newsArticles.data || []
+      newsArticles: newsArticles.data || [],
+      goldPrices: goldPrices.data || [],
+      egyptianFunds: egyptianFunds.data || []
     };
   } catch (error) {
     console.error('Error fetching user data:', error);
@@ -60,6 +69,10 @@ async function callGroqAPI(message: string, groqApiKey: string, userData: any): 
   
   const systemPrompt = `You are Anakin, an advanced AI financial advisor with access to comprehensive user data and web search capabilities for real-time information.
 
+USER PROFILE:
+Name: ${userData?.profile?.full_name || 'Unknown'}
+Job: ${userData?.profile?.job || 'Not specified'}
+
 USER FINANCIAL PROFILE:
 Personal Finances: ${JSON.stringify(userData?.personalFinances, null, 2)}
 Debts: ${JSON.stringify(userData?.debts, null, 2)}
@@ -71,10 +84,16 @@ Expense Streams: ${JSON.stringify(userData?.expenseStreams, null, 2)}
 Savings/Deposits: ${JSON.stringify(userData?.deposits, null, 2)}
 Portfolios: ${JSON.stringify(userData?.portfolios, null, 2)}
 
+MARKET DATA AVAILABLE:
+Egyptian Gold Prices: ${userData?.goldPrices?.length || 0} prices available
+Egyptian Investment Funds: ${userData?.egyptianFunds?.length || 0} funds available
+
 RECENT FINANCIAL NEWS:
 ${userData?.newsArticles?.map((article: any) => `- ${article.title}: ${article.summary}`).join('\n') || 'No recent news available'}
 
-You have complete access to this user's financial situation and can search the web for current market information, news, and financial data. Provide personalized, actionable advice based on their actual data. Be specific about their assets, debts, goals, and financial position. Reference their actual numbers and provide concrete recommendations.
+You have complete access to this user's financial situation and can search the web for current market information, news, and financial data. Provide personalized, actionable advice based on their actual data. Consider their job and career context when providing financial advice. Be specific about their assets, debts, goals, and financial position. Reference their actual numbers and provide concrete recommendations.
+
+When discussing gold prices or Egyptian funds, reference the real market data provided above.
 
 Key capabilities:
 - Analyze their complete financial picture

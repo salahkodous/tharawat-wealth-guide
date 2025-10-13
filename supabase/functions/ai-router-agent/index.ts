@@ -171,7 +171,19 @@ async function fetchMarketData(classification: any, userCountry: string) {
       }
     }
 
-    // Fetch gold prices - try country-specific first, then fallback
+    // Fetch Egyptian gold prices with Arabic names
+    const { data: egyptianGoldPrices } = await supabase
+      .from('egyptian_gold_prices')
+      .select('*')
+      .order('scraped_at', { ascending: false })
+      .limit(15);
+    
+    if (egyptianGoldPrices && egyptianGoldPrices.length > 0) {
+      marketData.egyptian_gold_prices = egyptianGoldPrices;
+      console.log(`Fetched ${egyptianGoldPrices.length} Egyptian gold prices with Arabic names`);
+    }
+    
+    // Also fetch general gold prices - try country-specific first, then fallback
     let goldPricesData = null;
     
     // Try exact country match first
@@ -295,6 +307,20 @@ async function fetchMarketData(classification: any, userCountry: string) {
       
       if (bankProducts && bankProducts.length > 0) {
         marketData.bank_products = bankProducts;
+      }
+    }
+
+    // Fetch Egyptian funds with Arabic names
+    if (context.includes('fund') || context.includes('etf') || context.includes('صناديق')) {
+      const { data: egyptianFunds } = await supabase
+        .from('egyptian_funds')
+        .select('*')
+        .order('last_price', { ascending: false })
+        .limit(30);
+      
+      if (egyptianFunds && egyptianFunds.length > 0) {
+        marketData.egyptian_funds = egyptianFunds;
+        console.log(`Fetched ${egyptianFunds.length} Egyptian funds with Arabic names`);
       }
     }
 
@@ -667,6 +693,18 @@ async function generateResponse(classification: any, userData: any, toolResults:
     const lowerQuery = query.toLowerCase();
     let summary = '';
     
+    // Egyptian gold prices with Arabic names
+    if ((lowerQuery.includes('gold') || lowerQuery.includes('ذهب')) && data.egyptian_gold_prices) {
+      summary += `\n🔸 EGYPTIAN GOLD PRICES (أسعار الذهب المصري):\n`;
+      data.egyptian_gold_prices.slice(0, 5).forEach((g: any) => {
+        summary += `- ${g.product_name} (${g.karat}): ${g.price_egp} EGP`;
+        if (g.buy_price && g.sell_price) {
+          summary += ` | Buy: ${g.buy_price} EGP, Sell: ${g.sell_price} EGP`;
+        }
+        summary += `\n`;
+      });
+    }
+    
     // Gold prices - only if query mentions gold
     if ((lowerQuery.includes('gold') || lowerQuery.includes('ذهب')) && data.gold_prices) {
       const goldData = data.gold_prices.filter((g: any) => 
@@ -762,6 +800,19 @@ async function generateResponse(classification: any, userData: any, toolResults:
       });
     }
     
+    // Egyptian investment funds with Arabic names
+    if ((lowerQuery.includes('fund') || lowerQuery.includes('صناديق') || lowerQuery.includes('صندوق')) && data.egyptian_funds) {
+      summary += `\n🔸 EGYPTIAN INVESTMENT FUNDS (صناديق الاستثمار المصرية):\n`;
+      data.egyptian_funds.slice(0, 10).forEach((f: any) => {
+        summary += `- ${f.fund_name} | ${f.issuer}: ${f.last_price} EGP`;
+        if (f.ytd_return) summary += ` | YTD: ${f.ytd_return}%`;
+        if (f.one_year_return) summary += ` | 1Y: ${f.one_year_return}%`;
+        if (f.category) summary += ` | ${f.category}`;
+        if (f.risk_level) summary += ` | Risk: ${f.risk_level}`;
+        summary += `\n`;
+      });
+    }
+    
     // Real estate - if query mentions real estate/property
     if ((lowerQuery.includes('real estate') || lowerQuery.includes('property') || lowerQuery.includes('عقار')) && data.real_estate) {
       summary += `\n🔸 REAL ESTATE (${userCountry}):\n`;
@@ -809,6 +860,10 @@ async function generateResponse(classification: any, userData: any, toolResults:
   const marketDataSummary = buildMarketDataSummary(userData.originalMessage, marketData);
   
   let systemPrompt = `You are a professional financial analyst and advisor for ${userCountry} markets, specializing in ${userCurrency} currency. Provide clear, evidence-based analysis with proper source citations.
+
+USER PROFILE:
+Name: ${userData.profile?.full_name || 'Unknown'}
+Job: ${userData.profile?.job || 'Not specified'}
 
 Context: ${userCountry} | ${userCurrency} | Query: ${classification.type}
 
@@ -1061,6 +1116,7 @@ serve(async (req) => {
 
     // Fetch user data in parallel
     const [
+      { data: profile },
       { data: personalFinances },
       { data: assets },
       { data: debts },
@@ -1070,6 +1126,7 @@ serve(async (req) => {
       { data: goals },
       { data: userSettings }
     ] = await Promise.all([
+      supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle(),
       supabase.from('personal_finances').select('*').eq('user_id', userId),
       supabase.from('assets').select('*').eq('user_id', userId),
       supabase.from('debts').select('*').eq('user_id', userId),
@@ -1081,6 +1138,7 @@ serve(async (req) => {
     ]);
 
     const userData = {
+      profile: profile,
       originalMessage: message,
       user_country: userSettings?.[0]?.currency === 'EGP' ? 'Egypt' : 'International',
       personal_finances: personalFinances?.[0],
