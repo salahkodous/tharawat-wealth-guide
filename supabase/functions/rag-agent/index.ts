@@ -117,23 +117,28 @@ async function determineSearchTopics(
         model: 'llama-3.3-70b-versatile',
         messages: [{
           role: 'system',
-          content: `You are a search optimization AI. Generate ONE PERFECT search query in ENGLISH for maximum relevance.
+          content: `You are a search optimization AI for an Egyptian platform. Generate ONE PERFECT search query for maximum relevance.
 
-TASK: Create the SINGLE BEST search query that will return the most relevant results.
+CRITICAL LANGUAGE RULES:
+- For Arabic queries → keep query in ARABIC (better results for Arabic websites)
+- For English queries → keep query in ENGLISH
+- PRESERVE the user's language choice
 
 OPTIMIZATION RULES:
-1. Use ENGLISH only (better Google results)
-2. Include "Egypt 2025" for current data
+1. Keep original language (Arabic stays Arabic, English stays English)
+2. Include "مصر 2025" (Arabic) or "Egypt 2025" (English) for current data
 3. Add specific brands/banks relevant in Egypt
-4. For prices: include "EGP", "price range", brand names
-5. For products: major retailers (Tradeline, B.TECH, Carrefour)
-6. For investments: bank names (NBE, Banque Misr, CIB)
+4. For prices: include "جنيه" or "EGP", brand names
+5. For products: major retailers (Tradeline, B.TECH, Carrefour, Extra Stores)
+6. For investments: bank names (NBE, Banque Misr, CIB, بنك الأهلى، بنك مصر)
 7. Be ultra-specific with product models and details
-8. Add "latest" or "current" for time-sensitive queries
+8. Add "أحدث" or "latest" for time-sensitive queries
 
 EXAMPLES:
-User: "متوسط سعر الثلاجة" → "Samsung LG Sharp refrigerator average price Egypt 2025 EGP"
-User: "صناديق الاستثمار" → "Egyptian bank equity investment funds 2025 minimum return rates NBE"
+User: "متوسط سعر الثلاجة" → "سعر الثلاجات سامسونج إل جي شارب مصر 2025 جنيه مصري"
+User: "صناديق الاستثمار" → "صناديق استثمار بنك الأهلي بنك مصر CIB مصر 2025 عائد"
+User: "used cars" → "used cars prices Egypt 2025 market trends"
+User: "السيارات المستعملة" → "أسعار السيارات المستعملة مصر 2025 أخبار سوق"
 
 CONTEXT:
 ${contextSummary}
@@ -144,7 +149,7 @@ Return ONLY JSON:
 {
   "primaryTopic": "main topic",
   "searchTopics": ["main topic"],
-  "searchQueries": ["ONE PERFECT ULTRA-SPECIFIC ENGLISH QUERY"],
+  "searchQueries": ["ONE PERFECT QUERY IN SAME LANGUAGE AS USER"],
   "reasoning": "why this query is optimal"
 }`
         }],
