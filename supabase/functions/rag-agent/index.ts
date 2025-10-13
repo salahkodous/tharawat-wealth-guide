@@ -720,9 +720,14 @@ serve(async (req) => {
       }
     }
 
-    // Step 6: Build context for LLM
+    // Step 6: Build context for LLM (truncate to max 1500 chars per source)
     const contextText = knowledgeContext
-      .map((doc: any, idx: number) => `[${idx + 1}] ${doc.content}`)
+      .map((doc: any, idx: number) => {
+        const truncated = doc.content.length > 1500 
+          ? doc.content.substring(0, 1500) + '...[truncated]'
+          : doc.content;
+        return `[${idx + 1}] ${truncated}`;
+      })
       .join('\n\n');
 
     // Build user financial context
@@ -848,10 +853,11 @@ NEVER say "the articles don't mention" or "no specific information" - you have $
       }
     ];
 
-    // Add conversation history
+    // Add conversation history (limit to last 2 messages to save tokens)
     if (conversationHistory && conversationHistory.length > 0) {
-      console.log(`📜 Including ${conversationHistory.length} previous messages for context`);
-      messages.push(...conversationHistory);
+      const limitedHistory = conversationHistory.slice(-2);
+      console.log(`📜 Including ${limitedHistory.length} previous messages for context`);
+      messages.push(...limitedHistory);
     }
 
     // Add current message
