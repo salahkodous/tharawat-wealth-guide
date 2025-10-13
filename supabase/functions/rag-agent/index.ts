@@ -720,11 +720,11 @@ serve(async (req) => {
       }
     }
 
-    // Step 6: Build context for LLM (truncate to max 1500 chars per source)
+    // Step 6: Build context for LLM (truncate to max 1000 chars per source)
     const contextText = knowledgeContext
       .map((doc: any, idx: number) => {
-        const truncated = doc.content.length > 1500 
-          ? doc.content.substring(0, 1500) + '...[truncated]'
+        const truncated = doc.content.length > 1000 
+          ? doc.content.substring(0, 1000) + '...[truncated]'
           : doc.content;
         return `[${idx + 1}] ${truncated}`;
       })
