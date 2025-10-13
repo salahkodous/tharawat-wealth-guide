@@ -448,16 +448,16 @@ async function generateSimpleLLMResponse(message: string, groqApiKey: string): P
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
+        model: 'llama-3.3-70b-specdec', // Ultra-fast model
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful financial assistant. Keep responses concise (2-3 sentences max) unless detailed analysis is requested. Be friendly and direct.'
+            content: 'You are a helpful financial assistant. Be VERY concise (1-2 sentences) unless detailed analysis requested. Be friendly and direct.'
           },
           { role: 'user', content: message }
         ],
         temperature: 0.7,
-        max_tokens: 200,
+        max_tokens: 150, // Reduced for speed
       }),
     });
 

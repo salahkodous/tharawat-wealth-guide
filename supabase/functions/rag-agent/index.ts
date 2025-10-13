@@ -89,7 +89,7 @@ Return only the expanded query:`
   return message; // Fallback to original
 }
 
-// AI agent to determine search topics and keywords
+// AI agent to determine SINGLE BEST search query
 async function determineSearchTopics(
   resolvedQuery: string,
   conversationHistory: any[]
@@ -99,12 +99,12 @@ async function determineSearchTopics(
   searchQueries: string[];
   reasoning: string;
 }> {
-  console.log('🤖 AI Agent determining search topics...');
+  console.log('🤖 AI Agent determining SINGLE BEST search query...');
 
   try {
     const contextSummary = conversationHistory
-      .slice(-6)
-      .map((msg: any) => `${msg.role}: ${msg.content.substring(0, 200)}`)
+      .slice(-4)
+      .map((msg: any) => `${msg.role}: ${msg.content.substring(0, 150)}`)
       .join('\n');
 
     const topicResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -117,49 +117,39 @@ async function determineSearchTopics(
         model: 'llama-3.3-70b-versatile',
         messages: [{
           role: 'system',
-          content: `You are a search strategy AI agent for Egyptian market queries. Generate HIGHLY SPECIFIC search queries in ENGLISH that will find accurate, relevant results.
+          content: `You are a search optimization AI. Generate ONE PERFECT search query in ENGLISH for maximum relevance.
 
-YOUR TASK:
-1. Identify the main product/topic (e.g., "refrigerators", "investment funds", "CBE rates")
-2. Generate 2-4 SPECIFIC search queries in ENGLISH optimized for Google Search
-3. Include Egyptian market context (brands, stores, banks available in Egypt)
-4. For prices: include "Egypt 2025", "EGP", specific brands/models
-5. For products: include common Egyptian retailers/brands
+TASK: Create the SINGLE BEST search query that will return the most relevant results.
 
-CRITICAL RULES FOR SEARCH QUERIES:
-- ALWAYS write queries in ENGLISH (not Arabic) for better Google results
-- Include "Egypt" or "Egyptian market" in EVERY query
-- For price queries: add "2025", "current price", "price range"
-- For appliances: include major brands available in Egypt (Samsung, LG, Toshiba, Sharp, etc.)
-- For investment products: include bank names (NBE, Banque Misr, CIB, etc.)
-- Be SPECIFIC: "Samsung refrigerator prices Egypt 2025" NOT "fridge prices"
-- Avoid generic terms that could match unrelated content
+OPTIMIZATION RULES:
+1. Use ENGLISH only (better Google results)
+2. Include "Egypt 2025" for current data
+3. Add specific brands/banks relevant in Egypt
+4. For prices: include "EGP", "price range", brand names
+5. For products: major retailers (Tradeline, B.TECH, Carrefour)
+6. For investments: bank names (NBE, Banque Misr, CIB)
+7. Be ultra-specific with product models and details
+8. Add "latest" or "current" for time-sensitive queries
 
 EXAMPLES:
-❌ BAD: "refrigerator Egypt"
-✅ GOOD: "Samsung LG refrigerator prices Egypt 2025 EGP range"
+User: "متوسط سعر الثلاجة" → "Samsung LG Sharp refrigerator average price Egypt 2025 EGP"
+User: "صناديق الاستثمار" → "Egyptian bank equity investment funds 2025 minimum return rates NBE"
 
-❌ BAD: "investment funds"
-✅ GOOD: "Egyptian bank equity investment funds 2025 minimum deposit rates"
-
-CONVERSATION CONTEXT:
+CONTEXT:
 ${contextSummary}
 
-CURRENT QUERY (may be in Arabic): "${resolvedQuery}"
+QUERY: "${resolvedQuery}"
 
-Return ONLY this JSON:
+Return ONLY JSON:
 {
-  "primaryTopic": "specific product/topic in English",
-  "searchTopics": ["subtopic1", "subtopic2"],
-  "searchQueries": [
-    "highly specific English query 1 with Egypt 2025",
-    "highly specific English query 2 with brands/details"
-  ],
-  "reasoning": "brief explanation"
+  "primaryTopic": "main topic",
+  "searchTopics": ["main topic"],
+  "searchQueries": ["ONE PERFECT ULTRA-SPECIFIC ENGLISH QUERY"],
+  "reasoning": "why this query is optimal"
 }`
         }],
-        temperature: 0.2,
-        max_tokens: 400,
+        temperature: 0.1,
+        max_tokens: 250,
       }),
     });
 
@@ -446,84 +436,76 @@ serve(async (req) => {
         console.error('⚠️ FIRECRAWL_API_KEY missing - will skip article scraping');
       }
       
-      // Execute searches for each AI-determined query
-      for (const searchQuery of searchQueriesToUse) {
-        console.log(`🔍 Searching: "${searchQuery}"`);
-        
-        // Add Egypt-specific context to search for better local results
-        const egyptFocusedQuery = isArabic 
-          ? `${searchQuery} مصر OR السوق المصري OR البورصة المصرية OR القاهرة`
-          : `${searchQuery} Egypt OR Egyptian market OR EGX OR Cairo`;
+      // Use ONLY the single best AI-optimized query for speed
+      const bestSearchQuery = searchQueriesToUse[0]; // AI already gave us the best one
+      console.log(`🎯 Using OPTIMIZED QUERY: "${bestSearchQuery}"`);
       
-        // Build search with time constraint and Egypt focus
-        const dateRestrict = toolSelection.dateFilter || (toolSelection.timeConstraint === 'realtime' ? 'd1' : toolSelection.timeConstraint === 'recent' ? 'w1' : 'm1');
-        const searchParams = new URLSearchParams({
-          key: GOOGLE_SEARCH_API_KEY,
-          cx: GOOGLE_SEARCH_ENGINE_ID,
-          q: egyptFocusedQuery,
-          dateRestrict,
-          num: '5', // Fewer per query since we're running multiple
-          lr: isArabic ? 'lang_ar' : 'lang_en',
-          gl: 'eg',
-        });
+      // Build search with time constraint (minimal parameters for speed)
+      const dateRestrict = toolSelection.dateFilter || (toolSelection.timeConstraint === 'realtime' ? 'd1' : toolSelection.timeConstraint === 'recent' ? 'w1' : 'm3');
+      const searchParams = new URLSearchParams({
+        key: GOOGLE_SEARCH_API_KEY,
+        cx: GOOGLE_SEARCH_ENGINE_ID,
+        q: bestSearchQuery, // Already optimized by AI
+        dateRestrict,
+        num: '3', // Only top 3 results for speed
+        lr: isArabic ? 'lang_ar' : 'lang_en',
+        gl: 'eg',
+      });
         
-        const searchUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`;
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`;
+      
+      console.log(`📅 Date: ${dateRestrict}, Lang: ${isArabic ? 'AR' : 'EN'}`);
+      const searchResponse = await fetch(searchUrl);
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json();
+        const resultCount = searchData.items?.length || 0;
+        console.log(`✓ Found ${resultCount} total results`);
         
-        console.log(`📅 Date: ${dateRestrict}, Lang: ${isArabic ? 'AR' : 'EN'}, Query: "${egyptFocusedQuery}"`);
-        const searchResponse = await fetch(searchUrl);
-        if (searchResponse.ok) {
-          const searchData = await searchResponse.json();
-          const resultCount = searchData.items?.length || 0;
-          console.log(`  ✓ Found ${resultCount} results for this query`);
-          
-          // Filter out irrelevant domains (hotels, travel, etc.)
-          const irrelevantDomains = ['booking.com', 'hotels.com', 'airbnb.com', 'expedia.com', 'tripadvisor.com'];
-          
-          // Deduplicate and filter articles
-          const articleItems = (searchData.items || []).filter((item: any) => {
+        // Filter out irrelevant domains
+        const irrelevantDomains = ['booking.com', 'hotels.com', 'airbnb.com', 'expedia.com', 'tripadvisor.com'];
+        
+        // Take only top 3 unique articles
+        const articleItems = (searchData.items || [])
+          .filter((item: any) => {
             const url = item.link.toLowerCase();
             if (seenUrls.has(url)) return false;
             
-            // Filter out irrelevant domains
             const domain = new URL(item.link).hostname.toLowerCase();
-            if (irrelevantDomains.some(d => domain.includes(d))) {
-              console.log(`  ⚠️ Filtered out irrelevant domain: ${domain}`);
-              return false;
-            }
+            if (irrelevantDomains.some(d => domain.includes(d))) return false;
             
             const isHomepage = url.match(/^https?:\/\/[^\/]+\/?$/);
             return !isHomepage;
-          });
+          })
+          .slice(0, 3); // ONLY TOP 3
+        
+        console.log(`📰 Processing ${articleItems.length} top articles`);
           
-          console.log(`  📰 ${articleItems.length} unique articles from this search`);
-          
-          if (!FIRECRAWL_API_KEY) {
-            console.warn('⚠️ Skipping Firecrawl - using snippets only');
-            // Fallback to snippets
-            articleItems.slice(0, 3).forEach((item: any) => {
-              seenUrls.add(item.link);
-              knowledgeContext.push({
-                content: item.snippet,
-                metadata: { title: item.title, source: 'Google Search', query: searchQuery },
-                sourceUrl: item.link,
-                retrievalType: 'keyword',
-                score: 0.9,
-              });
-              sources.push({ title: item.title, url: item.link, type: 'news_article' });
+        if (!FIRECRAWL_API_KEY) {
+          console.warn('⚠️ Skipping Firecrawl - using snippets only');
+          // Fallback to snippets
+          articleItems.forEach((item: any) => {
+            seenUrls.add(item.link);
+            knowledgeContext.push({
+              content: item.snippet,
+              metadata: { title: item.title, source: 'Google Search', query: bestSearchQuery },
+              sourceUrl: item.link,
+              retrievalType: 'keyword',
+              score: 0.9,
             });
-          } else if (articleItems.length > 0) {
-            // Scrape top articles with Firecrawl (limit to 2 per query)
-            let successfulScrapes = 0;
-            const itemsToScrape = articleItems.slice(0, 2);
-            
-            for (const item of itemsToScrape) {
-              if (seenUrls.has(item.link)) continue;
+            sources.push({ title: item.title, url: item.link, type: 'news_article' });
+          });
+        } else if (articleItems.length > 0) {
+          // Scrape ALL 3 articles with Firecrawl for quality
+          let successfulScrapes = 0;
+          
+          for (const item of articleItems) {
+            if (seenUrls.has(item.link)) continue;
               
               let articleAdded = false;
               
-              try {
-                console.log(`  🔥 Scraping: ${item.title.substring(0, 60)}...`);
-                const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+            try {
+              console.log(`🔥 Scraping ${successfulScrapes + 1}/3: ${item.title.substring(0, 50)}...`);
+              const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
@@ -550,7 +532,7 @@ serve(async (req) => {
                     metadata: { 
                       title: item.title, 
                       source: 'Firecrawl',
-                      searchQuery: searchQuery,
+                      searchQuery: bestSearchQuery,
                       date: new Date().toISOString(),
                       domain: new URL(item.link).hostname,
                     },
@@ -567,45 +549,45 @@ serve(async (req) => {
                   
                   articleAdded = true;
                   successfulScrapes++;
-                  console.log(`  ✅ Scraped successfully with Firecrawl`);
+                  console.log(`✅ Source ${successfulScrapes}/3 scraped`);
                 } else {
-                  console.warn('Firecrawl returned empty content, trying ScraperAPI fallback');
+                  console.warn('Firecrawl empty, trying ScraperAPI');
                 }
               } else {
-                console.error(`  ❌ Firecrawl error: ${firecrawlResponse.status}, trying ScraperAPI fallback`);
+                console.error(`❌ Firecrawl ${firecrawlResponse.status}, trying ScraperAPI`);
               }
-              } catch (e) {
-                console.error(`  ❌ Firecrawl exception:`, e, '- trying ScraperAPI fallback');
-              }
+            } catch (e) {
+              console.error(`❌ Firecrawl failed:`, e);
+            }
               
-              // Try ScraperAPI if Firecrawl failed and we have the API key
-              if (!articleAdded && SCRAPERAPI_KEY) {
-                try {
-                  console.log(`  🕷️ Trying ScraperAPI...`);
-                  const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPERAPI_KEY}&url=${encodeURIComponent(item.link)}`;
+            // Try ScraperAPI if Firecrawl failed and we have the API key
+            if (!articleAdded && SCRAPERAPI_KEY) {
+              try {
+                console.log(`🕷️ Trying ScraperAPI...`);
+                const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPERAPI_KEY}&url=${encodeURIComponent(item.link)}`;
                   
-                  const scraperResponse = await fetch(scraperApiUrl);
+                const scraperResponse = await fetch(scraperApiUrl);
+                
+                if (scraperResponse.ok) {
+                  const htmlContent = await scraperResponse.text();
                   
-                  if (scraperResponse.ok) {
-                    const htmlContent = await scraperResponse.text();
+                  // Basic HTML to text conversion
+                  const textContent = htmlContent
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                  
+                  if (textContent && textContent.length > 100) {
+                    seenUrls.add(item.link);
                     
-                    // Basic HTML to text conversion (remove tags, clean up)
-                    const textContent = htmlContent
-                      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                      .replace(/<[^>]+>/g, ' ')
-                      .replace(/\s+/g, ' ')
-                      .trim();
-                    
-                    if (textContent && textContent.length > 100) {
-                      seenUrls.add(item.link);
-                      
-                      knowledgeContext.push({
-                        content: textContent.substring(0, 12000),
-                        metadata: { 
-                          title: item.title, 
-                          source: 'ScraperAPI',
-                          searchQuery: searchQuery,
+                    knowledgeContext.push({
+                      content: textContent.substring(0, 12000),
+                      metadata: { 
+                        title: item.title, 
+                        source: 'ScraperAPI',
+                        searchQuery: bestSearchQuery,
                           date: new Date().toISOString(),
                           domain: new URL(item.link).hostname,
                         },
@@ -619,51 +601,44 @@ serve(async (req) => {
                         url: item.link,
                         type: 'news_article',
                       });
-                      
-                      articleAdded = true;
-                      successfulScrapes++;
-                      console.log(`  ✅ Scraped successfully with ScraperAPI`);
-                    } else {
-                      console.warn('ScraperAPI returned empty/short content');
-                    }
+                    
+                    articleAdded = true;
+                    successfulScrapes++;
+                    console.log(`✅ Source ${successfulScrapes}/3 scraped`);
                   } else {
-                    console.error(`  ❌ ScraperAPI error: ${scraperResponse.status}`);
+                    console.warn('ScraperAPI empty');
                   }
-                } catch (e) {
-                  console.error(`  ❌ ScraperAPI exception:`, e);
+                } else {
+                  console.error(`❌ ScraperAPI ${scraperResponse.status}`);
                 }
-              }
-              
-              // Fallback to snippet if scraping failed
-              if (!articleAdded && !seenUrls.has(item.link)) {
-                seenUrls.add(item.link);
-                knowledgeContext.push({
-                  content: item.snippet,
-                  metadata: { 
-                    title: item.title, 
-                    source: 'Google Search (Snippet)', 
-                    query: searchQuery,
-                  },
-                  sourceUrl: item.link,
-                  retrievalType: 'keyword',
-                  score: 0.85,
-                });
-                sources.push({ title: item.title, url: item.link, type: 'news_article' });
-                console.log(`  📝 Using snippet as fallback`);
+              } catch (e) {
+                console.error(`❌ ScraperAPI failed:`, e);
               }
             }
-            
-            console.log(`  ✅ Scraped ${successfulScrapes}/${itemsToScrape.length} articles successfully`);
-          } else {
-            console.warn(`  ⚠️ No articles found for this query`);
+              
+            // Fallback to snippet if scraping failed
+            if (!articleAdded && !seenUrls.has(item.link)) {
+              seenUrls.add(item.link);
+              knowledgeContext.push({
+                content: item.snippet,
+                metadata: { 
+                  title: item.title, 
+                  source: 'Google (Snippet)', 
+                  query: bestSearchQuery,
+                },
+                sourceUrl: item.link,
+                retrievalType: 'keyword',
+                score: 0.85,
+              });
+              sources.push({ title: item.title, url: item.link, type: 'news_article' });
+            }
           }
-        } else {
-          const errorText = await searchResponse.text();
-          console.error(`  ❌ Search API error: ${searchResponse.status}`);
+          
+          console.log(`✅ Successfully processed ${successfulScrapes}/3 sources`);
         }
-      } // End of search query loop
-      
-      console.log(`📊 Total sources collected: ${sources.length} from ${searchQueriesToUse.length} queries`);
+      } else {
+        console.warn('Google Search failed');
+      }
     }
 
     // Step 4: Rank and deduplicate context
