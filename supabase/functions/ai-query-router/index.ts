@@ -8,40 +8,61 @@ const corsHeaders = {
 
 interface QuickQueryResult {
   isQuick: boolean;
-  category?: 'gold' | 'stocks' | 'funds' | 'crypto' | 'currency' | 'bonds' | 'etfs';
+  category?: 'greeting' | 'gold' | 'stocks' | 'funds' | 'crypto' | 'currency' | 'bonds' | 'etfs' | 
+             'personal_finance' | 'portfolio' | 'debts' | 'deposits' | 'goals' | 'income' | 'expenses';
   symbol?: string;
+  financeType?: string;
 }
 
 // Quick classification without LLM for common patterns
 function quickClassify(message: string): QuickQueryResult {
   const lower = message.toLowerCase();
-  const arabicGold = /ذهب|جرام|عيار/;
-  const englishGold = /gold|gram|karat/i;
+  const trimmed = message.trim();
   
-  // Gold price queries
-  if (arabicGold.test(message) || englishGold.test(message)) {
+  // Greetings (instant response)
+  if (/^(hi|hello|hey|مرحبا|أهلا|السلام عليكم|سلام)$/i.test(trimmed)) {
+    return { isQuick: true, category: 'greeting' };
+  }
+  
+  // Personal Finance queries
+  if (/دخلي|income|راتب|salary|مصروفات|expenses|نفقات/i.test(lower)) {
+    return { isQuick: true, category: 'personal_finance', financeType: 'overview' };
+  }
+  
+  if (/ديون|debts?|قرض|loans?/i.test(lower)) {
+    return { isQuick: true, category: 'debts' };
+  }
+  
+  if (/ودائع|deposits?|شهادات|certificates?/i.test(lower)) {
+    return { isQuick: true, category: 'deposits' };
+  }
+  
+  if (/أهداف|goals?|مدخرات|savings?/i.test(lower)) {
+    return { isQuick: true, category: 'goals' };
+  }
+  
+  if (/محفظة|portfolio|أصول|assets?|استثمارات|investments?/i.test(lower)) {
+    return { isQuick: true, category: 'portfolio' };
+  }
+  
+  // Market Data queries
+  if (/ذهب|جرام|عيار|gold|gram|karat/i.test(lower)) {
     return { isQuick: true, category: 'gold' };
   }
   
-  // Stock queries with specific symbol
-  const stockPattern = /(?:سهم|stock|price of|سعر)\s+([A-Z]{2,6}|\w+)/i;
-  const stockMatch = message.match(stockPattern);
-  if (stockMatch) {
-    return { isQuick: true, category: 'stocks', symbol: stockMatch[1] };
+  if (/سهم|stock|أسهم|shares?/i.test(lower)) {
+    return { isQuick: true, category: 'stocks' };
   }
   
-  // Funds queries
   if (/صناديق|صندوق|funds?|mutual/i.test(lower)) {
     return { isQuick: true, category: 'funds' };
   }
   
-  // Crypto queries
-  if (/bitcoin|btc|crypto|عملة رقمية/i.test(lower)) {
+  if (/bitcoin|btc|crypto|عملة رقمية|بيتكوين/i.test(lower)) {
     return { isQuick: true, category: 'crypto' };
   }
   
-  // Currency queries
-  if (/dollar|euro|currency|دولار|يورو|عملة/i.test(lower)) {
+  if (/dollar|euro|currency|دولار|يورو|جنيه|pound/i.test(lower)) {
     return { isQuick: true, category: 'currency' };
   }
   
@@ -58,6 +79,168 @@ async function handleQuickQuery(
   
   try {
     switch (category) {
+      case 'greeting': {
+        return isArabic 
+          ? 'مرحباً! كيف يمكنني مساعدتك اليوم؟ 😊'
+          : 'Hi! How can I help you today? 😊';
+      }
+      
+      case 'personal_finance': {
+        const { data: finances } = await supabase
+          .from('personal_finances')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        const { data: incomes } = await supabase
+          .from('income_streams')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true);
+        
+        const { data: expenses } = await supabase
+          .from('expense_streams')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true);
+        
+        const totalIncome = incomes?.reduce((sum, i) => sum + Number(i.amount), 0) || 0;
+        const totalExpenses = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+        const netSavings = totalIncome - totalExpenses;
+        
+        if (isArabic) {
+          return `📊 **ملخص مالياتك الشخصية:**\n\n` +
+            `💰 الدخل الشهري: ${totalIncome.toLocaleString()} جنيه\n` +
+            `📉 المصروفات الشهرية: ${totalExpenses.toLocaleString()} جنيه\n` +
+            `💎 صافي المدخرات: ${netSavings.toLocaleString()} جنيه\n` +
+            `📈 نسبة الادخار: ${totalIncome > 0 ? ((netSavings/totalIncome)*100).toFixed(1) : 0}%`;
+        } else {
+          return `📊 **Your Personal Finance Summary:**\n\n` +
+            `💰 Monthly Income: ${totalIncome.toLocaleString()} EGP\n` +
+            `📉 Monthly Expenses: ${totalExpenses.toLocaleString()} EGP\n` +
+            `💎 Net Savings: ${netSavings.toLocaleString()} EGP\n` +
+            `📈 Savings Rate: ${totalIncome > 0 ? ((netSavings/totalIncome)*100).toFixed(1) : 0}%`;
+        }
+      }
+      
+      case 'debts': {
+        const { data: debts } = await supabase
+          .from('debts')
+          .select('*')
+          .eq('user_id', userId);
+        
+        if (!debts || debts.length === 0) {
+          return isArabic ? '✅ ليس لديك ديون مسجلة.' : '✅ You have no recorded debts.';
+        }
+        
+        const totalDebt = debts.reduce((sum, d) => sum + Number(d.total_amount), 0);
+        const totalPaid = debts.reduce((sum, d) => sum + Number(d.paid_amount), 0);
+        const remaining = totalDebt - totalPaid;
+        
+        if (isArabic) {
+          return `📊 **ملخص الديون:**\n\n` +
+            `💰 إجمالي الديون: ${totalDebt.toLocaleString()} جنيه\n` +
+            `✅ المدفوع: ${totalPaid.toLocaleString()} جنيه\n` +
+            `⏳ المتبقي: ${remaining.toLocaleString()} جنيه`;
+        } else {
+          return `📊 **Debt Summary:**\n\n` +
+            `💰 Total Debt: ${totalDebt.toLocaleString()} EGP\n` +
+            `✅ Paid: ${totalPaid.toLocaleString()} EGP\n` +
+            `⏳ Remaining: ${remaining.toLocaleString()} EGP`;
+        }
+      }
+      
+      case 'deposits': {
+        const { data: deposits } = await supabase
+          .from('deposits')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'active');
+        
+        if (!deposits || deposits.length === 0) {
+          return isArabic ? '📭 ليس لديك ودائع نشطة.' : '📭 You have no active deposits.';
+        }
+        
+        const totalPrincipal = deposits.reduce((sum, d) => sum + Number(d.principal), 0);
+        const totalAccrued = deposits.reduce((sum, d) => sum + Number(d.accrued_interest), 0);
+        
+        if (isArabic) {
+          return `💰 **ملخص الودائع:**\n\n` +
+            `📊 عدد الودائع: ${deposits.length}\n` +
+            `💵 رأس المال: ${totalPrincipal.toLocaleString()} جنيه\n` +
+            `📈 الفوائد المتراكمة: ${totalAccrued.toLocaleString()} جنيه\n` +
+            `💎 القيمة الإجمالية: ${(totalPrincipal + totalAccrued).toLocaleString()} جنيه`;
+        } else {
+          return `💰 **Deposits Summary:**\n\n` +
+            `📊 Number of Deposits: ${deposits.length}\n` +
+            `💵 Principal: ${totalPrincipal.toLocaleString()} EGP\n` +
+            `📈 Accrued Interest: ${totalAccrued.toLocaleString()} EGP\n` +
+            `💎 Total Value: ${(totalPrincipal + totalAccrued).toLocaleString()} EGP`;
+        }
+      }
+      
+      case 'goals': {
+        const { data: goals } = await supabase
+          .from('financial_goals')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'active');
+        
+        if (!goals || goals.length === 0) {
+          return isArabic ? '🎯 ليس لديك أهداف مالية نشطة.' : '🎯 You have no active financial goals.';
+        }
+        
+        const totalTarget = goals.reduce((sum, g) => sum + Number(g.target_amount), 0);
+        const totalCurrent = goals.reduce((sum, g) => sum + Number(g.current_amount), 0);
+        const progress = totalTarget > 0 ? (totalCurrent / totalTarget * 100).toFixed(1) : 0;
+        
+        if (isArabic) {
+          return `🎯 **ملخص الأهداف المالية:**\n\n` +
+            `📊 عدد الأهداف: ${goals.length}\n` +
+            `💰 المبلغ المستهدف: ${totalTarget.toLocaleString()} جنيه\n` +
+            `✅ المبلغ الحالي: ${totalCurrent.toLocaleString()} جنيه\n` +
+            `📈 نسبة التقدم: ${progress}%`;
+        } else {
+          return `🎯 **Financial Goals Summary:**\n\n` +
+            `📊 Number of Goals: ${goals.length}\n` +
+            `💰 Target Amount: ${totalTarget.toLocaleString()} EGP\n` +
+            `✅ Current Amount: ${totalCurrent.toLocaleString()} EGP\n` +
+            `📈 Progress: ${progress}%`;
+        }
+      }
+      
+      case 'portfolio': {
+        const { data: assets } = await supabase
+          .from('assets')
+          .select('*')
+          .eq('user_id', userId);
+        
+        if (!assets || assets.length === 0) {
+          return isArabic ? '📊 محفظتك فارغة حالياً.' : '📊 Your portfolio is currently empty.';
+        }
+        
+        const totalValue = assets.reduce((sum, a) => 
+          sum + (Number(a.quantity) * Number(a.current_price)), 0);
+        const totalCost = assets.reduce((sum, a) => 
+          sum + (Number(a.quantity) * Number(a.purchase_price)), 0);
+        const pnl = totalValue - totalCost;
+        const pnlPercent = totalCost > 0 ? (pnl / totalCost * 100).toFixed(2) : 0;
+        
+        if (isArabic) {
+          return `📊 **ملخص المحفظة:**\n\n` +
+            `🔢 عدد الأصول: ${assets.length}\n` +
+            `💰 القيمة الحالية: ${totalValue.toLocaleString()} جنيه\n` +
+            `📊 تكلفة الشراء: ${totalCost.toLocaleString()} جنيه\n` +
+            `${pnl >= 0 ? '📈' : '📉'} الربح/الخسارة: ${pnl.toLocaleString()} (${pnlPercent}%)`;
+        } else {
+          return `📊 **Portfolio Summary:**\n\n` +
+            `🔢 Number of Assets: ${assets.length}\n` +
+            `💰 Current Value: ${totalValue.toLocaleString()} EGP\n` +
+            `📊 Purchase Cost: ${totalCost.toLocaleString()} EGP\n` +
+            `${pnl >= 0 ? '📈' : '📉'} P&L: ${pnl.toLocaleString()} (${pnlPercent}%)`;
+        }
+      }
+      
       case 'gold': {
         const { data: goldPrices, error } = await supabase
           .from('egyptian_gold_prices')
@@ -74,24 +257,18 @@ async function handleQuickQuery(
         }
         
         if (isArabic) {
-          let response = '📊 **أسعار الذهب الحالية في مصر:**\n\n';
-          goldPrices.forEach((price: any) => {
-            response += `**${price.product_name}**\n`;
-            if (price.karat) response += `- العيار: ${price.karat}\n`;
-            response += `- السعر: ${price.price_egp} جنيه مصري\n`;
-            if (price.buy_price) response += `- سعر الشراء: ${price.buy_price} جنيه\n`;
-            if (price.sell_price) response += `- سعر البيع: ${price.sell_price} جنيه\n`;
+          let response = '✨ **أسعار الذهب:**\n\n';
+          goldPrices.slice(0, 5).forEach((price: any) => {
+            response += `**${price.product_name}**: ${price.price_egp} جنيه`;
+            if (price.karat) response += ` (${price.karat})`;
             response += '\n';
           });
           return response;
         } else {
-          let response = '📊 **Current Gold Prices in Egypt:**\n\n';
-          goldPrices.forEach((price: any) => {
-            response += `**${price.product_name}**\n`;
-            if (price.karat) response += `- Karat: ${price.karat}\n`;
-            response += `- Price: ${price.price_egp} EGP\n`;
-            if (price.buy_price) response += `- Buy Price: ${price.buy_price} EGP\n`;
-            if (price.sell_price) response += `- Sell Price: ${price.sell_price} EGP\n`;
+          let response = '✨ **Gold Prices:**\n\n';
+          goldPrices.slice(0, 5).forEach((price: any) => {
+            response += `**${price.product_name}**: ${price.price_egp} EGP`;
+            if (price.karat) response += ` (${price.karat})`;
             response += '\n';
           });
           return response;
@@ -114,25 +291,23 @@ async function handleQuickQuery(
         }
         
         if (isArabic) {
-          let response = '📈 **أحدث أسعار الأسهم المصرية:**\n\n';
-          stocks.slice(0, 10).forEach((stock: any) => {
-            response += `**${stock.symbol}** - ${stock.company_name || ''}\n`;
-            response += `- السعر: ${stock.last_price} ${stock.currency}\n`;
+          let response = '📈 **أحدث أسعار الأسهم:**\n\n';
+          stocks.slice(0, 5).forEach((stock: any) => {
+            response += `**${stock.symbol}**: ${stock.last_price} ${stock.currency}`;
             if (stock.change_amount) {
-              const arrow = stock.change_amount > 0 ? '📈' : stock.change_amount < 0 ? '📉' : '➡️';
-              response += `- التغيير: ${arrow} ${stock.change_amount} (${stock.change_percent?.toFixed(2)}%)\n`;
+              const arrow = stock.change_amount > 0 ? '📈' : '📉';
+              response += ` ${arrow} ${stock.change_percent?.toFixed(1)}%`;
             }
             response += '\n';
           });
           return response;
         } else {
-          let response = '📈 **Latest Egyptian Stock Prices:**\n\n';
-          stocks.slice(0, 10).forEach((stock: any) => {
-            response += `**${stock.symbol}** - ${stock.company_name || ''}\n`;
-            response += `- Price: ${stock.last_price} ${stock.currency}\n`;
+          let response = '📈 **Latest Stock Prices:**\n\n';
+          stocks.slice(0, 5).forEach((stock: any) => {
+            response += `**${stock.symbol}**: ${stock.last_price} ${stock.currency}`;
             if (stock.change_amount) {
-              const arrow = stock.change_amount > 0 ? '📈' : stock.change_amount < 0 ? '📉' : '➡️';
-              response += `- Change: ${arrow} ${stock.change_amount} (${stock.change_percent?.toFixed(2)}%)\n`;
+              const arrow = stock.change_amount > 0 ? '📈' : '📉';
+              response += ` ${arrow} ${stock.change_percent?.toFixed(1)}%`;
             }
             response += '\n';
           });
@@ -156,22 +331,18 @@ async function handleQuickQuery(
         }
         
         if (isArabic) {
-          let response = '💼 **صناديق الاستثمار المصرية:**\n\n';
-          funds.forEach((fund: any) => {
-            response += `**${fund.fund_name}**\n`;
-            if (fund.issuer) response += `- المُصدر: ${fund.issuer}\n`;
-            if (fund.last_price) response += `- آخر سعر: ${fund.last_price} ${fund.currency}\n`;
-            if (fund.ytd_return) response += `- العائد السنوي: ${fund.ytd_return}%\n`;
+          let response = '💼 **صناديق الاستثمار:**\n\n';
+          funds.slice(0, 5).forEach((fund: any) => {
+            response += `**${fund.fund_name}**: ${fund.last_price} ${fund.currency}`;
+            if (fund.ytd_return) response += ` | عائد: ${fund.ytd_return}%`;
             response += '\n';
           });
           return response;
         } else {
-          let response = '💼 **Egyptian Investment Funds:**\n\n';
-          funds.forEach((fund: any) => {
-            response += `**${fund.fund_name}**\n`;
-            if (fund.issuer) response += `- Issuer: ${fund.issuer}\n`;
-            if (fund.last_price) response += `- Last Price: ${fund.last_price} ${fund.currency}\n`;
-            if (fund.ytd_return) response += `- YTD Return: ${fund.ytd_return}%\n`;
+          let response = '💼 **Investment Funds:**\n\n';
+          funds.slice(0, 5).forEach((fund: any) => {
+            response += `**${fund.fund_name}**: ${fund.last_price} ${fund.currency}`;
+            if (fund.ytd_return) response += ` | Return: ${fund.ytd_return}%`;
             response += '\n';
           });
           return response;
@@ -194,25 +365,23 @@ async function handleQuickQuery(
         }
         
         if (isArabic) {
-          let response = '₿ **أسعار العملات الرقمية:**\n\n';
-          crypto.forEach((coin: any) => {
-            response += `**${coin.name} (${coin.symbol})**\n`;
-            response += `- السعر: $${coin.price_usd?.toFixed(2)}\n`;
+          let response = '₿ **العملات الرقمية:**\n\n';
+          crypto.slice(0, 5).forEach((coin: any) => {
+            response += `**${coin.symbol}**: $${coin.price_usd?.toFixed(2)}`;
             if (coin.change_percentage_24h) {
               const arrow = coin.change_percentage_24h > 0 ? '📈' : '📉';
-              response += `- التغيير 24 ساعة: ${arrow} ${coin.change_percentage_24h?.toFixed(2)}%\n`;
+              response += ` ${arrow} ${coin.change_percentage_24h?.toFixed(1)}%`;
             }
             response += '\n';
           });
           return response;
         } else {
-          let response = '₿ **Cryptocurrency Prices:**\n\n';
-          crypto.forEach((coin: any) => {
-            response += `**${coin.name} (${coin.symbol})**\n`;
-            response += `- Price: $${coin.price_usd?.toFixed(2)}\n`;
+          let response = '₿ **Cryptocurrencies:**\n\n';
+          crypto.slice(0, 5).forEach((coin: any) => {
+            response += `**${coin.symbol}**: $${coin.price_usd?.toFixed(2)}`;
             if (coin.change_percentage_24h) {
               const arrow = coin.change_percentage_24h > 0 ? '📈' : '📉';
-              response += `- 24h Change: ${arrow} ${coin.change_percentage_24h?.toFixed(2)}%\n`;
+              response += ` ${arrow} ${coin.change_percentage_24h?.toFixed(1)}%`;
             }
             response += '\n';
           });
@@ -237,24 +406,22 @@ async function handleQuickQuery(
         
         if (isArabic) {
           let response = '💱 **أسعار العملات:**\n\n';
-          rates.forEach((rate: any) => {
-            response += `**${rate.base_currency}/${rate.target_currency}**\n`;
-            response += `- السعر: ${rate.exchange_rate?.toFixed(4)}\n`;
+          rates.slice(0, 5).forEach((rate: any) => {
+            response += `${rate.base_currency}/${rate.target_currency}: ${rate.exchange_rate?.toFixed(4)}`;
             if (rate.change_percentage_24h) {
               const arrow = rate.change_percentage_24h > 0 ? '📈' : '📉';
-              response += `- التغيير 24 ساعة: ${arrow} ${rate.change_percentage_24h?.toFixed(2)}%\n`;
+              response += ` ${arrow} ${rate.change_percentage_24h?.toFixed(1)}%`;
             }
             response += '\n';
           });
           return response;
         } else {
           let response = '💱 **Currency Rates:**\n\n';
-          rates.forEach((rate: any) => {
-            response += `**${rate.base_currency}/${rate.target_currency}**\n`;
-            response += `- Rate: ${rate.exchange_rate?.toFixed(4)}\n`;
+          rates.slice(0, 5).forEach((rate: any) => {
+            response += `${rate.base_currency}/${rate.target_currency}: ${rate.exchange_rate?.toFixed(4)}`;
             if (rate.change_percentage_24h) {
               const arrow = rate.change_percentage_24h > 0 ? '📈' : '📉';
-              response += `- 24h Change: ${arrow} ${rate.change_percentage_24h?.toFixed(2)}%\n`;
+              response += ` ${arrow} ${rate.change_percentage_24h?.toFixed(1)}%`;
             }
             response += '\n';
           });
@@ -271,6 +438,43 @@ async function handleQuickQuery(
   }
 }
 
+// Simple LLM response for creative/general queries
+async function generateSimpleLLMResponse(message: string, groqApiKey: string): Promise<string> {
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'mixtral-8x7b-32768',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful financial assistant. Keep responses concise (2-3 sentences max) unless detailed analysis is requested. Be friendly and direct.'
+          },
+          { role: 'user', content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 200,
+      }),
+    });
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || 'Sorry, I couldn\'t process that.';
+  } catch (error) {
+    console.error('Error generating simple LLM response:', error);
+    return 'Sorry, an error occurred. Please try again.';
+  }
+}
+
+// Detect if query needs detailed analysis vs simple answer
+function needsDetailedAnalysis(message: string): boolean {
+  const detailedKeywords = /analyze|analysis|compare|recommend|should i|advice|strategy|plan|تحليل|مقارنة|نصيحة|استراتيجية|خطة/i;
+  return detailedKeywords.test(message) || message.length > 100;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -285,11 +489,13 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const groqApiKey = Deno.env.get('GROQ_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Classifying query:', message);
     const classification = quickClassify(message);
     
+    // Handle instant queries (greetings, database lookups)
     if (classification.isQuick && classification.category) {
       console.log('Quick query detected:', classification.category);
       const quickResponse = await handleQuickQuery(
@@ -306,7 +512,7 @@ serve(async (req) => {
             sources: [],
             uiComponents: [],
             processingTime: Date.now(),
-            queryType: 'quick',
+            queryType: 'instant',
             category: classification.category
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -314,9 +520,10 @@ serve(async (req) => {
       }
     }
 
-    // For complex queries, delegate to RAG agent
-    console.log('Complex query, delegating to RAG agent');
-    const ragResponse = await fetch(`${supabaseUrl}/functions/v1/rag-agent`, {
+    // Check if query needs detailed analysis
+    if (needsDetailedAnalysis(message)) {
+      console.log('Complex query, delegating to RAG agent');
+      const ragResponse = await fetch(`${supabaseUrl}/functions/v1/rag-agent`, {
       method: 'POST',
       headers: {
         'Authorization': req.headers.get('Authorization') || '',
@@ -329,9 +536,24 @@ serve(async (req) => {
       throw new Error(`RAG agent error: ${ragResponse.status}`);
     }
 
-    const ragData = await ragResponse.json();
+      const ragData = await ragResponse.json();
+      return new Response(
+        JSON.stringify({ ...ragData, queryType: 'detailed' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // For simple creative queries, use fast LLM
+    console.log('Simple query, using fast LLM');
+    const llmResponse = await generateSimpleLLMResponse(message, groqApiKey);
     return new Response(
-      JSON.stringify({ ...ragData, queryType: 'complex' }),
+      JSON.stringify({
+        response: llmResponse,
+        sources: [],
+        uiComponents: [],
+        processingTime: Date.now(),
+        queryType: 'simple'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
