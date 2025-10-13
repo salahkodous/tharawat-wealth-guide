@@ -36,7 +36,8 @@ const Settings = () => {
   
   const [profile, setProfile] = useState({
     full_name: '',
-    avatar_url: ''
+    avatar_url: '',
+    job: ''
   });
   
   // Initialize preferences from settings context
@@ -99,7 +100,8 @@ const Settings = () => {
       if (profileData) {
         setProfile({
           full_name: profileData.full_name || '',
-          avatar_url: profileData.avatar_url || ''
+          avatar_url: profileData.avatar_url || '',
+          job: profileData.job || ''
         });
       }
 
@@ -148,7 +150,8 @@ const Settings = () => {
         .upsert({
           user_id: user.id,
           full_name: profile.full_name,
-          avatar_url: profile.avatar_url
+          avatar_url: profile.avatar_url,
+          job: profile.job
         });
 
       if (error) throw error;
@@ -371,6 +374,15 @@ const Settings = () => {
                     value={profile.avatar_url}
                     onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
                     placeholder="https://example.com/avatar.jpg"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="job">{t('job')}</Label>
+                  <Input
+                    id="job"
+                    value={profile.job}
+                    onChange={(e) => setProfile({ ...profile, job: e.target.value })}
+                    placeholder="e.g., Software Engineer, Doctor, Teacher"
                   />
                 </div>
                 <Button onClick={saveProfile} disabled={loading}>
