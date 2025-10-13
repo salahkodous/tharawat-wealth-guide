@@ -24,9 +24,20 @@ function quickClassify(message: string): QuickQueryResult {
     return { isQuick: true, category: 'greeting' };
   }
   
-  // News queries (needs web search)
-  if (/أخبار|news|خبر|تقرير|report|مستجدات|updates|أحداث|events/i.test(lower)) {
+  // News queries & topic queries that need latest info (needs web search)
+  // Include explicit news keywords + topics people ask about to get latest info
+  if (/أخبار|news|خبر|تقرير|report|مستجدات|updates|أحداث|events|آخر|latest|حديث|recent/i.test(lower)) {
     return { isQuick: false }; // Route to RAG agent for web search
+  }
+  
+  // Topic queries that likely need web search for latest info
+  // Cars, real estate, products, services, etc. - anything not in our database
+  if (/سيارات|cars|عقارات|عقار|real estate|منتج|product|خدمة|service|مستعمل|used|جديد|new/i.test(lower)) {
+    // If it's ONLY about these topics without explicit financial context, needs web search
+    const hasFinancialContext = /سعر|price|تكلفة|cost|قيمة|value|استثمار|investment/i.test(lower);
+    if (!hasFinancialContext) {
+      return { isQuick: false }; // Route to RAG for web search
+    }
   }
   
   // Personal Finance queries
