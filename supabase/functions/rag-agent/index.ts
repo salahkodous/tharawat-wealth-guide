@@ -364,9 +364,28 @@ serve(async (req) => {
     console.log('🤖 Determining search topics...');
     const searchStrategy = await determineSearchTopics(resolvedMessage, conversationHistory);
     
-    // Step 3: Fetch user's financial data
-    console.log('Fetching user financial data...');
-    const userData = await getUserFinancialData(userId, supabase);
+    // Step 3: Determine if user financial data is needed
+    const needsUserData = /\b(my|mine|I|محفظتي|بياناتي|أموالي|دخلي|نفقاتي|أهدافي|portfolio|finances|income|expenses|goals|assets|debts|savings|deposit|analyze|تحليل|استثمار|توصية)\b/i.test(resolvedMessage);
+    
+    let userData = { 
+      personalFinances: {}, 
+      debts: [], 
+      assets: [], 
+      portfolios: [], 
+      financialGoals: [], 
+      incomeStreams: [], 
+      expenseStreams: [], 
+      deposits: [], 
+      portfolioGoals: [], 
+      newsArticles: [] 
+    };
+    
+    if (needsUserData) {
+      console.log('✓ User financial data needed for this query - fetching...');
+      userData = await getUserFinancialData(userId, supabase);
+    } else {
+      console.log('⊘ User financial data not needed for this query - skipping fetch');
+    }
 
     // Step 4: Advanced Router Agent (use resolved message and search topics)
     const toolSelection = await analyzeQueryAndSelectTools(message, resolvedMessage);
