@@ -129,6 +129,13 @@ const Index = () => {
                 </Button>
                 <Button variant="ghost" className="hover:text-primary">Features</Button>
                 <Button variant="ghost" className="hover:text-primary">Pricing</Button>
+                <Button 
+                  className="gradient-electric text-primary-foreground"
+                  onClick={() => navigate('/auth')}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Start
+                </Button>
               </nav>
             </div>
           </div>
