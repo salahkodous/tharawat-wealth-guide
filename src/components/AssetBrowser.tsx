@@ -14,7 +14,7 @@ import {
   Briefcase,
   DollarSign,
   Globe,
-  Banknote
+  Wallet
 } from 'lucide-react';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -37,7 +37,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
     realEstate,
     goldPrices,
     currencyRates,
-    bankProducts,
+    funds,
     loading
   } = useMarketData();
 
@@ -91,7 +91,8 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
 
   const filteredGold = useMemo(() => {
     return goldPrices.filter(gold => 
-      gold.source.toLowerCase().includes(searchTerm.toLowerCase())
+      gold.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (gold.karat?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
   }, [goldPrices, searchTerm]);
 
@@ -102,12 +103,12 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
     );
   }, [currencyRates, searchTerm]);
 
-  const filteredBankProducts = useMemo(() => {
-    return bankProducts.filter(product => 
-      product.bank_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFunds = useMemo(() => {
+    return funds.filter(fund => 
+      fund.fund_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fund.issuer.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [bankProducts, searchTerm]);
+  }, [funds, searchTerm]);
 
   if (loading) {
     return (
@@ -146,7 +147,7 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
               { value: 'real_estate', icon: Building2, label: 'Real Estate' },
               { value: 'gold', icon: DollarSign, label: 'Gold' },
               { value: 'currency', icon: Globe, label: 'Currency' },
-              { value: 'banking', icon: Banknote, label: 'Banking' }
+              { value: 'funds', icon: Wallet, label: 'Funds' }
             ].map(({ value, icon: Icon, label }) => (
               <Button
                 key={value}
@@ -193,9 +194,9 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
               <Globe className="w-4 h-4" />
               <span className="hidden sm:inline">Currency</span>
             </TabsTrigger>
-            <TabsTrigger value="banking" className="flex items-center gap-1">
-              <Banknote className="w-4 h-4" />
-              <span className="hidden sm:inline">Banking</span>
+            <TabsTrigger value="funds" className="flex items-center gap-1">
+              <Wallet className="w-4 h-4" />
+              <span className="hidden sm:inline">Funds</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -364,31 +365,37 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
                     onClick={() => onAssetSelect(gold, 'gold')}>
                 <CardContent className="p-4">
                   <div className="space-y-2">
-                    <h4 className="font-semibold">Gold - {gold.source}</h4>
+                    <h4 className="font-semibold">{gold.product_name}</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      {gold.price_24k_egp && (
+                      {gold.karat && (
                         <div>
-                          <span className="text-muted-foreground">24K:</span>
-                          <span className="font-medium ml-2">{formatPrice(gold.price_24k_egp)} EGP</span>
+                          <span className="text-muted-foreground">Karat:</span>
+                          <span className="font-medium ml-2">{gold.karat}</span>
                         </div>
                       )}
-                      {gold.price_21k_egp && (
+                      {gold.weight && (
                         <div>
-                          <span className="text-muted-foreground">21K:</span>
-                          <span className="font-medium ml-2">{formatPrice(gold.price_21k_egp)} EGP</span>
+                          <span className="text-muted-foreground">Weight:</span>
+                          <span className="font-medium ml-2">{gold.weight}</span>
+                        </div>
+                      )}
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Price:</span>
+                        <span className="font-medium ml-2">{formatPrice(gold.price_egp)} EGP</span>
+                      </div>
+                      {gold.buy_price && (
+                        <div>
+                          <span className="text-muted-foreground">Buy:</span>
+                          <span className="font-medium ml-2">{formatPrice(gold.buy_price)}</span>
+                        </div>
+                      )}
+                      {gold.sell_price && (
+                        <div>
+                          <span className="text-muted-foreground">Sell:</span>
+                          <span className="font-medium ml-2">{formatPrice(gold.sell_price)}</span>
                         </div>
                       )}
                     </div>
-                    {gold.change_percentage_24h && (
-                      <p className={`text-sm flex items-center gap-1 ${getChangeColor(gold.change_percentage_24h)}`}>
-                        {gold.change_percentage_24h >= 0 ? (
-                          <TrendingUp className="w-3 h-3" />
-                        ) : (
-                          <TrendingDown className="w-3 h-3" />
-                        )}
-                        {gold.change_percentage_24h.toFixed(2)}% (24h)
-                      </p>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -427,27 +434,37 @@ const AssetBrowser = ({ onAssetSelect, selectedAssetType }: AssetBrowserProps) =
           </div>
         </TabsContent>
 
-        <TabsContent value="banking" className="space-y-4">
+        <TabsContent value="funds" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 md:max-h-96 overflow-y-auto">
-            {filteredBankProducts.map((product) => (
-              <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onAssetSelect(product, 'banking')}>
+            {filteredFunds.map((fund) => (
+              <Card key={fund.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => onAssetSelect(fund, 'funds')}>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-semibold">{product.product_name}</h4>
-                      <p className="text-sm text-muted-foreground">{product.bank_name}</p>
-                      <Badge className="mt-1">{product.product_type}</Badge>
+                      <h4 className="font-semibold">{fund.fund_name}</h4>
+                      <p className="text-sm text-muted-foreground">{fund.issuer}</p>
+                      {fund.type && <Badge className="mt-1">{fund.type}</Badge>}
+                      {fund.risk_level && (
+                        <Badge variant="outline" className="mt-1 ml-1">{fund.risk_level}</Badge>
+                      )}
                     </div>
                     <div className="text-right">
-                      {product.interest_rate && (
-                        <p className="font-semibold">{product.interest_rate}% APR</p>
+                      {fund.last_price && (
+                        <p className="font-semibold">{formatPrice(fund.last_price, fund.currency)}</p>
                       )}
-                      {product.minimum_amount && (
-                        <p className="text-sm text-muted-foreground">
-                          Min: {formatPrice(product.minimum_amount)}
-                        </p>
-                      )}
+                      <div className="text-xs space-y-1 mt-2">
+                        {fund.ytd_return && (
+                          <p className={getChangeColor(fund.ytd_return)}>
+                            YTD: {fund.ytd_return.toFixed(2)}%
+                          </p>
+                        )}
+                        {fund.one_year_return && (
+                          <p className={getChangeColor(fund.one_year_return)}>
+                            1Y: {fund.one_year_return.toFixed(2)}%
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

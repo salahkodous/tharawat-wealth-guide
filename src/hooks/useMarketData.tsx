@@ -113,23 +113,32 @@ export interface CurrencyRate {
   last_updated?: string;
 }
 
-export interface BankProduct {
+export interface Fund {
   id: number;
-  bank_name: string;
-  bank_name_ar?: string;
-  product_name: string;
-  product_name_ar?: string;
-  product_type: string;
-  interest_rate: number | null;
-  minimum_amount: number | null;
-  maximum_amount: number | null;
-  term_months: number | null;
+  fund_name: string;
+  issuer: string;
+  type?: string;
+  category?: string;
   currency: string;
-  features?: string;
-  eligibility?: string;
-  monthly_fee: number | null;
-  opening_fee: number | null;
-  is_active?: boolean;
+  last_price: number | null;
+  ytd_return: number | null;
+  one_year_return: number | null;
+  since_inception_return: number | null;
+  risk_level?: string;
+  created_at?: string;
+}
+
+export interface EgyptianGoldPrice {
+  id: number;
+  product_name: string;
+  karat?: string;
+  weight?: string;
+  unit: string;
+  price_egp: number;
+  price_usd?: number | null;
+  buy_price?: number | null;
+  sell_price?: number | null;
+  scraped_at?: string;
 }
 
 export const useMarketData = () => {
@@ -138,9 +147,9 @@ export const useMarketData = () => {
   const [bonds, setBonds] = useState<Bond[]>([]);
   const [etfs, setETFs] = useState<ETF[]>([]);
   const [realEstate, setRealEstate] = useState<RealEstatePrice[]>([]);
-  const [goldPrices, setGoldPrices] = useState<GoldPrice[]>([]);
+  const [goldPrices, setGoldPrices] = useState<EgyptianGoldPrice[]>([]);
   const [currencyRates, setCurrencyRates] = useState<CurrencyRate[]>([]);
-  const [bankProducts, setBankProducts] = useState<BankProduct[]>([]);
+  const [funds, setFunds] = useState<Fund[]>([]);
   const [loading, setLoading] = useState(true);
 
   // For backward compatibility, this hook still fetches from base tables (Egypt)
@@ -148,11 +157,11 @@ export const useMarketData = () => {
 
   const fetchStocks = async () => {
     try {
-      console.log('Fetching stocks from Egypt stocks table...');
+      console.log('Fetching stocks from Mubasher stocks table...');
 
-      // Fetch data from the Egypt stocks table with 24h changes
+      // Fetch data from the mubasher_stocks table
       const { data, error } = await (supabase as any)
-        .from('egyptian_stocks')
+        .from('mubasher_stocks')
         .select('*')
         .order('change_percent', { ascending: false });
       
@@ -168,19 +177,19 @@ export const useMarketData = () => {
         symbol: stock.symbol || 'N/A',
         name: stock.name || 'Unknown',
         price: stock.price,
-        change: stock.change,
+        change: stock.change_amount,
         change_percent: stock.change_percent,
         volume: stock.volume,
         market_cap: stock.market_cap || null,
         country: stock.country || 'Egypt',
         currency: stock.currency || 'EGP',
-        exchange: stock.exchange || 'EGX',
+        exchange: stock.market || 'EGX',
         sector: stock.sector || null,
-        last_updated: stock.last_updated,
-        high: stock.high,
-        low: stock.low,
-        open: stock.open,
-        turnover: stock.turnover
+        last_updated: stock.scraped_at,
+        high: stock.high_price,
+        low: stock.low_price,
+        open: stock.open_price,
+        turnover: stock.value_traded
       }));
       
       setStocks(formattedStocks);
@@ -253,17 +262,14 @@ export const useMarketData = () => {
   };
 
   const fetchGoldPrices = async () => {
-    // Note: gold_prices table does not exist in current schema
-    // const { data, error } = await supabase
-    //   .from('gold_prices')
-    //   .select('*')
-    //   .order('last_updated', { ascending: false })
-    //   .limit(10);
+    const { data, error } = await supabase
+      .from('egyptian_gold_prices')
+      .select('*')
+      .order('scraped_at', { ascending: false });
     
-    // if (!error && data) {
-    //   setGoldPrices(data as GoldPrice[]);
-    // }
-    console.log('Gold prices table not available in current schema');
+    if (!error && data) {
+      setGoldPrices(data as EgyptianGoldPrice[]);
+    }
   };
 
   const fetchCurrencyRates = async () => {
@@ -277,15 +283,14 @@ export const useMarketData = () => {
     }
   };
 
-  const fetchBankProducts = async () => {
+  const fetchFunds = async () => {
     const { data, error } = await supabase
-      .from('bank_products')
+      .from('egyptian_funds')
       .select('*')
-      .eq('is_active', true)
-      .order('interest_rate', { ascending: false });
+      .order('ytd_return', { ascending: false, nullsFirst: false });
     
     if (!error && data) {
-      setBankProducts(data as BankProduct[]);
+      setFunds(data as Fund[]);
     }
   };
 
@@ -300,7 +305,7 @@ export const useMarketData = () => {
         fetchRealEstate(),
         fetchGoldPrices(),
         fetchCurrencyRates(),
-        fetchBankProducts(),
+        fetchFunds(),
       ]);
     } catch (error) {
       console.error('Error fetching market data:', error);
@@ -323,7 +328,7 @@ export const useMarketData = () => {
     realEstate,
     goldPrices,
     currencyRates,
-    bankProducts,
+    funds,
     loading,
     refetch,
     fetchStocks,
@@ -333,6 +338,6 @@ export const useMarketData = () => {
     fetchRealEstate,
     fetchGoldPrices,
     fetchCurrencyRates,
-    fetchBankProducts,
+    fetchFunds,
   };
 };
