@@ -157,14 +157,11 @@ const AIFinancialAgent = () => {
         content: msg.content
       }));
 
-      // Use intelligent query router that handles simple queries fast and delegates complex ones
-      const { data, error } = await supabase.functions.invoke('ai-query-router', {
+      // Use new multi-agent chat system
+      const { data, error } = await supabase.functions.invoke('multi-agent-chat', {
         body: {
           message: messageToSend,
-          conversationHistory, // Send full chat history
-          userId: user.id,
-          chatId: chatId,
-          language: language // Pass language to agent
+          userId: user.id
         }
       });
 

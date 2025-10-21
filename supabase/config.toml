@@ -105,3 +105,33 @@ verify_jwt = false
 
 [functions.ai-query-router]
 verify_jwt = false
+
+[functions.agent-translator]
+verify_jwt = false
+
+[functions.agent-router]
+verify_jwt = false
+
+[functions.agent-finance]
+verify_jwt = false
+
+[functions.agent-portfolio]
+verify_jwt = false
+
+[functions.agent-data-analyst]
+verify_jwt = false
+
+[functions.agent-scam]
+verify_jwt = false
+
+[functions.agent-summarizer]
+verify_jwt = false
+
+[functions.agent-creative]
+verify_jwt = false
+
+[functions.agent-orchestrator]
+verify_jwt = false
+
+[functions.multi-agent-chat]
+verify_jwt = false
