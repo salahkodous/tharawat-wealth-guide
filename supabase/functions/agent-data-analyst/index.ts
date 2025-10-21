@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const HF_API_KEY = "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";
+const HF_API_KEY = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
 
 async function analyzeData(query: string, userData: any): Promise<string> {
   try {
