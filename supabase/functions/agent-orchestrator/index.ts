@@ -9,21 +9,24 @@ const HF_API_KEY = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
 
 async function orchestrateOutputs(agentOutputs: any[], plan: string): Promise<string> {
   try {
+    // If only one agent, return its output directly without orchestration
+    if (agentOutputs.length === 1) {
+      return agentOutputs[0].output;
+    }
+    
     const model = "microsoft/phi-2";
     
-    // Combine all agent outputs
-    const combinedOutputs = agentOutputs.map(output => 
-      `[${output.agent}]: ${output.output}`
-    ).join('\n\n');
+    // Combine all agent outputs WITHOUT agent name prefixes
+    const combinedOutputs = agentOutputs.map(output => output.output).join('\n\n');
     
-    const prompt = `You are an orchestration agent. Combine these agent outputs into one coherent response following this plan:
+    const prompt = `You are an AI assistant. Combine these insights into one natural, coherent response following this plan:
 
 PLAN: ${plan}
 
-AGENT OUTPUTS:
+INSIGHTS:
 ${combinedOutputs}
 
-Provide a unified, coherent response:`;
+Provide a unified response without mentioning agent names or sources:`;
 
     const response = await fetch(
       `https://api-inference.huggingface.co/models/${model}`,
@@ -46,15 +49,15 @@ Provide a unified, coherent response:`;
     
     if (!response.ok) {
       console.error('Orchestrator API error:', await response.text());
-      // Fallback: simple concatenation
-      return combinedOutputs;
+      // Fallback: simple concatenation without agent names
+      return agentOutputs.map(o => o.output).join('\n\n');
     }
     
     const result = await response.json();
     return result[0]?.generated_text || combinedOutputs;
   } catch (error) {
     console.error('Orchestration error:', error);
-    // Fallback: combine outputs with separators
+    // Fallback: combine outputs without agent names
     return agentOutputs.map(o => o.output).join('\n\n');
   }
 }

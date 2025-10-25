@@ -131,25 +131,32 @@ serve(async (req) => {
     
     const agentResults = await Promise.all(agentPromises);
     
-    // 4️⃣ ORCHESTRATOR: Combine outputs
-    console.log('Step 4: Orchestrator');
-    const orchestratorResult = await callAgent('orchestrator', {
-      agentOutputs: agentResults,
-      plan: orchestrationPlan
-    });
+    let finalResponse: string;
     
-    const internalResponse = orchestratorResult.output || 'Unable to generate response';
-    
-    // 5️⃣ TRANSLATOR: Final language adjustment
-    console.log('Step 5: Final translation');
-    const finalResult = await callAgent('translator', {
-      text: internalResponse,
-      mode: 'finalize',
-      targetLanguage: originalLanguage,
-      internalText: internalResponse
-    });
-    
-    const finalResponse = finalResult.processedText || internalResponse;
+    // If only creative agent is activated, skip orchestration for faster response
+    if (agentsToActivate.length === 1 && agentsToActivate[0] === 'creative') {
+      finalResponse = agentResults[0].output;
+    } else {
+      // 4️⃣ ORCHESTRATOR: Combine outputs
+      console.log('Step 4: Orchestrator');
+      const orchestratorResult = await callAgent('orchestrator', {
+        agentOutputs: agentResults,
+        plan: orchestrationPlan
+      });
+      
+      const internalResponse = orchestratorResult.output || 'Unable to generate response';
+      
+      // 5️⃣ TRANSLATOR: Final language adjustment
+      console.log('Step 5: Final translation');
+      const finalResult = await callAgent('translator', {
+        text: internalResponse,
+        mode: 'finalize',
+        targetLanguage: originalLanguage,
+        internalText: internalResponse
+      });
+      
+      finalResponse = finalResult.processedText || internalResponse;
+    }
 
     return new Response(JSON.stringify({ 
       response: finalResponse,

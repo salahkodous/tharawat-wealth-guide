@@ -8,15 +8,30 @@ const corsHeaders = {
 const HF_API_KEY = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
 
 async function creativeAnalysis(query: string): Promise<string> {
+  const lowerQuery = query.toLowerCase().trim();
+  
+  // Instant responses for common queries - no API call needed
+  const greetingPattern = /^(hi|hello|hey|مرحبا|السلام عليكم|أهلا)$/i;
+  if (greetingPattern.test(lowerQuery)) {
+    return "Hello! I'm Anakin, your AI financial assistant. How can I help you today with your finances, investments, or any questions you have?";
+  }
+  
+  if (lowerQuery.match(/^(ok|okay|thanks|thank you|شكرا|حسنا)$/i)) {
+    return "You're welcome! Let me know if you need anything else.";
+  }
+  
+  if (lowerQuery.match(/how are you|كيف حالك/i)) {
+    return "I'm doing great, thank you! Ready to help you with any financial questions or general inquiries you have.";
+  }
+  
+  // For other general queries, provide helpful instant response
+  if (lowerQuery.length < 30) {
+    return "I'm Anakin, your AI assistant. I can help you with financial planning, investment analysis, portfolio management, and general questions. What would you like to know?";
+  }
+  
+  // For longer creative queries, use AI model
   try {
     const model = "microsoft/phi-2";
-    
-    // Check if it's a simple greeting
-    const greetingPattern = /(^hi$|^hello$|^hey$|^مرحبا|^السلام عليكم|^أهلا)/i;
-    if (greetingPattern.test(query.toLowerCase().trim())) {
-      return "Hello! I'm Anakin, your AI financial assistant. How can I help you today with your finances, investments, or any questions you have?";
-    }
-    
     const prompt = `You are Anakin, a helpful and friendly AI assistant. Respond naturally and conversationally to: ${query}`;
 
     const response = await fetch(
@@ -39,7 +54,6 @@ async function creativeAnalysis(query: string): Promise<string> {
     );
     
     if (!response.ok) {
-      console.error('Creative agent API error:', await response.text());
       return 'I\'m here to help! Please let me know what you\'d like to know.';
     }
     
