@@ -93,6 +93,26 @@ serve(async (req) => {
       userData = await getUserFinancialData(userId, supabase);
     }
 
+    // Fast path: Check for greetings/simple queries and respond instantly
+    const lowerMessage = message.toLowerCase().trim();
+    const simpleQueryPattern = /^(hi|hello|hey|مرحبا|السلام عليكم|أهلا|ok|okay|thanks|thank you|شكرا|حسنا)$/i;
+    
+    if (simpleQueryPattern.test(lowerMessage) || lowerMessage.length < 30) {
+      console.log('Fast path: Simple query detected, using creative agent directly');
+      const creativeResult = await callAgent('creative', { query: message });
+      
+      return new Response(JSON.stringify({ 
+        response: creativeResult.output,
+        metadata: {
+          originalLanguage: 'auto',
+          agentsUsed: ['creative'],
+          plan: 'Direct response'
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // 1️⃣ TRANSLATOR: Detect language and unify
     console.log('Step 1: Translator');
     const translatorResult = await callAgent('translator', { 

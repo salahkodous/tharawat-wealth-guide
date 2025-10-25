@@ -10,59 +10,42 @@ const HF_API_KEY = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
 async function creativeAnalysis(query: string): Promise<string> {
   const lowerQuery = query.toLowerCase().trim();
   
-  // Instant responses for common queries - no API call needed
+  // Detect language
+  const arabicPattern = /[\u0600-\u06FF]/g;
+  const arabicMatches = query.match(arabicPattern);
+  const isArabic = arabicMatches && arabicMatches.length > query.length * 0.3;
+  
+  // Instant responses in detected language - no API call needed
   const greetingPattern = /^(hi|hello|hey|مرحبا|السلام عليكم|أهلا)$/i;
   if (greetingPattern.test(lowerQuery)) {
-    return "Hello! I'm Anakin, your AI financial assistant. How can I help you today with your finances, investments, or any questions you have?";
+    return isArabic 
+      ? "مرحباً! أنا أناكين، مساعدك المالي الذكي. كيف يمكنني مساعدتك اليوم في أمورك المالية أو الاستثمارية أو أي استفسارات أخرى؟"
+      : "Hello! I'm Anakin, your AI financial assistant. How can I help you today with your finances, investments, or any questions you have?";
   }
   
   if (lowerQuery.match(/^(ok|okay|thanks|thank you|شكرا|حسنا)$/i)) {
-    return "You're welcome! Let me know if you need anything else.";
+    return isArabic 
+      ? "على الرحب والسعة! أخبرني إذا احتجت أي شيء آخر."
+      : "You're welcome! Let me know if you need anything else.";
   }
   
   if (lowerQuery.match(/how are you|كيف حالك/i)) {
-    return "I'm doing great, thank you! Ready to help you with any financial questions or general inquiries you have.";
+    return isArabic
+      ? "أنا بخير، شكراً! مستعد لمساعدتك في أي أسئلة مالية أو استفسارات عامة."
+      : "I'm doing great, thank you! Ready to help you with any financial questions or general inquiries you have.";
   }
   
-  // For other general queries, provide helpful instant response
+  // For other short general queries, provide helpful instant response in detected language
   if (lowerQuery.length < 30) {
-    return "I'm Anakin, your AI assistant. I can help you with financial planning, investment analysis, portfolio management, and general questions. What would you like to know?";
+    return isArabic
+      ? "أنا أناكين، مساعدك الذكي. يمكنني مساعدتك في التخطيط المالي، تحليل الاستثمارات، إدارة المحفظة، والأسئلة العامة. ماذا تريد أن تعرف؟"
+      : "I'm Anakin, your AI assistant. I can help you with financial planning, investment analysis, portfolio management, and general questions. What would you like to know?";
   }
   
-  // For longer creative queries, use AI model
-  try {
-    const model = "microsoft/phi-2";
-    const prompt = `You are Anakin, a helpful and friendly AI assistant. Respond naturally and conversationally to: ${query}`;
-
-    const response = await fetch(
-      `https://api-inference.huggingface.co/models/${model}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${HF_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 150,
-            temperature: 0.8,
-            return_full_text: false
-          }
-        }),
-      }
-    );
-    
-    if (!response.ok) {
-      return 'I\'m here to help! Please let me know what you\'d like to know.';
-    }
-    
-    const result = await response.json();
-    return result[0]?.generated_text || 'I\'m here to assist you. What would you like to know?';
-  } catch (error) {
-    console.error('Creative analysis error:', error);
-    return 'Hello! I\'m ready to help. What can I do for you?';
-  }
+  // For longer queries, provide quick response in same language
+  return isArabic
+    ? "أنا هنا لمساعدتك! كيف يمكنني خدمتك؟"
+    : "I'm here to help! What would you like to know?";
 }
 
 serve(async (req) => {
