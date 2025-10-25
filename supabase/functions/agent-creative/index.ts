@@ -11,7 +11,13 @@ async function creativeAnalysis(query: string): Promise<string> {
   try {
     const model = "microsoft/phi-2";
     
-    const prompt = `You are a creative conceptual analyst. Provide abstract reasoning and value assessment for: ${query}`;
+    // Check if it's a simple greeting
+    const greetingPattern = /(^hi$|^hello$|^hey$|^مرحبا|^السلام عليكم|^أهلا)/i;
+    if (greetingPattern.test(query.toLowerCase().trim())) {
+      return "Hello! I'm Anakin, your AI financial assistant. How can I help you today with your finances, investments, or any questions you have?";
+    }
+    
+    const prompt = `You are Anakin, a helpful and friendly AI assistant. Respond naturally and conversationally to: ${query}`;
 
     const response = await fetch(
       `https://api-inference.huggingface.co/models/${model}`,
@@ -34,14 +40,14 @@ async function creativeAnalysis(query: string): Promise<string> {
     
     if (!response.ok) {
       console.error('Creative agent API error:', await response.text());
-      return 'Creative analysis temporarily unavailable.';
+      return 'I\'m here to help! Please let me know what you\'d like to know.';
     }
     
     const result = await response.json();
-    return result[0]?.generated_text || 'Unable to provide creative analysis.';
+    return result[0]?.generated_text || 'I\'m here to assist you. What would you like to know?';
   } catch (error) {
     console.error('Creative analysis error:', error);
-    return 'Creative analysis encountered an error.';
+    return 'Hello! I\'m ready to help. What can I do for you?';
   }
 }
 

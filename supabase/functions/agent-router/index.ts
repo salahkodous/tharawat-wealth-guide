@@ -11,6 +11,12 @@ async function detectIntent(text: string): Promise<any> {
   const lowerText = text.toLowerCase();
   const intents: string[] = [];
   
+  // Greetings and general conversation - route to creative
+  if (lowerText.match(/(^hi$|^hello$|^hey$|^مرحبا|^السلام عليكم|^أهلا|how are you|كيف حالك|^ok$|^okay$|^thanks|^شكرا)/)) {
+    intents.push('creative');
+    return intents;
+  }
+  
   // Translator intent
   if (lowerText.match(/(ترجم|translate|arabic|english)/)) {
     intents.push('translator');
@@ -41,14 +47,14 @@ async function detectIntent(text: string): Promise<any> {
     intents.push('summarizer');
   }
   
-  // Creative intent
-  if (lowerText.match(/(idea|قيم|تحليل مفاهيمي|concept|creative|evaluate|value)/)) {
+  // Creative intent for general queries, ideas, concepts
+  if (lowerText.match(/(idea|قيم|تحليل مفاهيمي|concept|creative|evaluate|value|what|how|why|explain|tell me)/)) {
     intents.push('creative');
   }
   
-  // Default to finance if no specific intent
+  // Default to creative for unmatched general conversation
   if (intents.length === 0) {
-    intents.push('finance');
+    intents.push('creative');
   }
   
   return intents;
