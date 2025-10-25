@@ -12,7 +12,7 @@ async function detectIntent(text: string): Promise<any> {
   const intents: string[] = [];
   
   // Greetings and general conversation - route to creative
-  if (lowerText.match(/(^hi$|^hello$|^hey$|^مرحبا|^السلام عليكم|^أهلا|how are you|كيف حالك|^ok$|^okay$|^thanks|^شكرا)/)) {
+  if (lowerText.match(/(^hi$|^hello$|^hey$|^مرحبا$|^السلام عليكم$|^أهلا$|how are you|كيف حالك|^ok$|^okay$|^thanks|^شكرا)/)) {
     intents.push('creative');
     return intents;
   }
@@ -22,8 +22,8 @@ async function detectIntent(text: string): Promise<any> {
     intents.push('translator');
   }
   
-  // Finance intent
-  if (lowerText.match(/(ميزانية|مصروفات|أهداف|دخل|budget|expense|income|financial|goal)/)) {
+  // Finance intent - enhanced Arabic debt detection
+  if (lowerText.match(/(ديون|دين|ديني|ميزانية|مصروفات|أهداف|دخل|مصاريف|budget|expense|income|financial|goal|debt)/)) {
     intents.push('finance');
   }
   
@@ -33,7 +33,7 @@ async function detectIntent(text: string): Promise<any> {
   }
   
   // Data Analyst intent
-  if (lowerText.match(/(تحليل|نمط|data|chart|analysis|trend|pattern)/)) {
+  if (lowerText.match(/(تحليل|نمط|رسم|بيان|data|chart|analysis|trend|pattern|analyz)/)) {
     intents.push('data_analyst');
   }
   
@@ -48,7 +48,7 @@ async function detectIntent(text: string): Promise<any> {
   }
   
   // Creative intent for general queries, ideas, concepts
-  if (lowerText.match(/(idea|قيم|تحليل مفاهيمي|concept|creative|evaluate|value|what|how|why|explain|tell me)/)) {
+  if (lowerText.match(/(idea|قيم|مفهوم|concept|creative|evaluate|value|what|why|explain|tell me|اشرح|وضح)/)) {
     intents.push('creative');
   }
   

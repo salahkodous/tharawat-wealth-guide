@@ -95,9 +95,12 @@ serve(async (req) => {
 
     // Fast path: Check for greetings/simple queries and respond instantly
     const lowerMessage = message.toLowerCase().trim();
-    const simpleQueryPattern = /^(hi|hello|hey|مرحبا|السلام عليكم|أهلا|ok|okay|thanks|thank you|شكرا|حسنا)$/i;
+    const simpleQueryPattern = /^(hi|hello|hey|مرحبا|السلام عليكم|أهلا|ok|okay|thanks|thank you|شكرا|حسنا|how are you|كيف حالك)$/i;
     
-    if (simpleQueryPattern.test(lowerMessage) || lowerMessage.length < 30) {
+    // Don't use fast path if it contains financial keywords
+    const hasFinancialKeywords = /ديون|دين|ميزانية|مصروفات|استثمار|محفظة|تحليل|debt|budget|expense|portfolio|analyz|invest/i.test(message);
+    
+    if (simpleQueryPattern.test(lowerMessage) && !hasFinancialKeywords) {
       console.log('Fast path: Simple query detected, using creative agent directly');
       const creativeResult = await callAgent('creative', { query: message });
       
