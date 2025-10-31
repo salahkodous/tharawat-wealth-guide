@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLatestNews } from '@/hooks/useLatestNews';
+import Navigation from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -87,20 +88,24 @@ const News = () => {
 
   if (loading && articles.length === 0) {
     return (
-      <div className="container mx-auto p-4 space-y-4" dir="rtl">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-96 w-full" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-64" />
-          ))}
+      <>
+        <Navigation />
+        <div className="container mx-auto p-4 space-y-4" dir="rtl">
+          <Skeleton className="h-12 w-64" />
+          <Skeleton className="h-96 w-full" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-64" />
+            ))}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      <Navigation />
       {/* Header */}
       <div className="glass-card border-b">
         <div className="container mx-auto px-4 py-6">
