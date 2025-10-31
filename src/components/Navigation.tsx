@@ -18,7 +18,8 @@ import {
   X,
   Globe,
   ChevronDown,
-  User
+  User,
+  Newspaper
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -62,7 +63,8 @@ const Navigation = () => {
     { path: `/${currentLang}/dashboard`, icon: Home, label: t('dashboard') },
     { path: `/${currentLang}/portfolio`, icon: Briefcase, label: t('portfolio') },
     { path: `/${currentLang}/finances`, icon: Calculator, label: t('finances') },
-    { path: `/${currentLang}/analytics`, icon: Globe, label: 'News' },
+    { path: `/${currentLang}/analytics`, icon: TrendingUp, label: t('analytics') },
+    { path: `/${currentLang}/news`, icon: Newspaper, label: currentLang === 'ar' ? 'الأخبار' : 'News' },
   ];
 
   return (

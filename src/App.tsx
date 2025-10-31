@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
 import Analytics from "./pages/Analytics";
+import News from "./pages/News";
 import Auth from "./pages/Auth";
 import VerifyEmail from "./pages/VerifyEmail";
 import Settings from "./pages/Settings";
@@ -120,6 +121,13 @@ const AppRoutes = () => {
           </ProtectedRoute>
         </LanguageWrapper>
       } />
+      <Route path="/:lang/news" element={
+        <LanguageWrapper>
+          <ProtectedRoute>
+            <News />
+          </ProtectedRoute>
+        </LanguageWrapper>
+      } />
       <Route path="/:lang/settings" element={
         <LanguageWrapper>
           <ProtectedRoute>
@@ -134,6 +142,7 @@ const AppRoutes = () => {
       <Route path="/portfolio" element={<Navigate to={`/${settings.language || 'en'}/portfolio`} replace />} />
       <Route path="/finances" element={<Navigate to={`/${settings.language || 'en'}/finances`} replace />} />
       <Route path="/analytics" element={<Navigate to={`/${settings.language || 'en'}/analytics`} replace />} />
+      <Route path="/news" element={<Navigate to={`/${settings.language || 'en'}/news`} replace />} />
       <Route path="/settings" element={<Navigate to={`/${settings.language || 'en'}/settings`} replace />} />
       
       {/* 404 */}
