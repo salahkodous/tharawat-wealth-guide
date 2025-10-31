@@ -240,7 +240,291 @@ const News = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={activeTab} className="space-y-4">
+          <TabsContent value="all" className="space-y-4">
+            {filteredArticles().length === 0 ? (
+              <Card className="glass-card p-8 text-center">
+                <p className="body-medium text-muted-foreground">لا توجد أخبار في هذا القسم</p>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredArticles().map((article) => (
+                  <Card key={article.id} className="glass-card p-4 hover:shadow-lg transition-all">
+                    <div className="space-y-3">
+                      <div className="flex gap-2 flex-wrap items-start">
+                        {getSourceBadge(article.source_table)}
+                        {article.importance_level === 'high' && (
+                          <Badge variant="destructive">مهم</Badge>
+                        )}
+                        {article.source_table === 'ai_generated_news' && (
+                          <Badge variant="outline" className="electric-glow">
+                            <Sparkles className="h-3 w-3 ml-1" />
+                            AI
+                          </Badge>
+                        )}
+                      </div>
+
+                      <h3 className="heading-tertiary line-clamp-2">{article.title}</h3>
+                      
+                      {article.summary && (
+                        <p className="body-small text-muted-foreground line-clamp-3">{article.summary}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {article.published_at && (
+                          <span className="caption">{formatArabicDate(article.published_at)}</span>
+                        )}
+                        {article.location && (
+                          <span className="flex items-center gap-1 caption">
+                            <MapPin className="h-3 w-3" />
+                            {article.location}
+                          </span>
+                        )}
+                      </div>
+
+                      {article.business_sector && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.business_sector}
+                        </Badge>
+                      )}
+
+                      {article.tags && article.tags.length > 0 && (
+                        <div className="flex gap-1 flex-wrap">
+                          {article.tags.slice(0, 3).map((tag, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {article.url && (
+                        <Button variant="link" className="p-0 h-auto text-primary" asChild>
+                          <a href={article.url} target="_blank" rel="noopener noreferrer">
+                            اقرأ المزيد ←
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="breaking" className="space-y-4">
+            {filteredArticles().length === 0 ? (
+              <Card className="glass-card p-8 text-center">
+                <p className="body-medium text-muted-foreground">لا توجد أخبار في هذا القسم</p>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredArticles().map((article) => (
+                  <Card key={article.id} className="glass-card p-4 hover:shadow-lg transition-all">
+                    <div className="space-y-3">
+                      <div className="flex gap-2 flex-wrap items-start">
+                        {getSourceBadge(article.source_table)}
+                        {article.importance_level === 'high' && (
+                          <Badge variant="destructive">مهم</Badge>
+                        )}
+                        {article.source_table === 'ai_generated_news' && (
+                          <Badge variant="outline" className="electric-glow">
+                            <Sparkles className="h-3 w-3 ml-1" />
+                            AI
+                          </Badge>
+                        )}
+                      </div>
+
+                      <h3 className="heading-tertiary line-clamp-2">{article.title}</h3>
+                      
+                      {article.summary && (
+                        <p className="body-small text-muted-foreground line-clamp-3">{article.summary}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {article.published_at && (
+                          <span className="caption">{formatArabicDate(article.published_at)}</span>
+                        )}
+                        {article.location && (
+                          <span className="flex items-center gap-1 caption">
+                            <MapPin className="h-3 w-3" />
+                            {article.location}
+                          </span>
+                        )}
+                      </div>
+
+                      {article.business_sector && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.business_sector}
+                        </Badge>
+                      )}
+
+                      {article.tags && article.tags.length > 0 && (
+                        <div className="flex gap-1 flex-wrap">
+                          {article.tags.slice(0, 3).map((tag, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {article.url && (
+                        <Button variant="link" className="p-0 h-auto text-primary" asChild>
+                          <a href={article.url} target="_blank" rel="noopener noreferrer">
+                            اقرأ المزيد ←
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="commodities" className="space-y-4">
+            {filteredArticles().length === 0 ? (
+              <Card className="glass-card p-8 text-center">
+                <p className="body-medium text-muted-foreground">لا توجد أخبار في هذا القسم</p>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredArticles().map((article) => (
+                  <Card key={article.id} className="glass-card p-4 hover:shadow-lg transition-all">
+                    <div className="space-y-3">
+                      <div className="flex gap-2 flex-wrap items-start">
+                        {getSourceBadge(article.source_table)}
+                        {article.importance_level === 'high' && (
+                          <Badge variant="destructive">مهم</Badge>
+                        )}
+                        {article.source_table === 'ai_generated_news' && (
+                          <Badge variant="outline" className="electric-glow">
+                            <Sparkles className="h-3 w-3 ml-1" />
+                            AI
+                          </Badge>
+                        )}
+                      </div>
+
+                      <h3 className="heading-tertiary line-clamp-2">{article.title}</h3>
+                      
+                      {article.summary && (
+                        <p className="body-small text-muted-foreground line-clamp-3">{article.summary}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {article.published_at && (
+                          <span className="caption">{formatArabicDate(article.published_at)}</span>
+                        )}
+                        {article.location && (
+                          <span className="flex items-center gap-1 caption">
+                            <MapPin className="h-3 w-3" />
+                            {article.location}
+                          </span>
+                        )}
+                      </div>
+
+                      {article.business_sector && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.business_sector}
+                        </Badge>
+                      )}
+
+                      {article.tags && article.tags.length > 0 && (
+                        <div className="flex gap-1 flex-wrap">
+                          {article.tags.slice(0, 3).map((tag, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {article.url && (
+                        <Button variant="link" className="p-0 h-auto text-primary" asChild>
+                          <a href={article.url} target="_blank" rel="noopener noreferrer">
+                            اقرأ المزيد ←
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="ai" className="space-y-4">
+            {filteredArticles().length === 0 ? (
+              <Card className="glass-card p-8 text-center">
+                <p className="body-medium text-muted-foreground">لا توجد أخبار في هذا القسم</p>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredArticles().map((article) => (
+                  <Card key={article.id} className="glass-card p-4 hover:shadow-lg transition-all">
+                    <div className="space-y-3">
+                      <div className="flex gap-2 flex-wrap items-start">
+                        {getSourceBadge(article.source_table)}
+                        {article.importance_level === 'high' && (
+                          <Badge variant="destructive">مهم</Badge>
+                        )}
+                        {article.source_table === 'ai_generated_news' && (
+                          <Badge variant="outline" className="electric-glow">
+                            <Sparkles className="h-3 w-3 ml-1" />
+                            AI
+                          </Badge>
+                        )}
+                      </div>
+
+                      <h3 className="heading-tertiary line-clamp-2">{article.title}</h3>
+                      
+                      {article.summary && (
+                        <p className="body-small text-muted-foreground line-clamp-3">{article.summary}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        {article.published_at && (
+                          <span className="caption">{formatArabicDate(article.published_at)}</span>
+                        )}
+                        {article.location && (
+                          <span className="flex items-center gap-1 caption">
+                            <MapPin className="h-3 w-3" />
+                            {article.location}
+                          </span>
+                        )}
+                      </div>
+
+                      {article.business_sector && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.business_sector}
+                        </Badge>
+                      )}
+
+                      {article.tags && article.tags.length > 0 && (
+                        <div className="flex gap-1 flex-wrap">
+                          {article.tags.slice(0, 3).map((tag, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {article.url && (
+                        <Button variant="link" className="p-0 h-auto text-primary" asChild>
+                          <a href={article.url} target="_blank" rel="noopener noreferrer">
+                            اقرأ المزيد ←
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="trending" className="space-y-4">
             {filteredArticles().length === 0 ? (
               <Card className="glass-card p-8 text-center">
                 <p className="body-medium text-muted-foreground">لا توجد أخبار في هذا القسم</p>
