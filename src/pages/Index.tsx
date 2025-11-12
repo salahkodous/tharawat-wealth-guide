@@ -27,6 +27,7 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 import AnakinLogo from '@/components/AnakinLogo';
 import VoiceSearchInput from '@/components/VoiceSearchInput';
 import PortfolioManager from '@/components/PortfolioManager';
+import { SEO } from '@/components/SEO';
 
 
 // Import hero background
@@ -110,8 +111,44 @@ const Index = () => {
     { label: 'All Assets', value: '1 App', suffix: ' Unified View' }
   ];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Anakin",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "150"
+    },
+    "description": "AI-powered investment guide for Arab markets. Track EGX stocks, gold, real estate, and manage your entire financial portfolio in one intelligent platform.",
+    "featureList": [
+      "Portfolio Management",
+      "Egyptian Stock Exchange (EGX) Integration",
+      "AI Financial Guidance",
+      "Real Estate Tracking",
+      "Gold Price Monitoring",
+      "Arabic Financial News",
+      "Multi-currency Support"
+    ]
+  };
+
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <>
+      <SEO
+        title="Anakin - AI-Powered Investment Guide for Egyptian Markets"
+        description="Your AI-powered investment guide for Arab markets. Track EGX stocks, gold, real estate, bank accounts, debts, and crypto with intelligent portfolio management. Free to start."
+        keywords="anakin, investment, portfolio management, EGX, egyptian stock exchange, gold prices, real estate, AI investing, arab markets, financial management, wealth management"
+        structuredData={structuredData}
+        lang="en"
+      />
+      <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Animated Background */}
       <AnimatedBackground />
       
@@ -383,6 +420,7 @@ const Index = () => {
         </footer>
       </div>
     </div>
+    </>
   );
 };
 

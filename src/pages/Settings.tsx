@@ -14,6 +14,7 @@ import { useTheme } from 'next-themes';
 import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
+import { SEO } from '@/components/SEO';
 import { 
   User, 
   Globe, 
@@ -328,7 +329,13 @@ const Settings = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-background relative overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <>
+      <SEO
+        title="Settings - Anakin Investment Platform"
+        description="Manage your Anakin account settings including profile, language preferences, currency, notifications, and privacy settings. Customize your investment experience."
+        keywords="settings, account settings, profile management, preferences, privacy settings, notifications"
+      />
+      <div className={`min-h-screen bg-background relative overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       
       <div className="relative z-10">
         <Navigation />
@@ -459,6 +466,7 @@ const Settings = () => {
         </section>
       </div>
     </div>
+    </>
   );
 };
 

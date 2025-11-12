@@ -1,10 +1,17 @@
 import React from 'react';
 import Navigation from '@/components/Navigation';
+import { SEO } from '@/components/SEO';
 import PersonalFinances from '@/components/PersonalFinances';
 
 const Finances = () => {
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <>
+      <SEO
+        title="Financial Management - Anakin Investment Platform"
+        description="Manage your personal finances with income tracking, expense management, debt tracking, savings goals, and deposit management. Complete financial overview for Egyptian users."
+        keywords="financial management, income tracking, expense management, debt tracking, savings goals, personal finance, budget management"
+      />
+      <div className="min-h-screen bg-background relative overflow-hidden">
       
       <div className="relative z-10">
         <Navigation />
@@ -21,6 +28,7 @@ const Finances = () => {
         </section>
       </div>
     </div>
+    </>
   );
 };
 

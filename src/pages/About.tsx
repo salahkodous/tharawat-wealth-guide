@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SEO } from '@/components/SEO';
 import { 
   Brain, 
   Shield, 
@@ -108,7 +109,20 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <>
+      <SEO
+        title="About Anakin - AI-Powered Investment Platform for Arab Markets"
+        description="Learn about Anakin's mission to democratize financial management in Arab markets. Meet our team and discover how we help investors build wealth with AI technology."
+        keywords="about anakin, fintech, investment platform, arab markets, AI financial advisor, company mission, team"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "Anakin",
+          "description": "AI-powered investment platform for Arab markets",
+          "url": "https://yourdomain.com"
+        }}
+      />
+      <div className="min-h-screen bg-background relative overflow-hidden">
       
       <div className="relative z-10">
         {/* Header */}
@@ -394,6 +408,7 @@ const About = () => {
         </footer>
       </div>
     </div>
+    </>
   );
 };
 

@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import { SEO } from '@/components/SEO';
 import PortfolioTable from '@/components/PortfolioTable';
 import PortfolioManager from '@/components/PortfolioManager';
 import PortfolioSummary from '@/components/PortfolioSummary';
@@ -340,7 +341,33 @@ const Portfolio = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <>
+      <SEO
+        title="Portfolio Management - Anakin Investment Platform"
+        description="Manage your investment portfolio with EGX stocks, real estate, gold, crypto, and bonds. Track performance, set goals, and optimize your investments with AI insights."
+        keywords="portfolio management, investment portfolio, EGX stocks, real estate investment, gold investment, crypto portfolio, asset tracking"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "Portfolio Management",
+          "description": "Comprehensive investment portfolio management platform for Egyptian and Arab markets",
+          "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://yourdomain.com"
+            }, {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Portfolio",
+              "item": "https://yourdomain.com/portfolio"
+            }]
+          }
+        }}
+      />
+      <div className="min-h-screen bg-background relative overflow-hidden">
       
       <div className="relative z-10">
         <Navigation />
@@ -551,6 +578,7 @@ const Portfolio = () => {
         </section>
       </div>
     </div>
+    </>
   );
 };
 

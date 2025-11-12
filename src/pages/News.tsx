@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLatestNews } from '@/hooks/useLatestNews';
 import Navigation from '@/components/Navigation';
+import { SEO } from '@/components/SEO';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -104,7 +105,28 @@ const News = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
+    <>
+      <SEO
+        title="أخبار مالية - Anakin | آخر الأخبار المالية المصرية والعربية"
+        description="تابع آخر أخبار البورصة المصرية، أسعار الذهب، العقارات، والأخبار الاقتصادية بتحليل AI ذكي. أخبار مالية يومية من مصادر موثوقة."
+        keywords="أخبار مالية, البورصة المصرية, أسعار الذهب, أخبار الاقتصاد, EGX, الأسهم المصرية, التحليل المالي"
+        lang="ar"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          "headline": "آخر الأخبار المالية من مصر والأسواق العربية",
+          "description": "تغطية شاملة لأخبار البورصة المصرية، أسعار الذهب، والأخبار الاقتصادية",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Anakin",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://lovable.dev/opengraph-image-p98pqg.png"
+            }
+          }
+        }}
+      />
+      <div className="min-h-screen bg-background" dir="rtl">
       <Navigation />
       {/* Header */}
       <div className="glass-card border-b">
@@ -597,6 +619,7 @@ const News = () => {
         </Tabs>
       </div>
     </div>
+    </>
   );
 };
 

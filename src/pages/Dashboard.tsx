@@ -3,10 +3,17 @@ import Navigation from '@/components/Navigation';
 import PortfolioSummary from '@/components/PortfolioSummary';
 import DashboardFinanceOverview from '@/components/DashboardFinanceOverview';
 import AIFinancialAgent from '@/components/AIFinancialAgent';
+import { SEO } from '@/components/SEO';
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <>
+      <SEO
+        title="Dashboard - Anakin Investment Platform"
+        description="View your complete financial overview including portfolio performance, income, expenses, and AI-powered insights for Egyptian and Arab markets."
+        keywords="dashboard, financial overview, portfolio performance, investment tracking, personal finance"
+      />
+      <div className="min-h-screen bg-background relative overflow-hidden">
       
       <div className="relative z-10">
         <Navigation />
@@ -36,6 +43,7 @@ const Dashboard = () => {
         </footer>
       </div>
     </div>
+    </>
   );
 };
 
