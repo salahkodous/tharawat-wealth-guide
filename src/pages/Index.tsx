@@ -392,11 +392,21 @@ const Index = () => {
               
               <div>
                 <h4 className="font-semibold mb-3">Company</h4>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div>About</div>
-                  <div>Blog</div>
-                  <div>Careers</div>
-                  <div>Contact</div>
+                <div className="space-y-2 text-sm">
+                  <button 
+                    onClick={() => navigate('/about')}
+                    className="block text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                  >
+                    About / من نحن
+                  </button>
+                  <button 
+                    onClick={() => navigate('/privacy-policy')}
+                    className="block text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Privacy / الخصوصية
+                  </button>
+                  <div className="text-muted-foreground">Blog</div>
+                  <div className="text-muted-foreground">Contact</div>
                 </div>
               </div>
               
