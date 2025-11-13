@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,8 @@ import heroBackground from '@/assets/hero-background.jpg';
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const navigate = useNavigate();
+  const { lang } = useParams<{ lang: string }>();
+  const currentLang = lang || 'en';
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -161,14 +163,15 @@ const Index = () => {
               <AnakinLogo size="lg" />
               
               <nav className="hidden md:flex items-center gap-6">
-                <Button variant="ghost" className="hover:text-primary" onClick={() => navigate('/about')}>
-                  About
+                <Button variant="ghost" className="hover:text-primary" onClick={() => navigate(`/${currentLang}/about`)}>
+                  About / من نحن
                 </Button>
-                <Button variant="ghost" className="hover:text-primary">Features</Button>
-                <Button variant="ghost" className="hover:text-primary">Pricing</Button>
+                <Button variant="ghost" className="hover:text-primary" onClick={() => navigate(`/${currentLang}/privacy-policy`)}>
+                  Privacy / الخصوصية
+                </Button>
                 <Button 
                   className="gradient-electric text-primary-foreground"
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate(`/${currentLang}/auth`)}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Start
@@ -394,13 +397,13 @@ const Index = () => {
                 <h4 className="font-semibold mb-3">Company</h4>
                 <div className="space-y-2 text-sm">
                   <button 
-                    onClick={() => navigate('/about')}
+                    onClick={() => navigate(`/${currentLang}/about`)}
                     className="block text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                   >
                     About / من نحن
                   </button>
                   <button 
-                    onClick={() => navigate('/privacy-policy')}
+                    onClick={() => navigate(`/${currentLang}/privacy-policy`)}
                     className="block text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                   >
                     Privacy / الخصوصية
