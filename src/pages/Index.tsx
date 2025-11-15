@@ -169,7 +169,10 @@ const Index = () => {
                 <Button variant="ghost" className="hover:text-primary" onClick={() => navigate(`/${currentLang}/privacy-policy`)}>
                   Privacy / الخصوصية
                 </Button>
-                <Button 
+                <Button variant="ghost" className="hover:text-primary" onClick={() => navigate(`/${currentLang}/pricing`)}>
+                  Pricing / الأسعار
+                </Button>
+                <Button
                   className="gradient-electric text-primary-foreground"
                   onClick={() => navigate(`/${currentLang}/auth`)}
                 >

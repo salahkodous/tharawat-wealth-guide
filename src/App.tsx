@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
 import Portfolio from "./pages/Portfolio";
 import Finances from "./pages/Finances";
@@ -88,6 +89,7 @@ const AppRoutes = () => {
       <Route path="/:lang" element={<LanguageWrapper><Index /></LanguageWrapper>} />
       <Route path="/:lang/about" element={<LanguageWrapper><About /></LanguageWrapper>} />
       <Route path="/:lang/privacy-policy" element={<LanguageWrapper><PrivacyPolicy /></LanguageWrapper>} />
+      <Route path="/:lang/pricing" element={<LanguageWrapper><Pricing /></LanguageWrapper>} />
       <Route path="/:lang/auth" element={
         <LanguageWrapper>
           {user ? <LanguageRedirect /> : <Auth />}
