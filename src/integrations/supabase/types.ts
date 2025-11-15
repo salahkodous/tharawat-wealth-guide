@@ -41,6 +41,228 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_analysis_results: {
+        Row: {
+          analysis_period_days: number | null
+          analysis_results: Json
+          analysis_type: string
+          confidence_score: number | null
+          created_at: string | null
+          generated_by: string | null
+          id: number
+          key_insights: string[] | null
+          recommendations: string[] | null
+          source_tables: string[] | null
+          total_articles_analyzed: number | null
+        }
+        Insert: {
+          analysis_period_days?: number | null
+          analysis_results: Json
+          analysis_type: string
+          confidence_score?: number | null
+          created_at?: string | null
+          generated_by?: string | null
+          id?: number
+          key_insights?: string[] | null
+          recommendations?: string[] | null
+          source_tables?: string[] | null
+          total_articles_analyzed?: number | null
+        }
+        Update: {
+          analysis_period_days?: number | null
+          analysis_results?: Json
+          analysis_type?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          generated_by?: string | null
+          id?: number
+          key_insights?: string[] | null
+          recommendations?: string[] | null
+          source_tables?: string[] | null
+          total_articles_analyzed?: number | null
+        }
+        Relationships: []
+      }
+      ai_generated_news: {
+        Row: {
+          ai_model: string | null
+          category: string | null
+          confidence_score: number | null
+          content: string | null
+          created_at: string | null
+          generation_prompt: string | null
+          id: number
+          news_id: string
+          published_at: string | null
+          source_articles: string[] | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_model?: string | null
+          category?: string | null
+          confidence_score?: number | null
+          content?: string | null
+          created_at?: string | null
+          generation_prompt?: string | null
+          id?: number
+          news_id: string
+          published_at?: string | null
+          source_articles?: string[] | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_model?: string | null
+          category?: string | null
+          confidence_score?: number | null
+          content?: string | null
+          created_at?: string | null
+          generation_prompt?: string | null
+          id?: number
+          news_id?: string
+          published_at?: string | null
+          source_articles?: string[] | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      alborsa_news: {
+        Row: {
+          author: string | null
+          business_sector: string | null
+          category: string | null
+          company_mentioned: string[] | null
+          content: string | null
+          created_at: string | null
+          economic_indicator: string | null
+          financial_data: Json | null
+          government_entity: string | null
+          id: number
+          image_url: string | null
+          importance_level: string | null
+          news_id: string
+          published_at: string | null
+          source: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          url: string
+          view_count: number | null
+        }
+        Insert: {
+          author?: string | null
+          business_sector?: string | null
+          category?: string | null
+          company_mentioned?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          economic_indicator?: string | null
+          financial_data?: Json | null
+          government_entity?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          news_id: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          url: string
+          view_count?: number | null
+        }
+        Update: {
+          author?: string | null
+          business_sector?: string | null
+          category?: string | null
+          company_mentioned?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          economic_indicator?: string | null
+          financial_data?: Json | null
+          government_entity?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          news_id?: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          url?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      almaal_news: {
+        Row: {
+          author: string | null
+          category: string | null
+          content: string | null
+          created_at: string | null
+          id: number
+          image_url: string | null
+          importance_level: string | null
+          news_id: string
+          published_at: string | null
+          source: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          url: string
+          view_count: number | null
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          news_id: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          url: string
+          view_count?: number | null
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          news_id?: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          url?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       assets: {
         Row: {
           area_sqm: number | null
@@ -360,6 +582,63 @@ export type Database = {
           slug?: string
           updated_at?: string | null
           url?: string | null
+        }
+        Relationships: []
+      }
+      crawled_news: {
+        Row: {
+          category: string | null
+          content: string | null
+          crawled_at: string | null
+          created_at: string | null
+          gap_size: number | null
+          id: number
+          news_id: string
+          published_at: string | null
+          source: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          topic_keyword: string | null
+          trend_score: number | null
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          content?: string | null
+          crawled_at?: string | null
+          created_at?: string | null
+          gap_size?: number | null
+          id?: number
+          news_id: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          topic_keyword?: string | null
+          trend_score?: number | null
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          category?: string | null
+          content?: string | null
+          crawled_at?: string | null
+          created_at?: string | null
+          gap_size?: number | null
+          id?: number
+          news_id?: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          topic_keyword?: string | null
+          trend_score?: number | null
+          updated_at?: string | null
+          url?: string
         }
         Relationships: []
       }
@@ -1189,55 +1468,128 @@ export type Database = {
         }
         Relationships: []
       }
-      meta_accounts: {
+      mubasher_news: {
         Row: {
-          access_token: string | null
-          account_id: string | null
-          account_name: string
-          created_at: string
-          id: string
-          is_connected: boolean
-          last_sync: string | null
-          platform: string
-          project_id: string
-          updated_at: string
-          user_id: string
+          author: string | null
+          category: string | null
+          content: string | null
+          created_at: string | null
+          id: number
+          image_url: string | null
+          importance_level: string | null
+          news_id: string
+          published_at: string | null
+          source: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          url: string
+          view_count: number | null
         }
         Insert: {
-          access_token?: string | null
-          account_id?: string | null
-          account_name: string
-          created_at?: string
-          id?: string
-          is_connected?: boolean
-          last_sync?: string | null
-          platform: string
-          project_id: string
-          updated_at?: string
-          user_id: string
+          author?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          news_id: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          url: string
+          view_count?: number | null
         }
         Update: {
-          access_token?: string | null
-          account_id?: string | null
-          account_name?: string
-          created_at?: string
-          id?: string
-          is_connected?: boolean
-          last_sync?: string | null
-          platform?: string
-          project_id?: string
-          updated_at?: string
-          user_id?: string
+          author?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          news_id?: string
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          url?: string
+          view_count?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "meta_accounts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "business_projects"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      mubasher_stocks: {
+        Row: {
+          change_amount: number | null
+          change_percent: number | null
+          close_price: number | null
+          created_at: string | null
+          currency: string | null
+          high_price: number | null
+          id: number
+          low_price: number | null
+          market: string | null
+          market_cap: number | null
+          name: string | null
+          name_ar: string | null
+          open_price: number | null
+          price: number | null
+          scraped_at: string | null
+          sector: string | null
+          symbol: string
+          value_traded: number | null
+          volume: number | null
+        }
+        Insert: {
+          change_amount?: number | null
+          change_percent?: number | null
+          close_price?: number | null
+          created_at?: string | null
+          currency?: string | null
+          high_price?: number | null
+          id?: number
+          low_price?: number | null
+          market?: string | null
+          market_cap?: number | null
+          name?: string | null
+          name_ar?: string | null
+          open_price?: number | null
+          price?: number | null
+          scraped_at?: string | null
+          sector?: string | null
+          symbol: string
+          value_traded?: number | null
+          volume?: number | null
+        }
+        Update: {
+          change_amount?: number | null
+          change_percent?: number | null
+          close_price?: number | null
+          created_at?: string | null
+          currency?: string | null
+          high_price?: number | null
+          id?: number
+          low_price?: number | null
+          market?: string | null
+          market_cap?: number | null
+          name?: string | null
+          name_ar?: string | null
+          open_price?: number | null
+          price?: number | null
+          scraped_at?: string | null
+          sector?: string | null
+          symbol?: string
+          value_traded?: number | null
+          volume?: number | null
+        }
+        Relationships: []
       }
       neighborhoods: {
         Row: {
@@ -1744,6 +2096,42 @@ export type Database = {
           },
         ]
       }
+      system_health_logs: {
+        Row: {
+          checked_at: string | null
+          component_name: string
+          cpu_usage_percent: number | null
+          error_message: string | null
+          health_data: Json | null
+          id: number
+          memory_usage_mb: number | null
+          response_time_ms: number | null
+          status: string
+        }
+        Insert: {
+          checked_at?: string | null
+          component_name: string
+          cpu_usage_percent?: number | null
+          error_message?: string | null
+          health_data?: Json | null
+          id?: number
+          memory_usage_mb?: number | null
+          response_time_ms?: number | null
+          status: string
+        }
+        Update: {
+          checked_at?: string | null
+          component_name?: string
+          cpu_usage_percent?: number | null
+          error_message?: string | null
+          health_data?: Json | null
+          id?: number
+          memory_usage_mb?: number | null
+          response_time_ms?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1810,6 +2198,72 @@ export type Database = {
         }
         Relationships: []
       }
+      youm7_news: {
+        Row: {
+          author: string | null
+          category: string | null
+          commodity_type: string | null
+          content: string | null
+          created_at: string | null
+          id: number
+          image_url: string | null
+          importance_level: string | null
+          location: string | null
+          news_id: string
+          price_data: Json | null
+          published_at: string | null
+          source: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          url: string
+          view_count: number | null
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          commodity_type?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          location?: string | null
+          news_id: string
+          price_data?: Json | null
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          url: string
+          view_count?: number | null
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          commodity_type?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          image_url?: string | null
+          importance_level?: string | null
+          location?: string | null
+          news_id?: string
+          price_data?: Json | null
+          published_at?: string | null
+          source?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          url?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       international_indices_by_region: {
@@ -1821,6 +2275,26 @@ export type Database = {
           losers: number | null
           region: string | null
           unchanged: number | null
+        }
+        Relationships: []
+      }
+      latest_all_news: {
+        Row: {
+          business_sector: string | null
+          category: string | null
+          commodity_type: string | null
+          content: string | null
+          created_at: string | null
+          id: number | null
+          importance_level: string | null
+          location: string | null
+          news_id: string | null
+          published_at: string | null
+          source_table: string | null
+          summary: string | null
+          tags: string[] | null
+          title: string | null
+          url: string | null
         }
         Relationships: []
       }
@@ -1878,12 +2352,19 @@ export type Database = {
         }
         Relationships: []
       }
+      news_system_statistics: {
+        Row: {
+          last_24h: number | null
+          last_7d: number | null
+          latest_published: string | null
+          latest_record: string | null
+          table_name: string | null
+          total_records: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
       calculate_deposit_accrual: {
         Args: { p_deposit_id: string; p_from: string; p_to: string }
         Returns: number
@@ -1892,10 +2373,7 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
-      calculate_monthly_income: {
-        Args: { user_uuid: string }
-        Returns: number
-      }
+      calculate_monthly_income: { Args: { user_uuid: string }; Returns: number }
       cleanup_old_currency_rates: {
         Args: { keep_records?: number }
         Returns: number
@@ -1904,8 +2382,16 @@ export type Database = {
         Args: { keep_records?: number }
         Returns: number
       }
+      extract_alborsa_companies: {
+        Args: { content_text: string }
+        Returns: string[]
+      }
+      extract_youm7_price_info: {
+        Args: { content_text: string }
+        Returns: Json
+      }
       get_bond_market_summary: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avg_coupon: number
           avg_yield: number
@@ -1918,7 +2404,7 @@ export type Database = {
         }[]
       }
       get_crypto_market_summary: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avg_change: number
           bitcoin_dominance: number
@@ -1929,12 +2415,9 @@ export type Database = {
           total_volume_24h: number
         }[]
       }
-      get_deposit_view: {
-        Args: { p_deposit_id: string }
-        Returns: Json
-      }
+      get_deposit_view: { Args: { p_deposit_id: string }; Returns: Json }
       get_etf_performance_summary: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avg_change: number
           negative_etfs: number
@@ -1962,22 +2445,6 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
       }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
-      }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1985,41 +2452,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: unknown
+      identify_alborsa_business_sector: {
+        Args: { content_text: string; title_text: string }
+        Returns: string
       }
       match_knowledge_base: {
         Args: {
@@ -2046,42 +2481,6 @@ export type Database = {
           deposit_id: string
           status: string
         }[]
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
       }
     }
     Enums: {
