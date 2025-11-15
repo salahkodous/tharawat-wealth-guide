@@ -417,11 +417,15 @@ const Index = () => {
               
               <div>
                 <h4 className="font-semibold mb-3">Product</h4>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div>Features</div>
-                  <div>Pricing</div>
-                  <div>Security</div>
-                  <div>API</div>
+                <div className="space-y-2 text-sm">
+                  <button 
+                    onClick={() => navigate(`/${currentLang}/pricing`)}
+                    className="block text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Pricing
+                  </button>
+                  <div className="text-muted-foreground">Security</div>
+                  <div className="text-muted-foreground/60">API (Coming Soon)</div>
                 </div>
               </div>
               
@@ -440,18 +444,25 @@ const Index = () => {
                   >
                     Privacy / الخصوصية
                   </button>
-                  <div className="text-muted-foreground">Blog</div>
-                  <div className="text-muted-foreground">Contact</div>
+                  <a 
+                    href="mailto:support@anakin.tech"
+                    className="block text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Contact Us
+                  </a>
                 </div>
               </div>
               
               <div>
-                <h4 className="font-semibold mb-3">Markets</h4>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div>🇪🇬 Egypt (EGX)</div>
-                  <div>🇸🇦 Saudi Arabia (Tadawul)</div>
-                  <div>🇦🇪 UAE (DFM/ADX)</div>
-                  <div>🇰🇼 Kuwait (Boursa)</div>
+                <h4 className="font-semibold mb-3">Market Coverage</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="text-foreground font-medium">🇪🇬 Egypt (EGX)</div>
+                  <p className="text-muted-foreground text-xs">
+                    Egyptian Stock Exchange integration with real-time data
+                  </p>
+                  <div className="text-muted-foreground/60 text-xs pt-2">
+                    More markets coming soon
+                  </div>
                 </div>
               </div>
             </div>
