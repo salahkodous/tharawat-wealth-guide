@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   Search, 
   Briefcase, 
@@ -19,7 +20,8 @@ import {
   BarChart3,
   Users,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Menu
 } from 'lucide-react';
 
 // Components
@@ -162,6 +164,7 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <AnakinLogo size="lg" />
               
+              {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-6">
                 <Button variant="ghost" className="hover:text-primary" onClick={() => navigate(`/${currentLang}/about`)}>
                   About / من نحن
@@ -172,7 +175,7 @@ const Index = () => {
                 <Button variant="ghost" className="hover:text-primary" onClick={() => navigate(`/${currentLang}/pricing`)}>
                   Pricing / الأسعار
                 </Button>
-                <Button
+                <Button 
                   className="gradient-electric text-primary-foreground"
                   onClick={() => navigate(`/${currentLang}/auth`)}
                 >
@@ -180,6 +183,32 @@ const Index = () => {
                   Start
                 </Button>
               </nav>
+
+              {/* Mobile Navigation */}
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-background z-50">
+                    <DropdownMenuItem onClick={() => navigate(`/${currentLang}/about`)}>
+                      About / من نحن
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/${currentLang}/privacy-policy`)}>
+                      Privacy / الخصوصية
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/${currentLang}/pricing`)}>
+                      Pricing / الأسعار
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/${currentLang}/auth`)}>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Start
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </header>
