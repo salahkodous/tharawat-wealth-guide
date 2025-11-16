@@ -21,8 +21,8 @@ interface SettingsContextType {
 
 const defaultSettings: UserSettings = {
   currency: 'EGP',
-  language: 'en',
-  theme: 'system',
+  language: 'ar',
+  theme: 'dark',
   email_notifications: true,
   push_notifications: true,
   sms_notifications: false,

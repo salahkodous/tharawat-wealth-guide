@@ -9,6 +9,11 @@ export const ThemeSync = () => {
   useEffect(() => {
     // Force dark mode only
     setTheme('dark');
+    
+    // Set default direction to RTL for Arabic
+    const html = document.documentElement;
+    html.setAttribute('dir', 'rtl');
+    html.setAttribute('lang', 'ar');
   }, [setTheme]);
 
   // Apply language direction
