@@ -9,10 +9,22 @@ const translations = {
     assistant: 'AI Assistant',
     analytics: 'Analytics',
     settings: 'Settings',
+    news: 'News',
     
     // Dashboard
     welcome: 'Welcome to Anakin',
     personalFinancialManager: 'Your Super Personal Financial Manager',
+    dashboardOverview: 'Dashboard Overview',
+    yourFinancialOverview: 'Your financial overview at a glance',
+    allRightsReserved: 'All rights reserved',
+    
+    // Portfolio
+    portfolioManagement: 'Portfolio Management',
+    trackYourInvestments: 'Track and manage your investment portfolio',
+    
+    // Finances
+    financialManagement: 'Financial Management',
+    trackIncomeExpenses: 'Track your income, expenses, and financial goals',
     
     // Settings
     profileInformation: 'Profile Information',
@@ -64,16 +76,28 @@ const translations = {
   },
   ar: {
     // Navigation
-    dashboard: 'لوحة القيادة',
+    dashboard: 'لوحة التحكم',
     portfolio: 'المحفظة الاستثمارية',
     finances: 'الشؤون المالية',
     assistant: 'المساعد الذكي',
     analytics: 'التحليلات',
     settings: 'الإعدادات',
+    news: 'الأخبار',
     
     // Dashboard
     welcome: 'مرحباً بك في أناكين',
-    personalFinancialManager: 'مديرك المالي الشخصي المتميز',
+    personalFinancialManager: 'مديرك المالي الشخصي الذكي',
+    dashboardOverview: 'نظرة عامة',
+    yourFinancialOverview: 'ملخص وضعك المالي الحالي',
+    allRightsReserved: 'جميع الحقوق محفوظة',
+    
+    // Portfolio
+    portfolioManagement: 'إدارة المحفظة الاستثمارية',
+    trackYourInvestments: 'تتبع وإدارة استثماراتك',
+    
+    // Finances
+    financialManagement: 'إدارة الشؤون المالية',
+    trackIncomeExpenses: 'تتبع دخلك ومصروفاتك وأهدافك المالية',
     
     // Settings
     profileInformation: 'معلومات الملف الشخصي',
