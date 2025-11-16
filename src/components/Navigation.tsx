@@ -63,7 +63,7 @@ const Navigation = () => {
     { path: `/${currentLang}/dashboard`, icon: Home, label: t('dashboard') },
     { path: `/${currentLang}/portfolio`, icon: Briefcase, label: t('portfolio') },
     { path: `/${currentLang}/finances`, icon: Calculator, label: t('finances') },
-    { path: `/${currentLang}/news`, icon: Newspaper, label: currentLang === 'ar' ? 'الأخبار' : 'News' },
+    { path: `/${currentLang}/news`, icon: Newspaper, label: t('news') },
   ];
 
   return (
