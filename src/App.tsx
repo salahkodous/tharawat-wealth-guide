@@ -34,7 +34,7 @@ const LanguageWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const validLangs = ['ar', 'en'];
-    const currentLang = lang && validLangs.includes(lang) ? lang : 'en';
+    const currentLang = lang && validLangs.includes(lang) ? lang : 'ar';
     
     // Sync settings with route language
     if (settings.language !== currentLang) {
@@ -67,7 +67,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Language redirect component
 const LanguageRedirect = () => {
   const { settings } = useSettings();
-  const preferredLang = settings.language || 'en';
+  const preferredLang = settings.language || 'ar';
   
   return <Navigate to={`/${preferredLang}/dashboard`} replace />;
 };
@@ -83,7 +83,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Root redirect to preferred language */}
-      <Route path="/" element={<Navigate to={`/${settings.language || 'en'}`} replace />} />
+      <Route path="/" element={<Navigate to={`/${settings.language || 'ar'}`} replace />} />
       
       {/* Language-specific routes */}
       <Route path="/:lang" element={<LanguageWrapper><Index /></LanguageWrapper>} />
