@@ -358,7 +358,7 @@ const AIFinancialAgent = () => {
                   </div>
                   <div className="bg-muted p-3 rounded-lg">
                     <div className="text-sm text-muted-foreground animate-pulse">
-                      Analyzing your financial data...
+                      جاري تحليل بياناتك المالية...
                     </div>
                   </div>
                 </div>
@@ -371,7 +371,7 @@ const AIFinancialAgent = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask about your finances..."
+                placeholder={t('askQuestion')}
                 disabled={isLoading}
                 className="flex-1"
               />

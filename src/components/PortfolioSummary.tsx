@@ -17,10 +17,12 @@ import {
 import { useCurrency } from '@/hooks/useCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const PortfolioSummary = () => {
   const { formatAmount, convertAmount, currency } = useCurrency();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -149,25 +151,25 @@ const PortfolioSummary = () => {
 
   const portfolioStats = [
     { 
-      label: 'Total Value', 
+      label: t('totalValue'), 
       value: formatAmount(totalValue), 
       change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
       positive: totalChangePercent >= 0 
     },
     { 
-      label: 'Today\'s Gain', 
+      label: 'أرباح اليوم', 
       value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`, 
       change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
       positive: totalChange >= 0 
     },
     { 
-      label: 'Total Return', 
+      label: 'إجمالي العائد', 
       value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`, 
       change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
       positive: totalChange >= 0 
     },
     { 
-      label: 'Assets', 
+      label: 'الأصول', 
       value: assets.length.toString(), 
       change: assets.length > 0 ? `+${assets.length}` : '0', 
       positive: assets.length > 0 
@@ -233,7 +235,7 @@ const PortfolioSummary = () => {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Briefcase className="w-6 h-6 text-primary" />
-          <h2 className="text-2xl font-bold">Portfolio Summary</h2>
+          <h2 className="text-2xl font-bold">{t('portfolioSummary')}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
@@ -253,11 +255,11 @@ const PortfolioSummary = () => {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Briefcase className="w-6 h-6 text-primary" />
-          <h2 className="text-2xl font-bold">Portfolio Summary</h2>
+          <h2 className="text-2xl font-bold">{t('portfolioSummary')}</h2>
         </div>
         <Card className="glass-card">
           <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">Please sign in to view your portfolio.</p>
+            <p className="text-muted-foreground">الرجاء تسجيل الدخول لعرض محفظتك الاستثمارية.</p>
           </CardContent>
         </Card>
       </div>
@@ -268,7 +270,7 @@ const PortfolioSummary = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Briefcase className="w-6 h-6 text-primary" />
-        <h2 className="text-2xl font-bold">Portfolio Summary</h2>
+        <h2 className="text-2xl font-bold">{t('portfolioSummary')}</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -298,7 +300,7 @@ const PortfolioSummary = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PieChart className="w-5 h-5" />
-            Top Holdings
+            أفضل الممتلكات
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -339,8 +341,8 @@ const PortfolioSummary = () => {
               );
             }) : (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No assets in your portfolio yet.</p>
-                <p className="text-sm text-muted-foreground mt-2">Start by adding your first investment!</p>
+                <p className="text-muted-foreground">لا توجد أصول في محفظتك الاستثمارية بعد.</p>
+                <p className="text-sm text-muted-foreground mt-2">ابدأ بإضافة استثمارك الأول!</p>
               </div>
             )}
           </div>
