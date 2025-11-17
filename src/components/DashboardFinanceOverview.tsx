@@ -8,6 +8,7 @@ import DebtManager from '@/components/DebtManager';
 import { usePersonalFinances } from '@/hooks/usePersonalFinances';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const DashboardFinanceOverview = () => {
   const { 
@@ -24,6 +25,7 @@ const DashboardFinanceOverview = () => {
     deleteDebt
   } = usePersonalFinances();
   const { formatAmount } = useCurrency();
+  const { t } = useTranslation();
   const [showIncomeManager, setShowIncomeManager] = React.useState(false);
   const [showExpenseManager, setShowExpenseManager] = React.useState(false);
   const [showDebtManager, setShowDebtManager] = React.useState(false);
@@ -33,7 +35,7 @@ const DashboardFinanceOverview = () => {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <DollarSign className="w-6 h-6 text-primary" />
-          <h2 className="text-2xl font-bold">Personal Finances</h2>
+          <h2 className="text-2xl font-bold">{t('personalFinances')}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
@@ -50,35 +52,35 @@ const DashboardFinanceOverview = () => {
 
   const financialStats = [
     { 
-      label: 'Monthly Income', 
+      label: t('monthlyIncome'), 
       value: finances.monthly_income, 
       icon: DollarSign, 
       color: 'text-green-500',
       field: 'monthly_income' as keyof typeof finances
     },
     { 
-      label: 'Monthly Expenses', 
+      label: t('monthlyExpenses'), 
       value: finances.monthly_expenses, 
       icon: CreditCard, 
       color: 'text-red-500',
       field: 'monthly_expenses' as keyof typeof finances
     },
     { 
-      label: 'Monthly Investing', 
+      label: t('monthlyInvesting'), 
       value: finances.monthly_investing_amount, 
       icon: TrendingUp, 
       color: 'text-purple-500',
       field: 'monthly_investing_amount' as keyof typeof finances
     },
     { 
-      label: 'Free Monthly Cash', 
+      label: t('freeMonthlyC'), 
       value: getFreeMonthCash(), 
       icon: Banknote, 
       color: 'text-teal-500',
       field: null
     },
     { 
-      label: 'Total Debt', 
+      label: t('totalDebt'), 
       value: getTotalDebt(), 
       icon: AlertTriangle, 
       color: 'text-orange-500',
@@ -90,7 +92,7 @@ const DashboardFinanceOverview = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <DollarSign className="w-6 h-6 text-primary" />
-        <h2 className="text-2xl font-bold">Personal Finances</h2>
+        <h2 className="text-2xl font-bold">{t('personalFinances')}</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">

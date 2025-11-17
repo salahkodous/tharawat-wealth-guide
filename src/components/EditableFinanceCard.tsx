@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface EditableFinanceCardProps {
   label: string;
@@ -21,6 +22,7 @@ const EditableFinanceCard: React.FC<EditableFinanceCardProps> = ({
   color,
   onUpdate,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value.toString());
 
@@ -57,29 +59,29 @@ const EditableFinanceCard: React.FC<EditableFinanceCardProps> = ({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit {label}</DialogTitle>
+            <DialogTitle>{t('edit')} {label}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">{t('amount')}</Label>
               <Input
                 id="amount"
                 type="number"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Enter amount"
+                placeholder={t('enterAmount')}
               />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} className="flex-1">
-                Save
+                {t('save')}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setIsOpen(false)}
                 className="flex-1"
               >
-                Cancel
+                {t('cancel')}
               </Button>
             </div>
           </div>

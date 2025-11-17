@@ -15,6 +15,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Import the investment-focused goal manager
 import PortfolioGoalManager from '@/components/PortfolioGoalManager';
@@ -50,6 +51,7 @@ interface PortfolioGoalsProps {
 const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) => {
   const { user } = useAuth();
   const { formatAmount, convertAmount, currency } = useCurrency();
+  const { t } = useTranslation();
   const [goals, setGoals] = useState<PortfolioGoal[]>([]);
   const [isGoalManagerOpen, setIsGoalManagerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -226,18 +228,18 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                     <span className="font-medium">{portfolioProgress.goal.title}</span>
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    {portfolioProgress.progress.toFixed(1)}% complete
+                    {portfolioProgress.progress.toFixed(1)}% مكتمل
                   </Badge>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Current: {formatAmount(totalValue)}</span>
-                    <span>Target: {formatAmount(portfolioProgress.goal.target_value)}</span>
+                    <span>الحالي: {formatAmount(totalValue)}</span>
+                    <span>الهدف: {formatAmount(portfolioProgress.goal.target_value)}</span>
                   </div>
                   <Progress value={portfolioProgress.progress} className="h-2" />
                   {portfolioProgress.remaining > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      {formatAmount(portfolioProgress.remaining)} remaining to reach target
+                      {formatAmount(portfolioProgress.remaining)} متبقي للوصول إلى الهدف
                     </p>
                   )}
                 </div>

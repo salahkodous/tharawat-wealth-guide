@@ -10,10 +10,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 import PortfolioManager from '@/components/PortfolioManager';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const PortfolioTable = () => {
   const { user } = useAuth();
   const { formatAmount, convertAmount, currency } = useCurrency();
+  const { t } = useTranslation();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<string | null>(null);
@@ -42,8 +44,8 @@ const PortfolioTable = () => {
     } catch (error) {
       console.error('Error fetching assets:', error);
       toast({
-        title: "Error",
-        description: "Failed to load portfolio assets.",
+        title: "خطأ",
+        description: "فشل تحميل أصول المحفظة الاستثمارية.",
         variant: "destructive",
       });
     } finally {
@@ -157,8 +159,8 @@ const PortfolioTable = () => {
     
     try {
       toast({
-        title: "Analysis Starting",
-        description: `Analyzing ${asset.name} performance...`,
+        title: "جاري بدء التحليل",
+        description: `جاري تحليل أداء ${asset.name}...`,
       });
 
       const { data, error } = await supabase.functions.invoke('ai-investment-analysis', {
@@ -176,15 +178,15 @@ const PortfolioTable = () => {
       if (error) throw error;
 
       toast({
-        title: "Analysis Complete",
-        description: "Check the AI Assistant page for detailed insights.",
+        title: "اكتمل التحليل",
+        description: "تحقق من صفحة المساعد الذكي للحصول على تفاصيل إضافية.",
       });
       
     } catch (error) {
       console.error('Analysis Error:', error);
       toast({
-        title: "Analysis Failed",
-        description: "Could not analyze asset. Please try again.",
+        title: "فشل التحليل",
+        description: "تعذر تحليل الأصل. يرجى المحاولة مرة أخرى.",
         variant: "destructive",
       });
     } finally {
@@ -193,7 +195,7 @@ const PortfolioTable = () => {
   };
 
   const handleDelete = async (asset: any) => {
-    if (window.confirm(`Are you sure you want to delete ${asset.name} from your portfolio?`)) {
+    if (window.confirm(`هل أنت متأكد من حذف ${asset.name} من محفظتك الاستثمارية؟`)) {
       try {
         const { error } = await supabase
           .from('assets')
@@ -212,8 +214,8 @@ const PortfolioTable = () => {
       } catch (error) {
         console.error('Error deleting asset:', error);
         toast({
-          title: "Error",
-          description: "Failed to delete asset. Please try again.",
+          title: "خطأ",
+          description: "فشل في حذف الأصل. يرجى المحاولة مرة أخرى.",
           variant: "destructive",
         });
       }
@@ -237,7 +239,7 @@ const PortfolioTable = () => {
     return (
       <Card className="glass-card">
         <CardContent className="text-center py-12">
-          <div className="text-lg text-muted-foreground">Please sign in to view your portfolio.</div>
+          <div className="text-lg text-muted-foreground">الرجاء تسجيل الدخول لعرض محفظتك الاستثمارية.</div>
         </CardContent>
       </Card>
     );
@@ -247,8 +249,8 @@ const PortfolioTable = () => {
     return (
       <Card className="glass-card">
         <CardContent className="text-center py-12">
-          <div className="text-lg font-medium text-muted-foreground mb-2">Your portfolio is empty</div>
-          <div className="text-sm text-muted-foreground">Add some investments to get started.</div>
+          <div className="text-lg font-medium text-muted-foreground mb-2">محفظتك الاستثمارية فارغة</div>
+          <div className="text-sm text-muted-foreground">أضف بعض الاستثمارات للبدء.</div>
         </CardContent>
       </Card>
     );
@@ -258,7 +260,7 @@ const PortfolioTable = () => {
     <Card className="glass-card">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Portfolio Holdings</CardTitle>
+          <CardTitle>{t('holdings')}</CardTitle>
           <div className="text-right">
             <div className="text-2xl font-bold">{formatAmount(totalValue)}</div>
             <div className={`flex items-center gap-1 text-sm font-medium ${
@@ -279,14 +281,14 @@ const PortfolioTable = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Asset</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Avg Price</TableHead>
-                <TableHead className="text-right">Current Price</TableHead>
-                <TableHead className="text-right">Market Value</TableHead>
-                <TableHead className="text-right">P&L</TableHead>
+                <TableHead>{t('asset')}</TableHead>
+                <TableHead>{t('type')}</TableHead>
+                <TableHead>الدولة</TableHead>
+                <TableHead className="text-right">{t('quantity')}</TableHead>
+                <TableHead className="text-right">متوسط السعر</TableHead>
+                <TableHead className="text-right">السعر الحالي</TableHead>
+                <TableHead className="text-right">القيمة السوقية</TableHead>
+                <TableHead className="text-right">الربح/الخسارة</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>

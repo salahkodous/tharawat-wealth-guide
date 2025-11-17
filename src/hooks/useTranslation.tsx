@@ -72,7 +72,58 @@ const translations = {
     bhdDinar: 'BHD - Bahraini Dinar',
     omrRial: 'OMR - Omani Rial',
     jodDinar: 'JOD - Jordanian Dinar',
-    egpPound: 'EGP - Egyptian Pound'
+    egpPound: 'EGP - Egyptian Pound',
+    
+    // Dashboard Finance Overview
+    personalFinances: 'Personal Finances',
+    monthlyIncome: 'Monthly Income',
+    monthlyExpenses: 'Monthly Expenses',
+    monthlyInvesting: 'Monthly Investing',
+    freeMonthlyC: 'Free Monthly Cash',
+    totalDebt: 'Total Debt',
+    
+    // Portfolio
+    portfolioSummary: 'Portfolio Summary',
+    totalValue: 'Total Value',
+    totalGains: 'Total Gains',
+    assetAllocation: 'Asset Allocation',
+    geographicDistribution: 'Geographic Distribution',
+    topPerformer: 'Top Performer',
+    worstPerformer: 'Worst Performer',
+    holdings: 'Holdings',
+    
+    // AI Agent
+    askQuestion: 'Ask me anything about your finances...',
+    send: 'Send',
+    newChat: 'New Chat',
+    chatHistory: 'Chat History',
+    
+    // Portfolio Table
+    asset: 'Asset',
+    type: 'Type',
+    quantity: 'Quantity',
+    value: 'Value',
+    change: 'Change',
+    actions: 'Actions',
+    edit: 'Edit',
+    analyze: 'Analyze',
+    delete: 'Delete',
+    noAssets: 'No assets in portfolio',
+    
+    // Portfolio Goals
+    investmentGoals: 'Investment Goals',
+    portfolioTargets: 'Portfolio Targets',
+    addGoal: 'Add Goal',
+    progress: 'Progress',
+    targetValue: 'Target Value',
+    currentValue: 'Current Value',
+    remaining: 'Remaining',
+    targetDate: 'Target Date',
+    
+    // Editable Finance Card
+    amount: 'Amount',
+    enterAmount: 'Enter amount',
+    cancel: 'Cancel'
   },
   ar: {
     // Navigation
@@ -145,7 +196,58 @@ const translations = {
     bhdDinar: 'دينار بحريني - BHD',
     omrRial: 'ريال عماني - OMR',
     jodDinar: 'دينار أردني - JOD',
-    egpPound: 'جنيه مصري - EGP'
+    egpPound: 'جنيه مصري - EGP',
+    
+    // Dashboard Finance Overview
+    personalFinances: 'الشؤون المالية الشخصية',
+    monthlyIncome: 'الدخل الشهري',
+    monthlyExpenses: 'المصروفات الشهرية',
+    monthlyInvesting: 'الاستثمار الشهري',
+    freeMonthlyC: 'النقدية الشهرية المتاحة',
+    totalDebt: 'إجمالي الديون',
+    
+    // Portfolio
+    portfolioSummary: 'ملخص المحفظة الاستثمارية',
+    totalValue: 'القيمة الإجمالية',
+    totalGains: 'إجمالي الأرباح',
+    assetAllocation: 'توزيع الأصول',
+    geographicDistribution: 'التوزيع الجغرافي',
+    topPerformer: 'أفضل أداء',
+    worstPerformer: 'أسوأ أداء',
+    holdings: 'الممتلكات',
+    
+    // AI Agent
+    askQuestion: 'اسألني أي شيء عن شؤونك المالية...',
+    send: 'إرسال',
+    newChat: 'محادثة جديدة',
+    chatHistory: 'سجل المحادثات',
+    
+    // Portfolio Table
+    asset: 'الأصل',
+    type: 'النوع',
+    quantity: 'الكمية',
+    value: 'القيمة',
+    change: 'التغيير',
+    actions: 'الإجراءات',
+    edit: 'تعديل',
+    analyze: 'تحليل',
+    delete: 'حذف',
+    noAssets: 'لا توجد أصول في المحفظة',
+    
+    // Portfolio Goals
+    investmentGoals: 'الأهداف الاستثمارية',
+    portfolioTargets: 'أهداف المحفظة',
+    addGoal: 'إضافة هدف',
+    progress: 'التقدم',
+    targetValue: 'القيمة المستهدفة',
+    currentValue: 'القيمة الحالية',
+    remaining: 'المتبقي',
+    targetDate: 'التاريخ المستهدف',
+    
+    // Editable Finance Card
+    amount: 'المبلغ',
+    enterAmount: 'أدخل المبلغ',
+    cancel: 'إلغاء'
   }
 };
 
