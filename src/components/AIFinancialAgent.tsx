@@ -31,7 +31,7 @@ interface Message {
 
 const AIFinancialAgent = () => {
   const { user } = useAuth();
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

@@ -21,12 +21,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import AssetBrowser from '@/components/AssetBrowser';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface PortfolioManagerProps {
   onAssetAdded?: () => void;
 }
 
 const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const { formatCurrency } = useCurrencyConversion();

@@ -9,12 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, DollarSign } from 'lucide-react';
 import { useIncomeStreams, IncomeStream } from '@/hooks/useIncomeStreams';
 import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface IncomeStreamManagerProps {
   onIncomeChange: (totalIncome: number) => void;
 }
 
 const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChange }) => {
+  const { t } = useTranslation();
   const { incomeStreams, addIncomeStream, updateIncomeStream, deleteIncomeStream, calculateTotalMonthlyIncome } = useIncomeStreams();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStream, setEditingStream] = useState<IncomeStream | null>(null);
@@ -89,9 +91,9 @@ const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChang
 
   const getIncomeTypeLabel = (type: IncomeStream['income_type']) => {
     switch (type) {
-      case 'salary': return 'Salary';
-      case 'stable': return 'Stable Monthly';
-      case 'unstable': return 'One-time';
+      case 'salary': return t('salary');
+      case 'stable': return t('stableMonthly');
+      case 'unstable': return t('oneTime');
     }
   };
 
@@ -167,7 +169,7 @@ const IncomeStreamManager: React.FC<IncomeStreamManagerProps> = ({ onIncomeChang
               </div>
               {formData.income_type === 'unstable' && (
                 <div>
-                  <Label htmlFor="received_date">Received Date</Label>
+                  <Label htmlFor="received_date">{t('receivedDate')}</Label>
                   <Input
                     id="received_date"
                     type="date"

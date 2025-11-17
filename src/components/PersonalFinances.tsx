@@ -12,8 +12,10 @@ import { usePersonalFinances } from '@/hooks/usePersonalFinances';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useDeposits } from '@/hooks/useDeposits';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const PersonalFinances = () => {
+  const { t } = useTranslation();
   const { 
     finances, 
     debts, 
@@ -45,7 +47,7 @@ const PersonalFinances = () => {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <DollarSign className="w-6 h-6 text-primary" />
-          <h2 className="text-2xl font-bold">Personal Finances</h2>
+          <h2 className="text-2xl font-bold">{t('personalFinances')}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -62,28 +64,28 @@ const PersonalFinances = () => {
 
   const financialStats = [
     { 
-      label: 'Monthly Income', 
+      label: t('monthlyIncome'), 
       value: finances.monthly_income, 
       icon: DollarSign, 
       color: 'text-green-500',
       field: 'monthly_income' as keyof typeof finances
     },
     { 
-      label: 'Monthly Expenses', 
+      label: t('monthlyExpenses'), 
       value: finances.monthly_expenses, 
       icon: CreditCard, 
       color: 'text-red-500',
       field: 'monthly_expenses' as keyof typeof finances
     },
     { 
-      label: 'Monthly Investing', 
+      label: t('monthlyInvesting'), 
       value: finances.monthly_investing_amount, 
       icon: TrendingUp, 
       color: 'text-purple-500',
       field: 'monthly_investing_amount' as keyof typeof finances
     },
     { 
-      label: 'Free Monthly Cash', 
+      label: t('freeMonthlyC'), 
       value: getFreeMonthCash(), 
       icon: Banknote, 
       color: 'text-teal-500',
@@ -95,7 +97,7 @@ const PersonalFinances = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <DollarSign className="w-6 h-6 text-primary" />
-        <h2 className="text-2xl font-bold">Personal Finances</h2>
+        <h2 className="text-2xl font-bold">{t('personalFinances')}</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
