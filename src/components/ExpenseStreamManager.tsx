@@ -9,12 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, CreditCard } from 'lucide-react';
 import { useExpenseStreams, ExpenseStream } from '@/hooks/useExpenseStreams';
 import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ExpenseStreamManagerProps {
   onExpenseChange: (totalExpense: number) => void;
 }
 
 const ExpenseStreamManager: React.FC<ExpenseStreamManagerProps> = ({ onExpenseChange }) => {
+  const { t } = useTranslation();
   const { expenseStreams, addExpenseStream, updateExpenseStream, deleteExpenseStream, calculateTotalMonthlyExpenses } = useExpenseStreams();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStream, setEditingStream] = useState<ExpenseStream | null>(null);
@@ -101,9 +103,9 @@ const ExpenseStreamManager: React.FC<ExpenseStreamManagerProps> = ({ onExpenseCh
 
   const getExpenseTypeLabel = (type: string) => {
     switch (type) {
-      case 'fixed': return 'Fixed Monthly';
-      case 'variable': return 'Variable Monthly';
-      case 'one_time': return 'One-time';
+      case 'fixed': return t('fixedMonthly');
+      case 'variable': return t('variableMonthly');
+      case 'one_time': return t('oneTime');
       default: return type;
     }
   };

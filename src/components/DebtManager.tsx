@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import OptimizedCurrencyValue from '@/components/OptimizedCurrencyValue';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface Debt {
   id?: string;
@@ -31,6 +32,7 @@ const DebtManager: React.FC<DebtManagerProps> = ({
   onUpdateDebt,
   onDeleteDebt,
 }) => {
+  const { t } = useTranslation();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [formData, setFormData] = useState<Omit<Debt, 'id'>>({
@@ -89,22 +91,22 @@ const DebtManager: React.FC<DebtManagerProps> = ({
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
-            Active Debts
+            {t('activeDebts')}
           </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button size="sm" onClick={() => resetForm()}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Debt
+                {t('addDebt')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Add New Debt</DialogTitle>
+                <DialogTitle>{t('addNewDebt')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Debt Name</Label>
+                  <Label htmlFor="name">{t('debtName')}</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -114,16 +116,16 @@ const DebtManager: React.FC<DebtManagerProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="total_amount">Total Amount</Label>
+                    <Label htmlFor="total_amount">{t('totalAmount')}</Label>
                     <Input
                       id="total_amount"
                       type="number"
                       value={formData.total_amount}
-                      onChange={(e) => setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setFormData({ ...formData, total_amount: parseFloat(e.target.value) })}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="paid_amount">Paid Amount</Label>
+                    <Label htmlFor="paid_amount">{t('paidAmount')}</Label>
                     <Input
                       id="paid_amount"
                       type="number"
@@ -134,16 +136,16 @@ const DebtManager: React.FC<DebtManagerProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="monthly_payment">Monthly Payment</Label>
+                    <Label htmlFor="monthly_payment">{t('monthlyPayment')}</Label>
                     <Input
                       id="monthly_payment"
                       type="number"
                       value={formData.monthly_payment}
-                      onChange={(e) => setFormData({ ...formData, monthly_payment: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => setFormData({ ...formData, monthly_payment: parseFloat(e.target.value) })}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="interest_rate">Interest Rate (%)</Label>
+                    <Label htmlFor="interest_rate">{t('interestRate')} (%)</Label>
                     <Input
                       id="interest_rate"
                       type="number"
@@ -154,16 +156,16 @@ const DebtManager: React.FC<DebtManagerProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="duration_months">Duration (Months)</Label>
+                    <Label htmlFor="duration_months">{t('durationMonths')}</Label>
                     <Input
                       id="duration_months"
                       type="number"
                       value={formData.duration_months}
-                      onChange={(e) => setFormData({ ...formData, duration_months: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setFormData({ ...formData, duration_months: parseInt(e.target.value) })}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="start_date">Start Date</Label>
+                    <Label htmlFor="start_date">{t('startDate')}</Label>
                     <Input
                       id="start_date"
                       type="date"
@@ -173,7 +175,7 @@ const DebtManager: React.FC<DebtManagerProps> = ({
                   </div>
                 </div>
                 <Button onClick={handleSubmit} className="w-full">
-                  Add Debt
+                  {t('addDebt')}
                 </Button>
               </div>
             </DialogContent>
@@ -301,9 +303,9 @@ const DebtManager: React.FC<DebtManagerProps> = ({
                   />
                 </div>
               </div>
-              <Button onClick={handleSubmit} className="w-full">
-                Update Debt
-              </Button>
+            <Button onClick={handleSubmit} className="w-full">
+              {t('save')}
+            </Button>
             </div>
           </DialogContent>
         </Dialog>
