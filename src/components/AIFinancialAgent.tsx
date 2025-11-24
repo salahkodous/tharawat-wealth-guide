@@ -153,35 +153,35 @@ const AIFinancialAgent = () => {
     try {
       // Build conversation history for context
       const conversationHistory = messages.map(msg => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',
+        role: (msg.type === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
         content: msg.content
       }));
 
-      // Use new multi-agent chat system
-      const { data, error } = await supabase.functions.invoke('multi-agent-chat', {
-        body: {
-          message: messageToSend,
-          userId: user.id
-        }
+      // Use new multi-agent chat system via service layer
+      const { sendChatMessage } = await import('@/services/chatApi');
+      
+      const response = await sendChatMessage({
+        message: messageToSend,
+        userId: user.id,
+        chatId: chatId!,
+        conversationHistory,
       });
 
-      console.log('AI response:', { data, error });
+      console.log('AI response:', response);
 
-      if (error) {
-        throw new Error(`API Error: ${error.message}`);
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!response.success) {
+        throw new Error('Failed to get AI response');
       }
 
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
-        content: data?.response || 'No response received',
+        content: response.response || 'No response received',
         timestamp: new Date(),
-        uiComponents: data?.uiComponents || [],
-        assetDetails: data?.assetDetails
+        uiComponents: response.ui_components?.show_finances ? ['PersonalFinanceCard'] : 
+                      response.ui_components?.show_portfolio ? ['PortfolioHoldingsCard'] :
+                      response.ui_components?.show_asset_detail ? ['AssetDetailCard'] : [],
+        assetDetails: response.ui_components?.show_asset_detail
       };
 
       setMessages(prev => [...prev, agentMessage]);
