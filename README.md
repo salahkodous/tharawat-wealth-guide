@@ -1,73 +1,51 @@
-# Welcome to your Lovable project
+# Tharawat Wealth Guide
 
-## Project info
+**Tharawat** is a comprehensive personal finance management platform built with React, TypeScript, and Supabase. It features an AI-powered financial assistant, portfolio tracking, and real-time market data.
 
-**URL**: https://lovable.dev/projects/1766af6c-304d-4a10-bd58-59a8921ef156
+## 📚 Documentation
 
-## How can I edit this code?
+- **[Project Overview & Architecture](DOCUMENTATION.md)**: Detailed guide on features, tech stack, database schema, and file structure.
+- **[External API Integration](EXTERNAL_API_INTEGRATION.md)**: Guide for connecting the frontend to the multi-agent chat backend.
 
-There are several ways of editing your application.
+## 🚀 Quick Start
 
-**Use Lovable**
+### 1. Prerequisites
+- Node.js 18+
+- npm
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1766af6c-304d-4a10-bd58-59a8921ef156) and start prompting.
+### 2. Installation
 
-Changes made via Lovable will be committed automatically to this repo.
+```bash
+# Install dependencies
+npm install
+```
 
-**Use your preferred IDE**
+### 3. Configuration
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+This project is configured to connect to a deployed Vercel Chat API.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Environment Setup:**
+Ensure your `.env` file has the following configuration to use the external chat backend:
 
-Follow these steps:
+```env
+VITE_USE_EXTERNAL_CHAT_API=true
+VITE_EXTERNAL_CHAT_API_URL=https://vercel-chat-salah-kodous-s-projects.vercel.app
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 4. Development
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Start the development server:
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🛠️ Tech Stack
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, shadcn/ui
+- **Backend**: Supabase (Auth, Database, Edge Functions)
+- **AI Integration**: Custom Multi-Agent System (Vercel)
 
-**Use GitHub Codespaces**
+## 🔗 Project Info
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/1766af6c-304d-4a10-bd58-59a8921ef156) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Original Lovable Project**: [https://lovable.dev/projects/1766af6c-304d-4a10-bd58-59a8921ef156](https://lovable.dev/projects/1766af6c-304d-4a10-bd58-59a8921ef156)
