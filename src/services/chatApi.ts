@@ -1,5 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 
+// Anakin AI Chat System API
+const EXTERNAL_API_URL = 'https://vercel-chat-salah-kodous-s-projects.vercel.app';
+const USE_EXTERNAL_API = true; // Set to false to use Supabase functions instead
+
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -9,8 +13,8 @@ interface ChatMessage {
 interface SendMessageRequest {
   message: string;
   userId: string;
-  chatId: string;
-  conversationHistory: ChatMessage[];
+  chatId?: string;
+  conversationHistory?: ChatMessage[];
 }
 
 interface SendMessageResponse {
@@ -28,8 +32,22 @@ interface SendMessageResponse {
   };
 }
 
-const USE_EXTERNAL_API = import.meta.env.VITE_USE_EXTERNAL_CHAT_API === 'true';
-const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_CHAT_API_URL;
+/**
+ * Get authorization headers with Supabase JWT
+ */
+const getAuthHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+  
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+};
 
 /**
  * Send a message to either the Supabase function or external API
@@ -37,7 +55,7 @@ const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_CHAT_API_URL;
 export const sendChatMessage = async (
   request: SendMessageRequest
 ): Promise<SendMessageResponse> => {
-  if (USE_EXTERNAL_API && EXTERNAL_API_URL) {
+  if (USE_EXTERNAL_API) {
     return sendToExternalAPI(request);
   }
   
@@ -73,51 +91,58 @@ const sendToSupabaseFunction = async (
 };
 
 /**
- * Send message to External API
+ * Send message to External Anakin API
  */
 const sendToExternalAPI = async (
   request: SendMessageRequest
 ): Promise<SendMessageResponse> => {
-  const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token;
-
-  if (!token) {
-    throw new Error('Authentication required');
-  }
+  const headers = await getAuthHeaders();
 
   const response = await fetch(`${EXTERNAL_API_URL}/api/chat/send-message`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(request),
+    headers,
+    body: JSON.stringify({
+      message: request.message,
+      userId: request.userId,
+      chatId: request.chatId,
+      conversationHistory: request.conversationHistory,
+    }),
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Unauthorized: Please sign in again');
+    }
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || `API request failed: ${response.status}`);
   }
 
   const data = await response.json();
-  return data;
+  return {
+    success: data.success,
+    response: data.response || '',
+    metadata: data.metadata,
+    ui_components: data.ui_components,
+  };
 };
 
 /**
  * Fetch user conversations from either source
  */
 export const fetchConversations = async (userId: string) => {
-  if (USE_EXTERNAL_API && EXTERNAL_API_URL) {
-    const session = await supabase.auth.getSession();
-    const token = session.data.session?.access_token;
+  if (USE_EXTERNAL_API) {
+    const headers = await getAuthHeaders();
 
     const response = await fetch(`${EXTERNAL_API_URL}/api/chat/conversations/${userId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers,
     });
 
-    return response.json();
+    if (!response.ok) {
+      throw new Error(`Failed to fetch conversations: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || result; // Handle both {success, data} and direct array
   }
 
   // Use Supabase
@@ -135,17 +160,19 @@ export const fetchConversations = async (userId: string) => {
  * Fetch messages for a conversation
  */
 export const fetchMessages = async (chatId: string) => {
-  if (USE_EXTERNAL_API && EXTERNAL_API_URL) {
-    const session = await supabase.auth.getSession();
-    const token = session.data.session?.access_token;
+  if (USE_EXTERNAL_API) {
+    const headers = await getAuthHeaders();
 
     const response = await fetch(`${EXTERNAL_API_URL}/api/chat/messages/${chatId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers,
     });
 
-    return response.json();
+    if (!response.ok) {
+      throw new Error(`Failed to fetch messages: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || result; // Handle both {success, data} and direct array
   }
 
   // Use Supabase
@@ -163,20 +190,21 @@ export const fetchMessages = async (chatId: string) => {
  * Create a new conversation
  */
 export const createConversation = async (userId: string, title: string = 'New Chat') => {
-  if (USE_EXTERNAL_API && EXTERNAL_API_URL) {
-    const session = await supabase.auth.getSession();
-    const token = session.data.session?.access_token;
+  if (USE_EXTERNAL_API) {
+    const headers = await getAuthHeaders();
 
-    const response = await fetch(`${EXTERNAL_API_URL}/api/chat/conversations`, {
+    const response = await fetch(`${EXTERNAL_API_URL}/api/chat/conversations/create`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ userId, title }),
+      headers,
+      body: JSON.stringify({ title }),
     });
 
-    return response.json();
+    if (!response.ok) {
+      throw new Error(`Failed to create conversation: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || result;
   }
 
   // Use Supabase
@@ -194,18 +222,19 @@ export const createConversation = async (userId: string, title: string = 'New Ch
  * Delete a conversation
  */
 export const deleteConversation = async (chatId: string) => {
-  if (USE_EXTERNAL_API && EXTERNAL_API_URL) {
-    const session = await supabase.auth.getSession();
-    const token = session.data.session?.access_token;
+  if (USE_EXTERNAL_API) {
+    const headers = await getAuthHeaders();
 
-    const response = await fetch(`${EXTERNAL_API_URL}/api/chat/conversations/${chatId}`, {
+    const response = await fetch(`${EXTERNAL_API_URL}/api/chat/conversations/delete?chatId=${chatId}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers,
     });
 
-    return response.json();
+    if (!response.ok) {
+      throw new Error(`Failed to delete conversation: ${response.status}`);
+    }
+
+    return { success: true };
   }
 
   // Use Supabase
