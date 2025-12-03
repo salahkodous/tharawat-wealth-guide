@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 // Anakin AI Chat System API
-const EXTERNAL_API_URL = 'https://vercel-chat-salah-kodous-s-projects.vercel.app';
+const EXTERNAL_API_URL = 'https://vercel-chat-le3acpefj-salah-kodous-s-projects.vercel.app';
 const USE_EXTERNAL_API = true; // Set to false to use Supabase functions instead
 
 interface ChatMessage {
