@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Briefcase, 
-  TrendingUp, 
-  TrendingDown, 
-  PieChart, 
+import {
+  Briefcase,
+  TrendingUp,
+  TrendingDown,
+  PieChart,
   Target,
   Building2,
   DollarSign,
@@ -96,10 +96,10 @@ const PortfolioSummary = () => {
     if (asset.metadata?.additional_data?.currency) {
       return asset.metadata.additional_data.currency;
     }
-    
+
     // For crypto and global assets, they're usually stored in USD
     if (asset.asset_type === 'crypto' || asset.asset_type === 'cryptocurrencies') return 'USD';
-    
+
     const currencyMap: { [key: string]: string } = {
       'UAE': 'AED', 'Saudi Arabia': 'SAR', 'Egypt': 'EGP', 'Qatar': 'QAR',
       'Kuwait': 'KWD', 'Bahrain': 'BHD', 'Oman': 'OMR', 'Jordan': 'JOD',
@@ -115,7 +115,7 @@ const PortfolioSummary = () => {
     const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 1);
     const change = value - purchaseValue;
     const changePercent = purchaseValue > 0 ? ((change / purchaseValue) * 100) : 0;
-    
+
     return { value, change, changePercent, currency };
   };
 
@@ -150,29 +150,29 @@ const PortfolioSummary = () => {
   const totalChangePercent = totalValue > 0 ? ((totalChange / (totalValue - totalChange)) * 100) : 0;
 
   const portfolioStats = [
-    { 
-      label: t('totalValue'), 
-      value: formatAmount(totalValue), 
-      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
-      positive: totalChangePercent >= 0 
+    {
+      label: t('totalValue'),
+      value: formatAmount(totalValue),
+      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`,
+      positive: totalChangePercent >= 0
     },
-    { 
-      label: 'أرباح اليوم', 
-      value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`, 
-      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
-      positive: totalChange >= 0 
+    {
+      label: t('todaysGains'),
+      value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`,
+      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`,
+      positive: totalChange >= 0
     },
-    { 
-      label: 'إجمالي العائد', 
-      value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`, 
-      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`, 
-      positive: totalChange >= 0 
+    {
+      label: t('totalReturnLabel'),
+      value: `${totalChange >= 0 ? '+' : ''}${formatAmount(Math.abs(totalChange))}`,
+      change: `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(1)}%`,
+      positive: totalChange >= 0
     },
-    { 
-      label: 'الأصول', 
-      value: assets.length.toString(), 
-      change: assets.length > 0 ? `+${assets.length}` : '0', 
-      positive: assets.length > 0 
+    {
+      label: t('assetsCount'),
+      value: assets.length.toString(),
+      change: assets.length > 0 ? `+${assets.length}` : '0',
+      positive: assets.length > 0
     }
   ];
 
@@ -185,14 +185,14 @@ const PortfolioSummary = () => {
     .slice(0, 5)
     .map(holding => {
       const totalPortfolioValue = totalValue > 0 ? totalValue : 1;
-      const holdingValue = holding.currency === currency ? 
+      const holdingValue = holding.currency === currency ?
         holding.value : convertAmount(holding.value, holding.currency);
       const allocation = ((holdingValue / totalPortfolioValue) * 100).toFixed(1);
-      
+
       return {
         name: holding.name,
         symbol: holding.symbol,
-        value: holding.currency === currency ? 
+        value: holding.currency === currency ?
           formatAmount(holding.value) : formatAmount(holdingValue),
         allocation: `${allocation}%`,
         change: `${holding.changePercent >= 0 ? '+' : ''}${holding.changePercent.toFixed(1)}%`,
@@ -280,9 +280,8 @@ const PortfolioSummary = () => {
               <div className="space-y-2">
                 <div className="text-sm font-medium text-muted-foreground">{stat.label}</div>
                 <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                <div className={`flex items-center gap-1 text-sm font-medium ${
-                  stat.positive ? 'text-success' : 'text-destructive'
-                }`}>
+                <div className={`flex items-center gap-1 text-sm font-medium ${stat.positive ? 'text-success' : 'text-destructive'
+                  }`}>
                   {stat.positive ? (
                     <TrendingUp className="w-4 h-4" />
                   ) : (
@@ -300,7 +299,7 @@ const PortfolioSummary = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PieChart className="w-5 h-5" />
-            أفضل الممتلكات
+            {t('topHoldings')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -308,7 +307,7 @@ const PortfolioSummary = () => {
             {topHoldings.length > 0 ? topHoldings.map((holding, index) => {
               const IconComponent = assetTypeIcons[holding.type as keyof typeof assetTypeIcons] || Building2;
               const iconColor = assetTypeColors[holding.type as keyof typeof assetTypeColors] || 'text-muted-foreground';
-              
+
               return (
                 <div key={index} className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg border border-card-border/50">
                   <div className="flex items-center gap-3 flex-1">
@@ -332,9 +331,8 @@ const PortfolioSummary = () => {
                     <div className="font-semibold text-foreground">{holding.value}</div>
                     <div className="text-sm text-muted-foreground">{holding.allocation}</div>
                   </div>
-                  <div className={`text-sm font-medium ml-4 ${
-                    holding.positive ? 'text-success' : 'text-destructive'
-                  }`}>
+                  <div className={`text-sm font-medium ml-4 ${holding.positive ? 'text-success' : 'text-destructive'
+                    }`}>
                     {holding.change}
                   </div>
                 </div>
@@ -354,7 +352,7 @@ const PortfolioSummary = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5 text-primary" />
-              Asset Allocation
+              {t('assetAllocation')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -368,7 +366,7 @@ const PortfolioSummary = () => {
               </div>
             )) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No assets to display allocation
+                {t('noAssetsToDisplay')}
               </p>
             )}
           </CardContent>

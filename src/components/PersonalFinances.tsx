@@ -16,16 +16,16 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 const PersonalFinances = () => {
   const { t } = useTranslation();
-  const { 
-    finances, 
-    debts, 
-    loading, 
-    updateFinances, 
+  const {
+    finances,
+    debts,
+    loading,
+    updateFinances,
     updateMonthlyIncomeFromStreams,
     updateMonthlyExpensesFromStreams,
-    addDebt, 
-    updateDebt, 
-    deleteDebt, 
+    addDebt,
+    updateDebt,
+    deleteDebt,
     getTotalDebt,
     getFreeMonthCash
   } = usePersonalFinances();
@@ -63,31 +63,31 @@ const PersonalFinances = () => {
   }
 
   const financialStats = [
-    { 
-      label: t('monthlyIncome'), 
-      value: finances.monthly_income, 
-      icon: DollarSign, 
+    {
+      label: t('monthlyIncome'),
+      value: finances.monthly_income,
+      icon: DollarSign,
       color: 'text-green-500',
       field: 'monthly_income' as keyof typeof finances
     },
-    { 
-      label: t('monthlyExpenses'), 
-      value: finances.monthly_expenses, 
-      icon: CreditCard, 
+    {
+      label: t('monthlyExpenses'),
+      value: finances.monthly_expenses,
+      icon: CreditCard,
       color: 'text-red-500',
       field: 'monthly_expenses' as keyof typeof finances
     },
-    { 
-      label: t('monthlyInvesting'), 
-      value: finances.monthly_investing_amount, 
-      icon: TrendingUp, 
+    {
+      label: t('monthlyInvesting'),
+      value: finances.monthly_investing_amount,
+      icon: TrendingUp,
       color: 'text-purple-500',
       field: 'monthly_investing_amount' as keyof typeof finances
     },
-    { 
-      label: t('freeMonthlyC'), 
-      value: getFreeMonthCash(), 
-      icon: Banknote, 
+    {
+      label: t('freeMonthlyC'),
+      value: getFreeMonthCash(),
+      icon: Banknote,
       color: 'text-teal-500',
       field: null
     }
@@ -136,7 +136,7 @@ const PersonalFinances = () => {
                 </Card>
               );
             }
-            
+
             return (
               <EditableFinanceCard
                 key={index}
@@ -170,7 +170,7 @@ const PersonalFinances = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DepositsManager />
-        
+
         <div>
           <GoalManager />
         </div>
@@ -186,7 +186,7 @@ const PersonalFinances = () => {
       <Dialog open={showIncomeManager} onOpenChange={setShowIncomeManager}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Income Streams</DialogTitle>
+            <DialogTitle>{t('manageIncomeStreams')}</DialogTitle>
           </DialogHeader>
           <IncomeStreamManager onIncomeChange={updateMonthlyIncomeFromStreams} />
         </DialogContent>
@@ -195,7 +195,7 @@ const PersonalFinances = () => {
       <Dialog open={showExpenseManager} onOpenChange={setShowExpenseManager}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Expense Streams</DialogTitle>
+            <DialogTitle>{t('manageExpenseStreams')}</DialogTitle>
           </DialogHeader>
           <ExpenseStreamManager onExpenseChange={updateMonthlyExpensesFromStreams} />
         </DialogContent>

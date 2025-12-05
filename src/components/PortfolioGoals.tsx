@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Target, 
-  TrendingUp, 
-  Calendar, 
+import {
+  Target,
+  TrendingUp,
+  Calendar,
   Plus,
   DollarSign,
   PieChart
@@ -59,7 +59,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
   useEffect(() => {
     if (user) {
       fetchGoals();
-      
+
       // Set up real-time subscription for portfolio goals
       const channel = supabase
         .channel('portfolio-goals-changes')
@@ -81,7 +81,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
 
   const fetchGoals = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('portfolio_goals')
@@ -113,12 +113,12 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
 
   const calculatePortfolioTargetProgress = () => {
     const portfolioValueGoals = goals.filter(goal => goal.goal_type === 'portfolio_value');
-    
+
     if (portfolioValueGoals.length === 0) return null;
-    
+
     const mainGoal = portfolioValueGoals[0];
     const progress = Math.min((totalValue / mainGoal.target_value) * 100, 100);
-    
+
     return {
       goal: mainGoal,
       progress,
@@ -128,12 +128,12 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
 
   const calculateSectorAllocation = () => {
     const sectorBreakdown: { [key: string]: { value: number; target?: number } } = {};
-    
+
     assets.forEach(asset => {
       const quantity = asset.quantity || 1;
       const currentPrice = asset.current_price || asset.purchase_price || 0;
       const assetValue = convertAmount(quantity * currentPrice, getAssetCurrency(asset), currency);
-      
+
       if (!sectorBreakdown[asset.asset_type]) {
         sectorBreakdown[asset.asset_type] = { value: 0 };
       }
@@ -142,7 +142,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
 
     // Add target allocations from goals
     const allocationGoals = goals.filter(goal => goal.goal_type === 'sector_allocation');
-    
+
     allocationGoals.forEach(goal => {
       if (goal.asset_type && sectorBreakdown[goal.asset_type]) {
         sectorBreakdown[goal.asset_type].target = goal.target_percentage;
@@ -161,7 +161,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
       <Card className="glass-card border-primary/20">
         <CardContent className="p-6">
           <div className="flex items-center justify-center h-24">
-            <div className="text-sm text-muted-foreground">Loading goals...</div>
+            <div className="text-sm text-muted-foreground">{t('loadingGoalsMsg')}</div>
           </div>
         </CardContent>
       </Card>
@@ -174,18 +174,18 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5 text-primary" />
-            Portfolio Goals
+            {t('portfolioGoals')}
           </CardTitle>
           <Dialog open={isGoalManagerOpen} onOpenChange={setIsGoalManagerOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
-                Manage Goals
+                {t('manageGoals')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <PortfolioGoalManager 
-                assets={assets} 
+              <PortfolioGoalManager
+                assets={assets}
                 totalValue={totalValue}
                 onGoalsChange={fetchGoals}
               />
@@ -197,20 +197,20 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
         {activeGoals.length === 0 ? (
           <div className="text-center py-8">
             <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Portfolio Goals Set</h3>
+            <h3 className="text-lg font-medium mb-2">{t('noPortfolioGoals')}</h3>
             <p className="text-muted-foreground mb-4">
-              Set portfolio targets to track your investment progress
+              {t('setPortfolioTargets')}
             </p>
             <Dialog open={isGoalManagerOpen} onOpenChange={setIsGoalManagerOpen}>
               <DialogTrigger asChild>
                 <Button className="flex items-center gap-2">
                   <Plus className="w-4 h-4" />
-                  Create Your First Goal
+                  {t('createFirstGoal')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <PortfolioGoalManager 
-                  assets={assets} 
+                <PortfolioGoalManager
+                  assets={assets}
                   totalValue={totalValue}
                   onGoalsChange={fetchGoals}
                 />
@@ -251,14 +251,14 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <PieChart className="h-4 w-4 text-primary" />
-                  <span className="font-medium">Sector Allocation Targets</span>
+                  <span className="font-medium">{t('sectorAllocationTargets')}</span>
                 </div>
                 <div className="space-y-2">
                   {Object.entries(sectorAllocation).map(([sector, data]) => {
                     if (!data.target) return null;
                     const currentPercentage = totalValue > 0 ? (data.value / totalValue) * 100 : 0;
                     const progress = Math.min((currentPercentage / data.target) * 100, 100);
-                    
+
                     return (
                       <div key={sector} className="space-y-1">
                         <div className="flex justify-between text-sm">
@@ -277,7 +277,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span className="font-medium">Active Goals</span>
+                <span className="font-medium">{t('activeGoals')}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {activeGoals.slice(0, 4).map((goal) => {
@@ -298,7 +298,7 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                     currentDisplay = goal.current_value.toString();
                     targetDisplay = goal.target_value.toString();
                   }
-                  
+
                   return (
                     <div key={goal.id} className="p-3 rounded-lg bg-secondary/20 border">
                       <div className="space-y-2">
@@ -322,12 +322,12 @@ const PortfolioGoals: React.FC<PortfolioGoalsProps> = ({ assets, totalValue }) =
                 <Dialog open={isGoalManagerOpen} onOpenChange={setIsGoalManagerOpen}>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="w-full text-sm">
-                      View All {activeGoals.length} Goals
+                      {t('viewAllGoals')} {activeGoals.length} {t('goals')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <PortfolioGoalManager 
-                      assets={assets} 
+                    <PortfolioGoalManager
+                      assets={assets}
                       totalValue={totalValue}
                       onGoalsChange={fetchGoals}
                     />

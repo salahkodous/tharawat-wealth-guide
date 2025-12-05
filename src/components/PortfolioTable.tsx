@@ -31,14 +31,14 @@ const PortfolioTable = () => {
 
   const fetchAssets = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('assets')
         .select('*')
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
       setAssets(data || []);
     } catch (error) {
@@ -58,7 +58,7 @@ const PortfolioTable = () => {
     if (asset.metadata?.additional_data?.currency) {
       return asset.metadata.additional_data.currency;
     }
-    
+
     // Real estate always uses local currency
     if (asset.asset_type === 'real_estate' || asset.asset_type === 'Real Estate') {
       if (asset.country === 'Egypt') return 'EGP';
@@ -71,10 +71,10 @@ const PortfolioTable = () => {
       if (asset.country === 'Jordan') return 'JOD';
       return 'EGP'; // default to EGP for unknown real estate
     }
-    
+
     // For crypto and global assets, they're usually stored in USD
     if (asset.asset_type === 'crypto' || asset.asset_type === 'cryptocurrencies') return 'USD';
-    
+
     // For local assets, use the country's currency
     if (asset.country === 'Egypt') return 'EGP';
     if (asset.country === 'Saudi Arabia') return 'SAR';
@@ -84,7 +84,7 @@ const PortfolioTable = () => {
     if (asset.country === 'Bahrain') return 'BHD';
     if (asset.country === 'Oman') return 'OMR';
     if (asset.country === 'Jordan') return 'JOD';
-    
+
     // Global assets default to USD
     return 'USD';
   };
@@ -129,7 +129,7 @@ const PortfolioTable = () => {
     }
     return sum + convertAmount(holding.value, holding.currency, currency);
   }, 0);
-  
+
   const totalChange = holdings.reduce((sum, holding) => {
     // Only convert if asset currency is different from user currency
     if (holding.currency === currency) {
@@ -137,7 +137,7 @@ const PortfolioTable = () => {
     }
     return sum + convertAmount(holding.change, holding.currency, currency);
   }, 0);
-  
+
   const totalPurchaseValue = holdings.reduce((sum, holding) => {
     const purchaseValue = (holding.avgPrice || 0) * (holding.quantity || 0);
     // Only convert if asset currency is different from user currency
@@ -146,7 +146,7 @@ const PortfolioTable = () => {
     }
     return sum + convertAmount(purchaseValue, holding.currency, currency);
   }, 0);
-  
+
   const totalChangePercent = totalPurchaseValue > 0 ? (totalChange / totalPurchaseValue) * 100 : 0;
 
   const handleEdit = (asset: any) => {
@@ -156,7 +156,7 @@ const PortfolioTable = () => {
 
   const handleAnalyze = async (asset: any) => {
     setIsAnalyzing(asset.id);
-    
+
     try {
       toast({
         title: "جاري بدء التحليل",
@@ -181,7 +181,7 @@ const PortfolioTable = () => {
         title: "اكتمل التحليل",
         description: "تحقق من صفحة المساعد الذكي للحصول على تفاصيل إضافية.",
       });
-      
+
     } catch (error) {
       console.error('Analysis Error:', error);
       toast({
@@ -205,8 +205,8 @@ const PortfolioTable = () => {
         if (error) throw error;
 
         toast({
-          title: "Asset Removed",
-          description: `${asset.name} has been removed from your portfolio.`,
+          title: t('assetRemoved'),
+          description: `${asset.name} ${t('assetRemovedDesc')}`,
         });
 
         // Refresh assets list
@@ -228,7 +228,7 @@ const PortfolioTable = () => {
         <CardContent className="flex items-center justify-center h-64">
           <div className="flex items-center gap-2">
             <Loader2 className="w-6 h-6 animate-spin" />
-            <span className="text-lg text-muted-foreground">Loading portfolio...</span>
+            <span className="text-lg text-muted-foreground">{t('loadingPortfolio')}</span>
           </div>
         </CardContent>
       </Card>
@@ -263,9 +263,8 @@ const PortfolioTable = () => {
           <CardTitle>{t('holdings')}</CardTitle>
           <div className="text-right">
             <div className="text-2xl font-bold">{formatAmount(totalValue)}</div>
-            <div className={`flex items-center gap-1 text-sm font-medium ${
-              totalChange >= 0 ? 'text-success' : 'text-destructive'
-            }`}>
+            <div className={`flex items-center gap-1 text-sm font-medium ${totalChange >= 0 ? 'text-success' : 'text-destructive'
+              }`}>
               {totalChange >= 0 ? (
                 <TrendingUp className="w-4 h-4" />
               ) : (
@@ -302,43 +301,41 @@ const PortfolioTable = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      holding.type === 'Stock' ? 'bg-blue-500/20 text-blue-500' :
-                      holding.type === 'Real Estate' ? 'bg-green-500/20 text-green-500' :
-                      holding.type === 'Crypto' ? 'bg-orange-500/20 text-orange-500' :
-                      'bg-gray-500/20 text-gray-500'
-                    }`}>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${holding.type === 'Stock' ? 'bg-blue-500/20 text-blue-500' :
+                        holding.type === 'Real Estate' ? 'bg-green-500/20 text-green-500' :
+                          holding.type === 'Crypto' ? 'bg-orange-500/20 text-orange-500' :
+                            'bg-gray-500/20 text-gray-500'
+                      }`}>
                       {holding.type}
                     </span>
                   </TableCell>
                   <TableCell>{holding.country}</TableCell>
                   <TableCell className="text-right">
-                    {holding.type === 'Real Estate' ? '1 unit' : 
-                     holding.type === 'Crypto' ? holding.quantity.toString() : 
-                     holding.quantity.toLocaleString()}
+                    {holding.type === 'Real Estate' ? '1 unit' :
+                      holding.type === 'Crypto' ? holding.quantity.toString() :
+                        holding.quantity.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    {holding.currency === currency ? 
-                      formatAmount(holding.avgPrice) : 
+                    {holding.currency === currency ?
+                      formatAmount(holding.avgPrice) :
                       formatAmount(holding.avgPrice, holding.currency)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {holding.currency === currency ? 
-                      formatAmount(holding.currentPrice) : 
+                    {holding.currency === currency ?
+                      formatAmount(holding.currentPrice) :
                       formatAmount(holding.currentPrice, holding.currency)}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {holding.currency === currency ? 
-                      formatAmount(holding.value) : 
+                    {holding.currency === currency ?
+                      formatAmount(holding.value) :
                       formatAmount(convertAmount(holding.value, holding.currency, currency))}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className={`${
-                      holding.change >= 0 ? 'text-success' : 'text-destructive'
-                    }`}>
+                    <div className={`${holding.change >= 0 ? 'text-success' : 'text-destructive'
+                      }`}>
                       <div className="font-medium">
-                        {holding.change >= 0 ? '+' : ''}{holding.currency === currency ? 
-                          formatAmount(holding.change) : 
+                        {holding.change >= 0 ? '+' : ''}{holding.currency === currency ?
+                          formatAmount(holding.change) :
                           formatAmount(convertAmount(holding.change, holding.currency, currency))}
                       </div>
                       <div className="text-sm">
@@ -356,21 +353,21 @@ const PortfolioTable = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(holding)}>
                           <Edit3 className="w-4 h-4 mr-2" />
-                          Edit
+                          {t('edit')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleAnalyze(holding)}
                           disabled={isAnalyzing === holding.id}
                         >
                           <BarChart3 className="w-4 h-4 mr-2" />
-                          {isAnalyzing === holding.id ? 'Analyzing...' : 'Analyze'}
+                          {isAnalyzing === holding.id ? t('analyzing') : t('analyze')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleDelete(holding)}
                           className="text-destructive"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
+                          {t('delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -385,9 +382,9 @@ const PortfolioTable = () => {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Asset: {selectedAsset?.name}</DialogTitle>
+            <DialogTitle>{t('editAsset')}: {selectedAsset?.name}</DialogTitle>
           </DialogHeader>
-          <PortfolioManager 
+          <PortfolioManager
             onAssetAdded={() => {
               setEditDialogOpen(false);
               fetchAssets(); // Refresh portfolio data

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   TrendingUp,
   TrendingDown,
   Building2,
@@ -22,11 +22,13 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useUserCountry } from '@/hooks/useUserCountry';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const EnhancedPortfolioOverview = () => {
   const { formatAmount, convertAmount, currency } = useCurrency();
   const { user } = useAuth();
   const { userCountry } = useUserCountry();
+  const { t } = useTranslation();
   const [selectedTab, setSelectedTab] = useState('overview');
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,13 +39,13 @@ const EnhancedPortfolioOverview = () => {
 
   const fetchAssets = async () => {
     if (!user) return;
-    
+
     try {
       const { data } = await supabase
         .from('assets')
         .select('*')
         .eq('user_id', user.id);
-      
+
       setAssets(data || []);
     } catch (error) {
       console.error('Error fetching assets:', error);
@@ -57,10 +59,10 @@ const EnhancedPortfolioOverview = () => {
     if (asset.metadata?.additional_data?.currency) {
       return asset.metadata.additional_data.currency;
     }
-    
+
     // For crypto and global assets, they're usually stored in USD
     if (asset.asset_type === 'crypto' || asset.asset_type === 'cryptocurrencies') return 'USD';
-    
+
     // Return the currency based on the asset's country
     if (asset.country === 'Egypt') return 'EGP';
     if (asset.country === 'Saudi Arabia') return 'SAR';
@@ -70,7 +72,7 @@ const EnhancedPortfolioOverview = () => {
     if (asset.country === 'Bahrain') return 'BHD';
     if (asset.country === 'Oman') return 'OMR';
     if (asset.country === 'Jordan') return 'JOD';
-    
+
     return 'USD'; // Default fallback for global assets
   };
 
@@ -95,7 +97,7 @@ const EnhancedPortfolioOverview = () => {
       }
       return sum + convertAmount(change, assetCurrency, currency);
     }, 0),
-    dayChangePercent: assets.length > 0 ? 
+    dayChangePercent: assets.length > 0 ?
       (assets.reduce((sum, asset) => {
         const currentValue = (asset.current_price || 0) * (asset.quantity || 0);
         const purchaseValue = (asset.purchase_price || 0) * (asset.quantity || 0);
@@ -127,19 +129,19 @@ const EnhancedPortfolioOverview = () => {
     }
     return sum + convertAmount(purchaseValue, assetCurrency, currency);
   }, 0);
-  
-  portfolioMetrics.totalReturnPercent = totalInvested > 0 
-    ? (portfolioMetrics.totalReturn / totalInvested) * 100 
+
+  portfolioMetrics.totalReturnPercent = totalInvested > 0
+    ? (portfolioMetrics.totalReturn / totalInvested) * 100
     : 0;
 
   const assetBreakdown = assets.reduce((acc: any[], asset) => {
     const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
     const assetCurrency = getAssetCurrency(asset);
     const convertedValue = assetCurrency === currency ? assetValue : convertAmount(assetValue, assetCurrency, currency);
-    
+
     const assetType = asset.asset_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Unknown';
     const existingType = acc.find(item => item.type === assetType);
-    
+
     if (existingType) {
       existingType.value += convertedValue;
     } else {
@@ -165,7 +167,7 @@ const EnhancedPortfolioOverview = () => {
     const assetValue = (asset.current_price || asset.purchase_price || 0) * (asset.quantity || 0);
     const assetCurrency = getAssetCurrency(asset);
     const convertedValue = assetCurrency === currency ? assetValue : convertAmount(assetValue, assetCurrency, currency);
-    
+
     const country = asset.country || 'Unknown';
     const existingCountry = acc.find(item => item.region === country);
     if (existingCountry) {
@@ -244,7 +246,7 @@ const EnhancedPortfolioOverview = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-muted-foreground">Loading portfolio...</div>
+        <div className="text-lg text-muted-foreground">{t('loadingPortfolio')}</div>
       </div>
     );
   }
@@ -252,8 +254,8 @@ const EnhancedPortfolioOverview = () => {
   if (assets.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-lg font-medium text-muted-foreground mb-2">No assets in portfolio</div>
-        <div className="text-sm text-muted-foreground">Add some investments to see your portfolio overview.</div>
+        <div className="text-lg font-medium text-muted-foreground mb-2">{t('noAssetsInPortfolio')}</div>
+        <div className="text-sm text-muted-foreground">{t('addInvestmentsToSee')}</div>
       </div>
     );
   }
@@ -263,17 +265,17 @@ const EnhancedPortfolioOverview = () => {
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="allocation">Allocation</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="risk">Risk Analysis</TabsTrigger>
+          <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
+          <TabsTrigger value="allocation">{t('allocation')}</TabsTrigger>
+          <TabsTrigger value="performance">{t('performance')}</TabsTrigger>
+          <TabsTrigger value="risk">{t('riskAnalysis')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="glass-card border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('portfolioValue')}</CardTitle>
                 <BarChart3 className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
@@ -295,7 +297,7 @@ const EnhancedPortfolioOverview = () => {
 
             <Card className="glass-card border-success/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Return</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('totalReturnCard')}</CardTitle>
                 <Target className="h-4 w-4 text-success" />
               </CardHeader>
               <CardContent>
@@ -303,21 +305,21 @@ const EnhancedPortfolioOverview = () => {
                   {portfolioMetrics.totalReturn >= 0 ? '+' : ''}{formatAmount(portfolioMetrics.totalReturn)}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {portfolioMetrics.totalReturnPercent >= 0 ? '+' : ''}{portfolioMetrics.totalReturnPercent.toFixed(1)}% all time
+                  {portfolioMetrics.totalReturnPercent >= 0 ? '+' : ''}{portfolioMetrics.totalReturnPercent.toFixed(1)}% {t('allTime')}
                 </p>
               </CardContent>
             </Card>
 
             <Card className="glass-card border-warning/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Risk Score</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('riskScore')}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-warning" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-warning">
                   {portfolioMetrics.riskScore}/10
                 </div>
-                <p className="text-sm text-muted-foreground">Moderate-High Risk</p>
+                <p className="text-sm text-muted-foreground">{t('moderateHighRisk')}</p>
               </CardContent>
             </Card>
           </div>
@@ -327,7 +329,7 @@ const EnhancedPortfolioOverview = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PieChart className="w-5 h-5" />
-                  Asset Allocation
+                  {t('assetAllocation')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -361,7 +363,7 @@ const EnhancedPortfolioOverview = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle>Asset Type Distribution</CardTitle>
+                <CardTitle>{t('assetTypeDistribution')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {assetBreakdown.map((item) => (
@@ -396,16 +398,15 @@ const EnhancedPortfolioOverview = () => {
         <TabsContent value="risk" className="space-y-6">
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle>Risk Assessment</CardTitle>
+              <CardTitle>{t('riskAssessment')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {riskIndicators.map((risk) => (
                 <div key={risk.name} className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      risk.level === 'Low' ? 'bg-success' :
-                      risk.level === 'Medium' ? 'bg-warning' : 'bg-destructive'
-                    }`} />
+                    <div className={`w-3 h-3 rounded-full ${risk.level === 'Low' ? 'bg-success' :
+                        risk.level === 'Medium' ? 'bg-warning' : 'bg-destructive'
+                      }`} />
                     <div>
                       <div className="font-medium">{risk.name}</div>
                       <div className="text-sm text-muted-foreground">{risk.description}</div>

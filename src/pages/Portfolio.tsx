@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Plus, 
-  TrendingUp, 
-  TrendingDown, 
-  Building2, 
-  Home, 
-  Factory, 
+import {
+  Plus,
+  TrendingUp,
+  TrendingDown,
+  Building2,
+  Home,
+  Factory,
   MapPin,
   Target,
   Calendar,
@@ -30,6 +30,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useAssetPriceUpdater } from '@/hooks/useAssetPriceUpdater';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface Asset {
   id: string;
@@ -72,6 +73,7 @@ const Portfolio = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { updateAssetPrices } = useAssetPriceUpdater();
+  const { t } = useTranslation();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ const Portfolio = () => {
 
   const fetchPortfolioData = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       setError(null);
@@ -116,10 +118,10 @@ const Portfolio = () => {
       setGoals(goalsData || []);
     } catch (error) {
       console.error('Error fetching portfolio data:', error);
-      setError('Failed to load portfolio data. Please try again.');
+      setError(t('errorLoadingPortfolio'));
       toast({
-        title: "Error",
-        description: "Failed to load portfolio data.",
+        title: t('error'),
+        description: t('errorLoadingPortfolio'),
         variant: "destructive",
       });
     } finally {
@@ -190,7 +192,7 @@ const Portfolio = () => {
     if (asset.metadata?.additional_data?.currency) {
       return asset.metadata.additional_data.currency;
     }
-    
+
     if (asset.country === 'Egypt') return 'EGP';
     if (asset.country === 'Saudi Arabia') return 'SAR';
     if (asset.country === 'UAE') return 'AED';
@@ -225,7 +227,7 @@ const Portfolio = () => {
       const investedValue = quantity * purchasePrice;
       return total + convertAmount(investedValue, getAssetCurrency(asset), currency);
     }, 0);
-    
+
     if (totalInvested === 0) return 0;
     return (calculateTotalGains() / totalInvested) * 100;
   };
@@ -238,7 +240,7 @@ const Portfolio = () => {
       const quantity = asset.quantity || 1;
       const currentPrice = asset.current_price || asset.purchase_price || 0;
       const assetValue = convertAmount(quantity * currentPrice, getAssetCurrency(asset), currency);
-      
+
       if (!breakdown[asset.asset_type]) {
         breakdown[asset.asset_type] = { value: 0, percentage: 0 };
       }
@@ -255,30 +257,30 @@ const Portfolio = () => {
 
   const getBestPerformer = () => {
     if (assets.length === 0) return null;
-    
+
     return assets.reduce((best, asset) => {
-      const currentReturn = asset.current_price && asset.purchase_price 
-        ? ((asset.current_price - asset.purchase_price) / asset.purchase_price) * 100 
+      const currentReturn = asset.current_price && asset.purchase_price
+        ? ((asset.current_price - asset.purchase_price) / asset.purchase_price) * 100
         : 0;
-      const bestReturn = best.current_price && best.purchase_price 
-        ? ((best.current_price - best.purchase_price) / best.purchase_price) * 100 
+      const bestReturn = best.current_price && best.purchase_price
+        ? ((best.current_price - best.purchase_price) / best.purchase_price) * 100
         : 0;
-      
+
       return currentReturn > bestReturn ? asset : best;
     });
   };
 
   const getWorstPerformer = () => {
     if (assets.length === 0) return null;
-    
+
     return assets.reduce((worst, asset) => {
-      const currentReturn = asset.current_price && asset.purchase_price 
-        ? ((asset.current_price - asset.purchase_price) / asset.purchase_price) * 100 
+      const currentReturn = asset.current_price && asset.purchase_price
+        ? ((asset.current_price - asset.purchase_price) / asset.purchase_price) * 100
         : 0;
-      const worstReturn = worst.current_price && worst.purchase_price 
-        ? ((worst.current_price - worst.purchase_price) / worst.purchase_price) * 100 
+      const worstReturn = worst.current_price && worst.purchase_price
+        ? ((worst.current_price - worst.purchase_price) / worst.purchase_price) * 100
         : 0;
-      
+
       return currentReturn < worstReturn ? asset : worst;
     });
   };
@@ -298,7 +300,7 @@ const Portfolio = () => {
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center gap-2">
               <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-lg text-muted-foreground">Loading portfolio...</span>
+              <span className="text-lg text-muted-foreground">{t('loadingPortfolio')}</span>
             </div>
           </div>
         </div>
@@ -313,8 +315,8 @@ const Portfolio = () => {
           <Navigation />
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Portfolio Access</h2>
-              <p className="text-muted-foreground">Please sign in to view your portfolio.</p>
+              <h2 className="text-2xl font-bold mb-2">{t('portfolioAccess')}</h2>
+              <p className="text-muted-foreground">{t('pleaseSignIn')}</p>
             </div>
           </div>
         </div>
@@ -330,9 +332,9 @@ const Portfolio = () => {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Error Loading Portfolio</h2>
+              <h2 className="text-2xl font-bold mb-2">{t('errorLoadingPortfolio')}</h2>
               <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={fetchPortfolioData}>Try Again</Button>
+              <Button onClick={fetchPortfolioData}>{t('tryAgain')}</Button>
             </div>
           </div>
         </div>
@@ -368,216 +370,216 @@ const Portfolio = () => {
         }}
       />
       <div className="min-h-screen bg-background relative overflow-hidden">
-      
-      <div className="relative z-10">
-        <Navigation />
-        
-        <section className="py-8">
-          <div className="container mx-auto px-4 space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Portfolio Management</h1>
-                <p className="text-muted-foreground">Manage your investments and track performance</p>
-              </div>
-              
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add Investment
-                  </Button>
-                </DialogTrigger>
+
+        <div className="relative z-10">
+          <Navigation />
+
+          <section className="py-8">
+            <div className="container mx-auto px-4 space-y-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">{t('portfolioManagement')}</h1>
+                  <p className="text-muted-foreground">{t('manageInvestments')}</p>
+                </div>
+
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      {t('addInvestment')}
+                    </Button>
+                  </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <PortfolioManager onAssetAdded={() => {
                       setIsModalOpen(false);
                       fetchPortfolioData();
                     }} />
                   </DialogContent>
-              </Dialog>
-            </div>
+                </Dialog>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="glass-card border-primary/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Portfolio Value</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{formatAmount(totalValue)}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {gainsPercentage >= 0 ? '+' : ''}{gainsPercentage.toFixed(1)}% overall return
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className={`glass-card ${totalGains >= 0 ? 'border-success/20' : 'border-destructive/20'}`}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Gains/Loss</CardTitle>
-                  {totalGains >= 0 ? (
-                    <TrendingUp className="h-4 w-4 text-success" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-destructive" />
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-2xl font-bold ${totalGains >= 0 ? 'text-success' : 'text-destructive'}`}>
-                    {totalGains >= 0 ? '+' : ''}{formatAmount(totalGains)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {gainsPercentage >= 0 ? '+' : ''}{gainsPercentage.toFixed(2)}% return
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card border-primary/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Goals</CardTitle>
-                  <Target className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{goals.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {goals.length} active
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <PortfolioTable />
-            
-            <EnhancedPortfolioOverview />
-
-            <PortfolioGoals assets={assets} totalValue={totalValue} />
-
-            {assets.length > 0 && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-blue-500" />
-                      Portfolio Analysis
-                    </CardTitle>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="glass-card border-primary/20">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('totalPortfolioValue')}</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Total Assets</span>
-                        <span className="text-sm font-medium">{assets.length}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Portfolio Return</span>
-                        <span className={`text-sm font-medium ${gainsPercentage >= 0 ? 'text-success' : 'text-destructive'}`}>
-                          {gainsPercentage >= 0 ? '+' : ''}{gainsPercentage.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={Math.min(Math.abs(gainsPercentage), 100)} className="h-2" />
-                    </div>
-
-                    <div className="pt-4 border-t">
-                      <h4 className="font-medium mb-2">Asset Type Breakdown</h4>
-                      <div className="space-y-2 text-sm">
-                        {Object.entries(assetBreakdown).map(([type, data]) => (
-                          <div key={type} className="flex justify-between">
-                            <span className="capitalize">{type.replace('_', ' ')}</span>
-                            <span>{data.percentage.toFixed(1)}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-foreground">{formatAmount(totalValue)}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {gainsPercentage >= 0 ? '+' : ''}{gainsPercentage.toFixed(1)}% {t('overallReturn')}
+                    </p>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="h-5 w-5 text-green-500" />
-                      Performance Insights
-                    </CardTitle>
+                <Card className={`glass-card ${totalGains >= 0 ? 'border-success/20' : 'border-destructive/20'}`}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('totalGainsLoss')}</CardTitle>
+                    {totalGains >= 0 ? (
+                      <TrendingUp className="h-4 w-4 text-success" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-destructive" />
+                    )}
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      {bestPerformer && (
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4 text-success" />
-                          <span className="text-sm">
-                            Best: {bestPerformer.asset_name}
-                            {bestPerformer.current_price && bestPerformer.purchase_price && (
-                              <span className="text-success">
-                                {' '}(+{(((bestPerformer.current_price - bestPerformer.purchase_price) / bestPerformer.purchase_price) * 100).toFixed(1)}%)
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
-                      {worstPerformer && (
-                        <div className="flex items-center gap-2">
-                          <TrendingDown className="h-4 w-4 text-destructive" />
-                          <span className="text-sm">
-                            Worst: {worstPerformer.asset_name}
-                            {worstPerformer.current_price && worstPerformer.purchase_price && (
-                              <span className="text-destructive">
-                                {' '}({(((worstPerformer.current_price - worstPerformer.purchase_price) / worstPerformer.purchase_price) * 100).toFixed(1)}%)
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${totalGains >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      {totalGains >= 0 ? '+' : ''}{formatAmount(totalGains)}
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      {gainsPercentage >= 0 ? '+' : ''}{gainsPercentage.toFixed(2)}% {t('return')}
+                    </p>
+                  </CardContent>
+                </Card>
 
-                    <div className="pt-4 border-t">
-                      <h4 className="font-medium mb-2">AI Recommendations</h4>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        {goals.length === 0 && (
-                          <p>• Set financial goals to get personalized advice</p>
-                        )}
-                        {assets.length < 3 && (
-                          <p>• Consider diversifying with more asset types</p>
-                        )}
-                        {gainsPercentage < 0 && (
-                          <p>• Review underperforming assets</p>
-                        )}
-                        {Object.keys(assetBreakdown).length === 1 && (
-                          <p>• Add different asset classes for better diversification</p>
-                        )}
-                      </div>
-                    </div>
+                <Card className="glass-card border-primary/20">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('activeGoals')}</CardTitle>
+                    <Target className="h-4 w-4 text-primary" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-foreground">{goals.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {goals.length} {t('active')}
+                    </p>
                   </CardContent>
                 </Card>
               </div>
-            )}
 
-            {assets.length === 0 && (
-              <Card className="glass-card">
-                <CardContent className="text-center py-12">
-                  <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Start Your Investment Journey</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Add your first investment to begin tracking your portfolio performance
-                  </p>
-                  <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="flex items-center gap-2">
-                        <Plus className="w-4 h-4" />
-                        Add Your First Investment
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <PortfolioManager onAssetAdded={() => {
-                        setIsModalOpen(false);
-                        fetchPortfolioData();
-                      }} />
-                    </DialogContent>
-                  </Dialog>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </section>
+              <PortfolioTable />
+
+              <EnhancedPortfolioOverview />
+
+              <PortfolioGoals assets={assets} totalValue={totalValue} />
+
+              {assets.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-blue-500" />
+                        {t('portfolioAnalysis')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">{t('totalAssets')}</span>
+                          <span className="text-sm font-medium">{assets.length}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">{t('portfolioReturn')}</span>
+                          <span className={`text-sm font-medium ${gainsPercentage >= 0 ? 'text-success' : 'text-destructive'}`}>
+                            {gainsPercentage >= 0 ? '+' : ''}{gainsPercentage.toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress value={Math.min(Math.abs(gainsPercentage), 100)} className="h-2" />
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <h4 className="font-medium mb-2">{t('assetTypeBreakdown')}</h4>
+                        <div className="space-y-2 text-sm">
+                          {Object.entries(assetBreakdown).map(([type, data]) => (
+                            <div key={type} className="flex justify-between">
+                              <span className="capitalize">{type.replace('_', ' ')}</span>
+                              <span>{data.percentage.toFixed(1)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="h-5 w-5 text-green-500" />
+                        {t('performanceInsights')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        {bestPerformer && (
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-success" />
+                            <span className="text-sm">
+                              {t('best')}: {bestPerformer.asset_name}
+                              {bestPerformer.current_price && bestPerformer.purchase_price && (
+                                <span className="text-success">
+                                  {' '}(+{(((bestPerformer.current_price - bestPerformer.purchase_price) / bestPerformer.purchase_price) * 100).toFixed(1)}%)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        {worstPerformer && (
+                          <div className="flex items-center gap-2">
+                            <TrendingDown className="h-4 w-4 text-destructive" />
+                            <span className="text-sm">
+                              {t('worst')}: {worstPerformer.asset_name}
+                              {worstPerformer.current_price && worstPerformer.purchase_price && (
+                                <span className="text-destructive">
+                                  {' '}({(((worstPerformer.current_price - worstPerformer.purchase_price) / worstPerformer.purchase_price) * 100).toFixed(1)}%)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <h4 className="font-medium mb-2">{t('aiRecommendations')}</h4>
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          {goals.length === 0 && (
+                            <p>• {t('setGoalsAdvice')}</p>
+                          )}
+                          {assets.length < 3 && (
+                            <p>• {t('diversifyAdvice')}</p>
+                          )}
+                          {gainsPercentage < 0 && (
+                            <p>• {t('reviewUnderperforming')}</p>
+                          )}
+                          {Object.keys(assetBreakdown).length === 1 && (
+                            <p>• {t('addDifferentAssets')}</p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {assets.length === 0 && (
+                <Card className="glass-card">
+                  <CardContent className="text-center py-12">
+                    <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">{t('startInvestmentJourney')}</h3>
+                    <p className="text-muted-foreground mb-6">
+                      {t('addFirstInvestment')}
+                    </p>
+                    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          {t('addYourFirstInvestment')}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <PortfolioManager onAssetAdded={() => {
+                          setIsModalOpen(false);
+                          fetchPortfolioData();
+                        }} />
+                      </DialogContent>
+                    </Dialog>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
     </>
   );
 };

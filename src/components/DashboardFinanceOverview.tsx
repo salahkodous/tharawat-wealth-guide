@@ -11,11 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useTranslation } from '@/hooks/useTranslation';
 
 const DashboardFinanceOverview = () => {
-  const { 
-    finances, 
+  const {
+    finances,
     debts,
-    loading, 
-    updateFinances, 
+    loading,
+    updateFinances,
     updateMonthlyIncomeFromStreams,
     updateMonthlyExpensesFromStreams,
     getFreeMonthCash,
@@ -51,38 +51,38 @@ const DashboardFinanceOverview = () => {
   }
 
   const financialStats = [
-    { 
-      label: t('monthlyIncome'), 
-      value: finances.monthly_income, 
-      icon: DollarSign, 
+    {
+      label: t('monthlyIncome'),
+      value: finances.monthly_income,
+      icon: DollarSign,
       color: 'text-green-500',
       field: 'monthly_income' as keyof typeof finances
     },
-    { 
-      label: t('monthlyExpenses'), 
-      value: finances.monthly_expenses, 
-      icon: CreditCard, 
+    {
+      label: t('monthlyExpenses'),
+      value: finances.monthly_expenses,
+      icon: CreditCard,
       color: 'text-red-500',
       field: 'monthly_expenses' as keyof typeof finances
     },
-    { 
-      label: t('monthlyInvesting'), 
-      value: finances.monthly_investing_amount, 
-      icon: TrendingUp, 
+    {
+      label: t('monthlyInvesting'),
+      value: finances.monthly_investing_amount,
+      icon: TrendingUp,
       color: 'text-purple-500',
       field: 'monthly_investing_amount' as keyof typeof finances
     },
-    { 
-      label: t('freeMonthlyC'), 
-      value: getFreeMonthCash(), 
-      icon: Banknote, 
+    {
+      label: t('freeMonthlyC'),
+      value: getFreeMonthCash(),
+      icon: Banknote,
       color: 'text-teal-500',
       field: null
     },
-    { 
-      label: t('totalDebt'), 
-      value: getTotalDebt(), 
-      icon: AlertTriangle, 
+    {
+      label: t('totalDebt'),
+      value: getTotalDebt(),
+      icon: AlertTriangle,
       color: 'text-orange-500',
       field: 'total_debt' as any
     }
@@ -148,7 +148,7 @@ const DashboardFinanceOverview = () => {
                 </Card>
               );
             }
-            
+
             return (
               <EditableFinanceCard
                 key={index}
@@ -182,7 +182,7 @@ const DashboardFinanceOverview = () => {
       <Dialog open={showIncomeManager} onOpenChange={setShowIncomeManager}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Income Streams</DialogTitle>
+            <DialogTitle>{t('manageIncomeStreams')}</DialogTitle>
           </DialogHeader>
           <IncomeStreamManager onIncomeChange={updateMonthlyIncomeFromStreams} />
         </DialogContent>
@@ -191,7 +191,7 @@ const DashboardFinanceOverview = () => {
       <Dialog open={showExpenseManager} onOpenChange={setShowExpenseManager}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Expense Streams</DialogTitle>
+            <DialogTitle>{t('manageExpenseStreams')}</DialogTitle>
           </DialogHeader>
           <ExpenseStreamManager onExpenseChange={updateMonthlyExpensesFromStreams} />
         </DialogContent>
@@ -200,13 +200,13 @@ const DashboardFinanceOverview = () => {
       <Dialog open={showDebtManager} onOpenChange={setShowDebtManager}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Debts</DialogTitle>
+            <DialogTitle>{t('manageDebts')}</DialogTitle>
           </DialogHeader>
-          <DebtManager 
-            debts={debts} 
-            onAddDebt={addDebt} 
-            onUpdateDebt={updateDebt} 
-            onDeleteDebt={deleteDebt} 
+          <DebtManager
+            debts={debts}
+            onAddDebt={addDebt}
+            onUpdateDebt={updateDebt}
+            onDeleteDebt={deleteDebt}
           />
         </DialogContent>
       </Dialog>

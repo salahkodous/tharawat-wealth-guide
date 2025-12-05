@@ -15,12 +15,12 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import { SEO } from '@/components/SEO';
-import { 
-  User, 
-  Globe, 
-  DollarSign, 
-  Bell, 
-  Shield, 
+import {
+  User,
+  Globe,
+  DollarSign,
+  Bell,
+  Shield,
   Download,
   Palette,
   Monitor,
@@ -34,13 +34,13 @@ const Settings = () => {
   const { settings, updateSettings, refreshSettings } = useSettings();
   const { setTheme, theme } = useTheme();
   const { t, isRTL } = useTranslation();
-  
+
   const [profile, setProfile] = useState({
     full_name: '',
     avatar_url: '',
     job: ''
   });
-  
+
   // Initialize preferences from settings context
   const [preferences, setPreferences] = useState({
     currency: settings.currency,
@@ -56,7 +56,7 @@ const Settings = () => {
       dataSharing: settings.data_sharing
     }
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -143,7 +143,7 @@ const Settings = () => {
 
   const saveProfile = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const { error } = await supabase
@@ -164,8 +164,8 @@ const Settings = () => {
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
-        title: "Error",
-        description: "Failed to update profile.",
+        title: t('error'),
+        description: t('failedUpdateProfile'),
         variant: "destructive"
       });
     } finally {
@@ -175,7 +175,7 @@ const Settings = () => {
 
   const saveSettings = async (settingsToSave = preferences) => {
     if (!user) return;
-    
+
     setSavingSettings(true);
     try {
       // Check if settings exist first
@@ -241,14 +241,14 @@ const Settings = () => {
 
       setHasUnsavedChanges(false);
       toast({
-        title: t('settingsSaved'), 
+        title: t('settingsSaved'),
         description: t('settingsSavedDesc')
       });
     } catch (error) {
       console.error('Error saving settings:', error);
       toast({
-        title: "Error",
-        description: "Failed to save settings.",
+        title: t('error'),
+        description: t('failedSaveSettings'),
         variant: "destructive"
       });
     } finally {
@@ -259,7 +259,7 @@ const Settings = () => {
   const updatePreferences = (newPreferences: typeof preferences) => {
     setPreferences(newPreferences);
     setHasUnsavedChanges(true);
-    
+
     // Apply theme change immediately
     if (newPreferences.theme !== preferences.theme) {
       setTheme(newPreferences.theme);
@@ -268,14 +268,14 @@ const Settings = () => {
 
   const exportData = async () => {
     if (!user) return;
-    
+
     try {
       // Get all user data
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id);
-      
+
       const { data: settingsData } = await supabase
         .from('user_settings')
         .select('*')
@@ -336,136 +336,136 @@ const Settings = () => {
         keywords="settings, account settings, profile management, preferences, privacy settings, notifications"
       />
       <div className={`min-h-screen bg-background relative overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      
-      <div className="relative z-10">
-        <Navigation />
-        
-        <section className="py-8">
-          <div className="container mx-auto px-4 max-w-4xl space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{t('settings')}</h1>
-              <p className="text-muted-foreground">Manage your account preferences and privacy settings</p>
-            </div>
 
-            {/* Profile Settings */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  {t('profileInformation')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="email">{t('email')}</Label>
-                  <Input
-                    id="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="bg-secondary/50"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="full_name">{t('fullName')}</Label>
-                  <Input
-                    id="full_name"
-                    value={profile.full_name}
-                    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                    placeholder={t('fullName')}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="avatar_url">{t('avatarUrl')}</Label>
-                  <Input
-                    id="avatar_url"
-                    value={profile.avatar_url}
-                    onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
-                    placeholder="https://example.com/avatar.jpg"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="job">{t('job')}</Label>
-                  <Input
-                    id="job"
-                    value={profile.job}
-                    onChange={(e) => setProfile({ ...profile, job: e.target.value })}
-                    placeholder="e.g., Software Engineer, Doctor, Teacher"
-                  />
-                </div>
-                <Button onClick={saveProfile} disabled={loading}>
-                  {loading ? t('saving') : t('saveProfile')}
-                </Button>
-              </CardContent>
-            </Card>
+        <div className="relative z-10">
+          <Navigation />
 
-            {/* Preferences */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="w-5 h-5" />
-                  {t('preferences')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 gap-4">
+          <section className="py-8">
+            <div className="container mx-auto px-4 max-w-4xl space-y-8">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{t('settings')}</h1>
+                <p className="text-muted-foreground">{t('managePreferences')}</p>
+              </div>
+
+              {/* Profile Settings */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    {t('profileInformation')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="language">{t('language')}</Label>
-                    <Select value={preferences.language} onValueChange={(value) => 
-                      updatePreferences({ ...preferences, language: value })
+                    <Label htmlFor="email">{t('email')}</Label>
+                    <Input
+                      id="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="bg-secondary/50"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="full_name">{t('fullName')}</Label>
+                    <Input
+                      id="full_name"
+                      value={profile.full_name}
+                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                      placeholder={t('fullName')}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="avatar_url">{t('avatarUrl')}</Label>
+                    <Input
+                      id="avatar_url"
+                      value={profile.avatar_url}
+                      onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
+                      placeholder="https://example.com/avatar.jpg"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="job">{t('job')}</Label>
+                    <Input
+                      id="job"
+                      value={profile.job}
+                      onChange={(e) => setProfile({ ...profile, job: e.target.value })}
+                      placeholder={t('jobPlaceholder')}
+                    />
+                  </div>
+                  <Button onClick={saveProfile} disabled={loading}>
+                    {loading ? t('saving') : t('saveProfile')}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Preferences */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    {t('preferences')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="language">{t('language')}</Label>
+                      <Select value={preferences.language} onValueChange={(value) =>
+                        updatePreferences({ ...preferences, language: value })
+                      }>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">{t('english')}</SelectItem>
+                          <SelectItem value="ar">{t('arabic')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="theme">{t('theme')}</Label>
+                    <Select value={preferences.theme} onValueChange={(value) =>
+                      updatePreferences({ ...preferences, theme: value })
                     }>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full md:w-[200px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en">{t('english')}</SelectItem>
-                        <SelectItem value="ar">{t('arabic')}</SelectItem>
+                        <SelectItem value="light">{t('light')}</SelectItem>
+                        <SelectItem value="dark">{t('dark')}</SelectItem>
+                        <SelectItem value="system">{t('system')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="theme">{t('theme')}</Label>
-                  <Select value={preferences.theme} onValueChange={(value) => 
-                    updatePreferences({ ...preferences, theme: value })
-                  }>
-                    <SelectTrigger className="w-full md:w-[200px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">{t('light')}</SelectItem>
-                      <SelectItem value="dark">{t('dark')}</SelectItem>
-                      <SelectItem value="system">{t('system')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <Button
+                    onClick={() => saveSettings()}
+                    disabled={savingSettings || !hasUnsavedChanges}
+                    className="w-full md:w-auto"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {savingSettings ? t('saving') : t('savePreferences')}
+                  </Button>
+                </CardContent>
+              </Card>
 
-                <Button 
-                  onClick={() => saveSettings()} 
-                  disabled={savingSettings || !hasUnsavedChanges}
-                  className="w-full md:w-auto"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {savingSettings ? t('saving') : t('savePreferences')}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Account Actions */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>{t('accountActions')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" onClick={signOut} className="w-full">
-                  {t('signOut')}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
+              {/* Account Actions */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle>{t('accountActions')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" onClick={signOut} className="w-full">
+                    {t('signOut')}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
     </>
   );
 };

@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
+import {
+  ArrowLeft,
+  ArrowRight,
   Calendar as CalendarIcon,
   CheckCircle
 } from 'lucide-react';
@@ -45,13 +45,13 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
   const handleAssetSelect = (asset: any, type: string) => {
     setSelectedAssetType(type);
     setSelectedAsset(asset);
-    
+
     // Set default values based on asset type and current market price
     if (asset.price || asset.current_price || asset.price_usd) {
       const currentPrice = asset.price || asset.current_price || asset.price_usd || asset.exchange_rate;
       setPurchasePrice(currentPrice?.toString() || '');
     }
-    
+
     nextStep();
   };
 
@@ -59,7 +59,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
   const saveAsset = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       // First ensure user has a portfolio
@@ -68,14 +68,14 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         .select('id')
         .eq('user_id', user.id)
         .single();
-      
+
       if (!portfolio) {
         const { data: newPortfolio, error: portfolioError } = await supabase
           .from('portfolios')
           .insert({ user_id: user.id, name: 'My Portfolio' })
           .select()
           .single();
-        
+
         if (portfolioError) throw portfolioError;
         portfolio = newPortfolio;
       }
@@ -89,11 +89,11 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
       };
 
       const getCurrentPrice = () => {
-        return selectedAsset.price || 
-               selectedAsset.current_price || 
-               selectedAsset.price_usd || 
-               selectedAsset.exchange_rate || 
-               parseFloat(purchasePrice) || 0;
+        return selectedAsset.price ||
+          selectedAsset.current_price ||
+          selectedAsset.price_usd ||
+          selectedAsset.exchange_rate ||
+          parseFloat(purchasePrice) || 0;
       };
 
       const assetData = {
@@ -119,12 +119,12 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
       };
 
       const { error } = await supabase.from('assets').insert(assetData);
-      
+
       if (error) throw error;
 
       toast({
-        title: "Asset Added Successfully!",
-        description: `${getAssetName()} has been added to your portfolio.`,
+        title: t('assetAdded'),
+        description: `${getAssetName()} ${t('assetAddedTo')}`,
       });
 
       resetForm();
@@ -132,8 +132,8 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
     } catch (error) {
       console.error('Error saving asset:', error);
       toast({
-        title: "Error",
-        description: "Failed to add asset. Please try again.",
+        title: t('error'),
+        description: t('failedAddAsset'),
         variant: "destructive",
       });
     } finally {
@@ -164,7 +164,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
   const calculateRealEstatePrice = async () => {
     if (!selectedAsset || !areaSize) return;
-    
+
     try {
       const { data: priceData } = await supabase
         .from('real_estate_prices')
@@ -173,7 +173,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         .eq('city_name', selectedAsset.city_name)
         .eq('property_type', selectedAsset.property_type || 'mixed')
         .single();
-      
+
       if (priceData) {
         const pricePerMeter = priceData.avg_price_per_meter || 0;
         const totalPrice = pricePerMeter * parseFloat(areaSize);
@@ -194,7 +194,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
   const canProceed = () => {
     switch (currentStep) {
       case 1: return selectedAsset !== null;
-      case 2: 
+      case 2:
         if (selectedAssetType === 'real_estate') {
           return quantity !== '' && areaSize !== '' && purchaseDate !== undefined;
         }
@@ -210,11 +210,11 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-2xl font-bold mb-2">Browse & Select Assets</h3>
-              <p className="text-muted-foreground">Choose from real market data across MENA region</p>
+              <h3 className="text-2xl font-bold mb-2">{t('browseSelectAssets')}</h3>
+              <p className="text-muted-foreground">{t('chooseFromRealData')}</p>
             </div>
-            
-            <AssetBrowser 
+
+            <AssetBrowser
               onAssetSelect={handleAssetSelect}
               selectedAssetType={selectedAssetType}
             />
@@ -225,8 +225,8 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-2xl font-bold mb-2">Purchase Details</h3>
-              <p className="text-muted-foreground">Enter your investment details</p>
+              <h3 className="text-2xl font-bold mb-2">{t('purchaseDetails')}</h3>
+              <p className="text-muted-foreground">{t('enterInvestmentDetails')}</p>
             </div>
 
             {selectedAsset && (
@@ -235,35 +235,35 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-semibold">
-                        {selectedAsset.name || selectedAsset.product_name || 
-                         (selectedAsset.neighborhood_name + ', ' + selectedAsset.city_name)}
+                        {selectedAsset.name || selectedAsset.product_name ||
+                          (selectedAsset.neighborhood_name + ', ' + selectedAsset.city_name)}
                       </h4>
                       <p className="text-sm text-muted-foreground">
                         {selectedAsset.symbol || selectedAsset.bank_name} • {selectedAssetType}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">Current Price</p>
+                      <p className="font-semibold">{t('currentPrice')}</p>
                       <p className="text-lg">
-                        {selectedAsset.price || selectedAsset.current_price || 
-                         selectedAsset.price_usd || selectedAsset.exchange_rate || 'N/A'}
+                        {selectedAsset.price || selectedAsset.current_price ||
+                          selectedAsset.price_usd || selectedAsset.exchange_rate || 'N/A'}
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="quantity">
-                  {selectedAssetType === 'real_estate' ? 'Number of Properties' : 
-                   selectedAssetType === 'banking' ? 'Investment Amount' : 'Quantity/Shares'}
+                  {selectedAssetType === 'real_estate' ? t('numberOfProperties') :
+                    selectedAssetType === 'banking' ? t('investmentAmount') : t('quantityShares')}
                 </Label>
                 <Input
                   id="quantity"
                   type="number"
-                  placeholder="Enter quantity"
+                  placeholder={t('enterQuantity')}
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                 />
@@ -271,22 +271,22 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
               {selectedAssetType === 'real_estate' ? (
                 <div className="space-y-2">
-                  <Label htmlFor="areaSize">Area (Square Meters)</Label>
+                  <Label htmlFor="areaSize">{t('areaSquareMeters')}</Label>
                   <Input
                     id="areaSize"
                     type="number"
-                    placeholder="Enter area in m²"
+                    placeholder={t('enterAreaSqm')}
                     value={areaSize}
                     onChange={(e) => setAreaSize(e.target.value)}
                   />
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Label htmlFor="purchasePrice">Purchase Price (per unit)</Label>
+                  <Label htmlFor="purchasePrice">{t('purchasePricePerUnit')}</Label>
                   <Input
                     id="purchasePrice"
                     type="number"
-                    placeholder="Enter purchase price"
+                    placeholder={t('enterPurchasePrice')}
                     value={purchasePrice}
                     onChange={(e) => setPurchasePrice(e.target.value)}
                   />
@@ -294,7 +294,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
               )}
 
               <div className="space-y-2 md:col-span-2">
-                <Label>Purchase Date</Label>
+                <Label>{t('purchaseDate')}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -305,7 +305,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {purchaseDate ? format(purchaseDate, "PPP") : "Pick a date"}
+                      {purchaseDate ? format(purchaseDate, "PPP") : t('pickDate')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -324,7 +324,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                   <Card className="bg-primary/5 border-primary/20">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-center">
-                        <span className="font-medium">Total Investment:</span>
+                        <span className="font-medium">{t('totalInvestment')}:</span>
                         <span className="text-xl font-bold text-primary">
                           {formatCurrency((parseFloat(quantity) * parseFloat(purchasePrice)), selectedAsset?.currency || 'EGP')}
                         </span>
@@ -354,8 +354,8 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                   <div>
                     <Label className="text-muted-foreground">Asset</Label>
                     <p className="font-semibold">
-                      {selectedAsset?.name || selectedAsset?.product_name || 
-                       (selectedAsset?.neighborhood_name + ', ' + selectedAsset?.city_name)}
+                      {selectedAsset?.name || selectedAsset?.product_name ||
+                        (selectedAsset?.neighborhood_name + ', ' + selectedAsset?.city_name)}
                     </p>
                   </div>
                   <div>
@@ -377,8 +377,8 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                       {selectedAssetType === 'real_estate' ? 'Total Price' : 'Price per Unit'}
                     </Label>
                     <p className="font-semibold">
-                      {selectedAssetType === 'real_estate' ? 
-                        formatCurrency(calculatedPrice, selectedAsset?.currency || 'EGP') : 
+                      {selectedAssetType === 'real_estate' ?
+                        formatCurrency(calculatedPrice, selectedAsset?.currency || 'EGP') :
                         formatCurrency(parseFloat(purchasePrice || '0'), selectedAsset?.currency || 'EGP')}
                     </p>
                   </div>
@@ -389,12 +389,12 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="pt-4 border-t">
                   <div className="flex justify-between items-center text-lg">
-                    <span className="font-bold">Total Investment:</span>
+                    <span className="font-bold">{t('totalInvestment')}:</span>
                     <span className="font-bold text-primary">
-                      {selectedAssetType === 'real_estate' ? 
+                      {selectedAssetType === 'real_estate' ?
                         formatCurrency((calculatedPrice * parseFloat(quantity || '1')), selectedAsset?.currency || 'EGP') :
                         formatCurrency((parseFloat(quantity || '0') * parseFloat(purchasePrice || '0')), selectedAsset?.currency || 'EGP')}
                     </span>
@@ -414,17 +414,16 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
     <Card className="glass-card w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle className="text-center text-gradient-electric text-2xl">
-          Add New Investment
+          {t('addNewInvestment')}
         </CardTitle>
-        
+
         {/* Progress Steps */}
         <div className="flex justify-center mt-6">
           <div className="flex items-center space-x-4">
             {[1, 2, 3].map((step) => (
               <React.Fragment key={step}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                  step <= currentStep ? 'gradient-electric text-white' : 'bg-muted text-muted-foreground'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step <= currentStep ? 'gradient-electric text-white' : 'bg-muted text-muted-foreground'
+                  }`}>
                   {step}
                 </div>
                 {step < 3 && (
@@ -438,7 +437,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
 
       <CardContent className="p-6">
         {renderStep()}
-        
+
         {/* Navigation Buttons */}
         <div className="flex justify-between mt-8">
           <Button
@@ -452,7 +451,7 @@ const PortfolioManager = ({ onAssetAdded }: PortfolioManagerProps) => {
           </Button>
 
           {currentStep === 3 ? (
-            <Button 
+            <Button
               onClick={saveAsset}
               className="gradient-electric w-full max-w-xs"
               disabled={loading || !canProceed()}
